@@ -1,0 +1,110 @@
+{"time":"2026-04-22T18:08:05.0317175+03:00","level":"INFO","msg":"database connected"}
+{"time":"2026-04-22T18:08:05.0651671+03:00","level":"INFO","msg":"migrations applied"}
+{"time":"2026-04-22T18:08:05.0735471+03:00","level":"INFO","msg":"redis connected"}
+{"time":"2026-04-22T18:08:05.0735471+03:00","level":"INFO","msg":"storage: local","dir":"./data/uploads"}
+[GIN-debug] [WARNING] Running in "debug" mode. Switch to "release" mode in production.
+ - using env:	export GIN_MODE=release
+ - using code:	gin.SetMode(gin.ReleaseMode)
+
+[GIN-debug] GET    /api/health               --> main.main.func1 (3 handlers)
+[GIN-debug] GET    /api/auth/dev/login       --> github.com/you/fungreet/internal/handlers.(*AuthHandler).DevLogin-fm (3 handlers)
+[GIN-debug] POST   /api/auth/refresh         --> github.com/you/fungreet/internal/handlers.(*AuthHandler).Refresh-fm (3 handlers)
+[GIN-debug] POST   /api/auth/logout          --> github.com/you/fungreet/internal/handlers.(*AuthHandler).Logout-fm (3 handlers)
+[GIN-debug] GET    /api/user/me              --> github.com/you/fungreet/internal/handlers.(*AuthHandler).Me-fm (4 handlers)
+[GIN-debug] GET    /api/billing/balance      --> github.com/you/fungreet/internal/handlers.(*BillingHandler).Balance-fm (4 handlers)
+[GIN-debug] GET    /api/billing/tariff       --> github.com/you/fungreet/internal/handlers.(*BillingHandler).Tariff-fm (4 handlers)
+[GIN-debug] GET    /api/billing/estimate     --> github.com/you/fungreet/internal/handlers.(*BillingHandler).Estimate-fm (4 handlers)
+[GIN-debug] GET    /api/billing/transactions --> github.com/you/fungreet/internal/handlers.(*BillingHandler).Transactions-fm (4 handlers)
+[GIN-debug] GET    /api/sessions             --> github.com/you/fungreet/internal/handlers.(*SessionHandler).List-fm (4 handlers)
+[GIN-debug] GET    /api/sessions/:id         --> github.com/you/fungreet/internal/handlers.(*SessionHandler).Get-fm (4 handlers)
+[GIN-debug] PATCH  /api/sessions/:id         --> github.com/you/fungreet/internal/handlers.(*SessionHandler).UpdateTitle-fm (4 handlers)
+[GIN-debug] POST   /api/generations          --> github.com/you/fungreet/internal/handlers.(*GenerationHandler).Create-fm (4 handlers)
+[GIN-debug] GET    /api/generations          --> github.com/you/fungreet/internal/handlers.(*GenerationHandler).List-fm (4 handlers)
+[GIN-debug] GET    /api/generations/:id      --> github.com/you/fungreet/internal/handlers.(*GenerationHandler).Get-fm (4 handlers)
+[GIN-debug] GET    /api/generations/:id/status --> github.com/you/fungreet/internal/handlers.(*GenerationHandler).Status-fm (4 handlers)
+[GIN-debug] POST   /api/uploads              --> github.com/you/fungreet/internal/handlers.(*GenerationHandler).Upload-fm (4 handlers)
+[GIN-debug] GET    /api/files/*key           --> main.main.func2 (3 handlers)
+{"time":"2026-04-22T18:08:05.0735471+03:00","level":"INFO","msg":"server starting","port":"8080"}
+{"time":"2026-04-22T18:08:05.0735471+03:00","level":"INFO","msg":"worker started","id":1}
+{"time":"2026-04-22T18:08:05.0735471+03:00","level":"INFO","msg":"worker started","id":0}
+{"time":"2026-04-22T18:08:06.2866742+03:00","level":"INFO","msg":"request","method":"GET","path":"/api/billing/balance","status":200,"latency":"15.8965ms","ip":"::1"}
+{"time":"2026-04-22T18:08:06.2866742+03:00","level":"INFO","msg":"request","method":"GET","path":"/api/billing/tariff","status":200,"latency":"15.8965ms","ip":"::1"}
+{"time":"2026-04-22T18:08:06.2871778+03:00","level":"INFO","msg":"request","method":"GET","path":"/api/sessions","status":200,"latency":"16.4001ms","ip":"::1"}
+{"time":"2026-04-22T18:08:11.5703819+03:00","level":"INFO","msg":"request","method":"GET","path":"/api/health","status":200,"latency":"0s","ip":"::1"}
+{"time":"2026-04-22T18:08:54.4819223+03:00","level":"INFO","msg":"request","method":"GET","path":"/api/billing/balance","status":200,"latency":"4.514ms","ip":"::1"}
+{"time":"2026-04-22T18:08:54.4824248+03:00","level":"INFO","msg":"request","method":"GET","path":"/api/sessions","status":200,"latency":"5.0165ms","ip":"::1"}
+{"time":"2026-04-22T18:08:56.0910424+03:00","level":"INFO","msg":"request","method":"GET","path":"/api/user/me","status":200,"latency":"5.1833ms","ip":"::1"}
+{"time":"2026-04-22T18:08:56.1246064+03:00","level":"INFO","msg":"request","method":"GET","path":"/api/billing/tariff","status":200,"latency":"3.4322ms","ip":"::1"}
+{"time":"2026-04-22T18:08:56.1256984+03:00","level":"INFO","msg":"request","method":"GET","path":"/api/billing/balance","status":200,"latency":"4.5242ms","ip":"::1"}
+{"time":"2026-04-22T18:08:56.1267009+03:00","level":"INFO","msg":"request","method":"GET","path":"/api/sessions","status":200,"latency":"5.5267ms","ip":"::1"}
+{"time":"2026-04-22T18:08:57.7888249+03:00","level":"INFO","msg":"request","method":"POST","path":"/api/auth/logout","status":200,"latency":"0s","ip":"::1"}
+{"time":"2026-04-22T18:08:59.2432788+03:00","level":"INFO","msg":"request","method":"GET","path":"/api/auth/dev/login","status":200,"latency":"19.0418ms","ip":"::1"}
+{"time":"2026-04-22T18:08:59.2518316+03:00","level":"INFO","msg":"request","method":"GET","path":"/api/user/me","status":200,"latency":"2.1115ms","ip":"::1"}
+{"time":"2026-04-22T18:08:59.2687474+03:00","level":"INFO","msg":"request","method":"GET","path":"/api/sessions","status":200,"latency":"2.497ms","ip":"::1"}
+{"time":"2026-04-22T18:08:59.2687474+03:00","level":"INFO","msg":"request","method":"GET","path":"/api/billing/balance","status":200,"latency":"2.497ms","ip":"::1"}
+{"time":"2026-04-22T18:09:05.2523135+03:00","level":"INFO","msg":"request","method":"POST","path":"/api/auth/logout","status":200,"latency":"0s","ip":"::1"}
+{"time":"2026-04-22T18:09:06.6283419+03:00","level":"INFO","msg":"request","method":"GET","path":"/api/auth/dev/login","status":200,"latency":"17.393ms","ip":"::1"}
+{"time":"2026-04-22T18:09:06.6363228+03:00","level":"INFO","msg":"request","method":"GET","path":"/api/user/me","status":200,"latency":"1.6968ms","ip":"::1"}
+{"time":"2026-04-22T18:09:06.6534578+03:00","level":"INFO","msg":"request","method":"GET","path":"/api/billing/balance","status":200,"latency":"2.3521ms","ip":"::1"}
+{"time":"2026-04-22T18:09:06.6534578+03:00","level":"INFO","msg":"request","method":"GET","path":"/api/sessions","status":200,"latency":"2.3521ms","ip":"::1"}
+{"time":"2026-04-22T18:09:34.7550408+03:00","level":"INFO","msg":"request","method":"POST","path":"/api/auth/logout","status":200,"latency":"0s","ip":"::1"}
+{"time":"2026-04-22T18:09:37.9808956+03:00","level":"INFO","msg":"request","method":"GET","path":"/api/auth/dev/login","status":200,"latency":"13.1607ms","ip":"::1"}
+{"time":"2026-04-22T18:09:37.9887514+03:00","level":"INFO","msg":"request","method":"GET","path":"/api/user/me","status":200,"latency":"2.3446ms","ip":"::1"}
+{"time":"2026-04-22T18:09:38.0045598+03:00","level":"INFO","msg":"request","method":"GET","path":"/api/sessions","status":200,"latency":"1.8174ms","ip":"::1"}
+{"time":"2026-04-22T18:09:38.0045598+03:00","level":"INFO","msg":"request","method":"GET","path":"/api/billing/balance","status":200,"latency":"2.7ms","ip":"::1"}
+{"time":"2026-04-22T18:10:08.0172211+03:00","level":"INFO","msg":"request","method":"GET","path":"/api/billing/balance","status":200,"latency":"3.2945ms","ip":"::1"}
+{"time":"2026-04-22T18:10:36.7124546+03:00","level":"INFO","msg":"request","method":"GET","path":"/api/billing/balance","status":200,"latency":"2.7444ms","ip":"::1"}
+{"time":"2026-04-22T18:10:36.7124546+03:00","level":"INFO","msg":"request","method":"GET","path":"/api/sessions","status":200,"latency":"2.7444ms","ip":"::1"}
+{"time":"2026-04-22T18:10:36.7124546+03:00","level":"INFO","msg":"request","method":"GET","path":"/api/billing/tariff","status":200,"latency":"3.2512ms","ip":"::1"}
+{"time":"2026-04-22T18:10:59.2669837+03:00","level":"INFO","msg":"request","method":"GET","path":"/api/billing/balance","status":200,"latency":"2.8152ms","ip":"::1"}
+{"time":"2026-04-22T18:10:59.2669837+03:00","level":"INFO","msg":"request","method":"GET","path":"/api/sessions","status":200,"latency":"2.8152ms","ip":"::1"}
+{"time":"2026-04-22T18:11:18.2841743+03:00","level":"INFO","msg":"request","method":"GET","path":"/api/sessions","status":200,"latency":"3.4911ms","ip":"::1"}
+{"time":"2026-04-22T18:11:18.2841743+03:00","level":"INFO","msg":"request","method":"GET","path":"/api/billing/balance","status":200,"latency":"3.4911ms","ip":"::1"}
+{"time":"2026-04-22T18:11:38.2381409+03:00","level":"INFO","msg":"request","method":"GET","path":"/api/billing/tariff","status":200,"latency":"2.3569ms","ip":"::1"}
+{"time":"2026-04-22T18:11:38.2391664+03:00","level":"INFO","msg":"request","method":"GET","path":"/api/sessions","status":200,"latency":"3.3824ms","ip":"::1"}
+{"time":"2026-04-22T18:11:38.2391664+03:00","level":"INFO","msg":"request","method":"GET","path":"/api/billing/balance","status":200,"latency":"3.3824ms","ip":"::1"}
+{"time":"2026-04-22T18:11:40.80255+03:00","level":"INFO","msg":"processing generation","worker":1,"generation_id":"8c87c584-b7ab-4ce4-af30-468b2e407b51"}
+{"time":"2026-04-22T18:11:40.8030996+03:00","level":"INFO","msg":"request","method":"POST","path":"/api/generations","status":201,"latency":"48.243ms","ip":"::1"}
+{"time":"2026-04-22T18:11:40.8112658+03:00","level":"INFO","msg":"request","method":"GET","path":"/api/billing/balance","status":200,"latency":"1.579ms","ip":"::1"}
+{"time":"2026-04-22T18:11:40.8212307+03:00","level":"INFO","msg":"request","method":"GET","path":"/api/sessions","status":200,"latency":"12.1018ms","ip":"::1"}
+{"time":"2026-04-22T18:11:40.8276336+03:00","level":"INFO","msg":"request","method":"GET","path":"/api/sessions/68da3492-8d36-4edc-be56-9290a34059cb","status":200,"latency":"6.4029ms","ip":"::1"}
+{"time":"2026-04-22T18:11:40.8384765+03:00","level":"INFO","msg":"generation completed","generation_id":"8c87c584-b7ab-4ce4-af30-468b2e407b51","images":3,"songs":1,"context_images":0}
+{"time":"2026-04-22T18:11:42.8395247+03:00","level":"INFO","msg":"request","method":"GET","path":"/api/sessions/68da3492-8d36-4edc-be56-9290a34059cb","status":200,"latency":"3.4087ms","ip":"::1"}
+{"time":"2026-04-22T18:12:09.9868837+03:00","level":"INFO","msg":"request","method":"GET","path":"/api/billing/balance","status":200,"latency":"3.1084ms","ip":"::1"}
+{"time":"2026-04-22T18:12:09.9941735+03:00","level":"INFO","msg":"request","method":"GET","path":"/api/sessions","status":200,"latency":"4.2787ms","ip":"::1"}
+{"time":"2026-04-22T18:12:22.9815871+03:00","level":"INFO","msg":"request","method":"GET","path":"/api/billing/balance","status":200,"latency":"1.9681ms","ip":"::1"}
+{"time":"2026-04-22T18:12:28.9502843+03:00","level":"INFO","msg":"request","method":"GET","path":"/api/sessions","status":200,"latency":"4.3297ms","ip":"::1"}
+{"time":"2026-04-22T18:12:54.2805181+03:00","level":"INFO","msg":"request","method":"GET","path":"/api/billing/tariff","status":200,"latency":"1.5238ms","ip":"::1"}
+{"time":"2026-04-22T18:12:54.2819791+03:00","level":"INFO","msg":"request","method":"GET","path":"/api/billing/balance","status":200,"latency":"2.9848ms","ip":"::1"}
+{"time":"2026-04-22T18:12:54.2819791+03:00","level":"INFO","msg":"request","method":"GET","path":"/api/sessions","status":200,"latency":"2.9848ms","ip":"::1"}
+{"time":"2026-04-22T18:13:09.6422952+03:00","level":"INFO","msg":"request","method":"GET","path":"/api/sessions/68da3492-8d36-4edc-be56-9290a34059cb","status":200,"latency":"10.4927ms","ip":"::1"}
+{"time":"2026-04-22T18:13:24.3054105+03:00","level":"INFO","msg":"request","method":"GET","path":"/api/billing/balance","status":200,"latency":"2.1248ms","ip":"::1"}
+{"time":"2026-04-22T18:13:26.8994917+03:00","level":"INFO","msg":"processing generation","worker":0,"generation_id":"3b704475-5f49-4c79-aa51-f6403c825f51"}
+{"time":"2026-04-22T18:13:26.8999945+03:00","level":"INFO","msg":"request","method":"POST","path":"/api/generations","status":201,"latency":"23.3047ms","ip":"::1"}
+{"time":"2026-04-22T18:13:26.9092901+03:00","level":"INFO","msg":"request","method":"GET","path":"/api/sessions","status":200,"latency":"1.5992ms","ip":"::1"}
+{"time":"2026-04-22T18:13:26.9098214+03:00","level":"INFO","msg":"request","method":"GET","path":"/api/billing/balance","status":200,"latency":"1.5992ms","ip":"::1"}
+{"time":"2026-04-22T18:13:26.910887+03:00","level":"INFO","msg":"request","method":"GET","path":"/api/sessions/68da3492-8d36-4edc-be56-9290a34059cb","status":200,"latency":"2.6731ms","ip":"::1"}
+{"time":"2026-04-22T18:13:26.9438445+03:00","level":"INFO","msg":"generation completed","generation_id":"3b704475-5f49-4c79-aa51-f6403c825f51","images":1,"songs":0,"context_images":3}
+{"time":"2026-04-22T18:13:28.9342465+03:00","level":"INFO","msg":"request","method":"GET","path":"/api/sessions/68da3492-8d36-4edc-be56-9290a34059cb","status":200,"latency":"7.0819ms","ip":"::1"}
+{"time":"2026-04-22T18:13:35.3097362+03:00","level":"INFO","msg":"processing generation","worker":0,"generation_id":"666fe76a-09b8-48ca-854a-385c233ebe0a"}
+{"time":"2026-04-22T18:13:35.3105222+03:00","level":"INFO","msg":"request","method":"POST","path":"/api/generations","status":201,"latency":"20.7452ms","ip":"::1"}
+{"time":"2026-04-22T18:13:35.3197546+03:00","level":"INFO","msg":"request","method":"GET","path":"/api/billing/balance","status":200,"latency":"1.5966ms","ip":"::1"}
+{"time":"2026-04-22T18:13:35.3197546+03:00","level":"INFO","msg":"request","method":"GET","path":"/api/sessions","status":200,"latency":"1.5966ms","ip":"::1"}
+{"time":"2026-04-22T18:13:35.3248358+03:00","level":"INFO","msg":"request","method":"GET","path":"/api/sessions/68da3492-8d36-4edc-be56-9290a34059cb","status":200,"latency":"6.6778ms","ip":"::1"}
+{"time":"2026-04-22T18:13:35.3293823+03:00","level":"INFO","msg":"generation completed","generation_id":"666fe76a-09b8-48ca-854a-385c233ebe0a","images":2,"songs":0,"context_images":1}
+{"time":"2026-04-22T18:13:37.3468447+03:00","level":"INFO","msg":"request","method":"GET","path":"/api/sessions/68da3492-8d36-4edc-be56-9290a34059cb","status":200,"latency":"3.6634ms","ip":"::1"}
+{"time":"2026-04-22T18:13:48.6457971+03:00","level":"INFO","msg":"processing generation","worker":0,"generation_id":"35527b0f-7bdf-4ef6-8d43-f77ec7b05846"}
+{"time":"2026-04-22T18:13:48.6465554+03:00","level":"INFO","msg":"request","method":"POST","path":"/api/generations","status":201,"latency":"17.8634ms","ip":"::1"}
+{"time":"2026-04-22T18:13:48.6569296+03:00","level":"INFO","msg":"request","method":"GET","path":"/api/billing/balance","status":200,"latency":"2.0865ms","ip":"::1"}
+{"time":"2026-04-22T18:13:48.6569296+03:00","level":"INFO","msg":"request","method":"GET","path":"/api/sessions","status":200,"latency":"2.0865ms","ip":"::1"}
+{"time":"2026-04-22T18:13:48.661637+03:00","level":"INFO","msg":"request","method":"GET","path":"/api/sessions/68da3492-8d36-4edc-be56-9290a34059cb","status":200,"latency":"6.7939ms","ip":"::1"}
+{"time":"2026-04-22T18:13:48.6684854+03:00","level":"INFO","msg":"generation completed","generation_id":"35527b0f-7bdf-4ef6-8d43-f77ec7b05846","images":3,"songs":0,"context_images":2}
+{"time":"2026-04-22T18:13:50.6823573+03:00","level":"INFO","msg":"request","method":"GET","path":"/api/sessions/68da3492-8d36-4edc-be56-9290a34059cb","status":200,"latency":"4.9955ms","ip":"::1"}
+{"time":"2026-04-22T18:14:01.7190177+03:00","level":"INFO","msg":"request","method":"GET","path":"/api/billing/tariff","status":200,"latency":"2.3466ms","ip":"::1"}
+{"time":"2026-04-22T18:14:01.7202825+03:00","level":"INFO","msg":"request","method":"GET","path":"/api/billing/balance","status":200,"latency":"3.6114ms","ip":"::1"}
+{"time":"2026-04-22T18:14:01.7202825+03:00","level":"INFO","msg":"request","method":"GET","path":"/api/sessions","status":200,"latency":"2.4782ms","ip":"::1"}
+{"time":"2026-04-22T18:14:01.724568+03:00","level":"INFO","msg":"request","method":"GET","path":"/api/sessions/68da3492-8d36-4edc-be56-9290a34059cb","status":200,"latency":"6.7637ms","ip":"::1"}
+{"time":"2026-04-22T18:14:37.9247218+03:00","level":"INFO","msg":"request","method":"GET","path":"/api/billing/balance","status":200,"latency":"4.5344ms","ip":"::1"}
+{"time":"2026-04-22T18:14:37.9247218+03:00","level":"INFO","msg":"request","method":"GET","path":"/api/sessions","status":200,"latency":"4.5344ms","ip":"::1"}
+{"time":"2026-04-22T18:14:37.9274906+03:00","level":"INFO","msg":"request","method":"GET","path":"/api/sessions/68da3492-8d36-4edc-be56-9290a34059cb","status":200,"latency":"6.6958ms","ip":"::1"}
+{"time":"2026-04-22T18:14:42.524636+03:00","level":"INFO","msg":"request","method":"GET","path":"/api/health","status":200,"latency":"0s","ip":"::1"}

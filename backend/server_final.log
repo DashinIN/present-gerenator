@@ -1,0 +1,357 @@
+{"time":"2026-04-22T17:30:17.7201328+03:00","level":"INFO","msg":"database connected"}
+{"time":"2026-04-22T17:30:17.7534439+03:00","level":"INFO","msg":"migrations applied"}
+{"time":"2026-04-22T17:30:17.7634958+03:00","level":"INFO","msg":"redis connected"}
+{"time":"2026-04-22T17:30:17.7634958+03:00","level":"INFO","msg":"storage: local","dir":"./data/uploads"}
+[GIN-debug] [WARNING] Running in "debug" mode. Switch to "release" mode in production.
+ - using env:	export GIN_MODE=release
+ - using code:	gin.SetMode(gin.ReleaseMode)
+
+[GIN-debug] GET    /api/health               --> main.main.func1 (3 handlers)
+[GIN-debug] GET    /api/auth/dev/login       --> github.com/you/fungreet/internal/handlers.(*AuthHandler).DevLogin-fm (3 handlers)
+[GIN-debug] POST   /api/auth/refresh         --> github.com/you/fungreet/internal/handlers.(*AuthHandler).Refresh-fm (3 handlers)
+[GIN-debug] POST   /api/auth/logout          --> github.com/you/fungreet/internal/handlers.(*AuthHandler).Logout-fm (3 handlers)
+[GIN-debug] GET    /api/user/me              --> github.com/you/fungreet/internal/handlers.(*AuthHandler).Me-fm (4 handlers)
+[GIN-debug] GET    /api/billing/balance      --> github.com/you/fungreet/internal/handlers.(*BillingHandler).Balance-fm (4 handlers)
+[GIN-debug] GET    /api/billing/tariff       --> github.com/you/fungreet/internal/handlers.(*BillingHandler).Tariff-fm (4 handlers)
+[GIN-debug] GET    /api/billing/estimate     --> github.com/you/fungreet/internal/handlers.(*BillingHandler).Estimate-fm (4 handlers)
+[GIN-debug] GET    /api/billing/transactions --> github.com/you/fungreet/internal/handlers.(*BillingHandler).Transactions-fm (4 handlers)
+[GIN-debug] GET    /api/sessions             --> github.com/you/fungreet/internal/handlers.(*SessionHandler).List-fm (4 handlers)
+[GIN-debug] GET    /api/sessions/:id         --> github.com/you/fungreet/internal/handlers.(*SessionHandler).Get-fm (4 handlers)
+[GIN-debug] PATCH  /api/sessions/:id         --> github.com/you/fungreet/internal/handlers.(*SessionHandler).UpdateTitle-fm (4 handlers)
+[GIN-debug] POST   /api/generations          --> github.com/you/fungreet/internal/handlers.(*GenerationHandler).Create-fm (4 handlers)
+[GIN-debug] GET    /api/generations          --> github.com/you/fungreet/internal/handlers.(*GenerationHandler).List-fm (4 handlers)
+[GIN-debug] GET    /api/generations/:id      --> github.com/you/fungreet/internal/handlers.(*GenerationHandler).Get-fm (4 handlers)
+[GIN-debug] GET    /api/generations/:id/status --> github.com/you/fungreet/internal/handlers.(*GenerationHandler).Status-fm (4 handlers)
+[GIN-debug] POST   /api/uploads              --> github.com/you/fungreet/internal/handlers.(*GenerationHandler).Upload-fm (4 handlers)
+[GIN-debug] GET    /api/files/*key           --> main.main.func2 (3 handlers)
+{"time":"2026-04-22T17:30:17.7640564+03:00","level":"INFO","msg":"server starting","port":"8080"}
+{"time":"2026-04-22T17:30:17.7640564+03:00","level":"INFO","msg":"worker started","id":1}
+{"time":"2026-04-22T17:30:17.7640564+03:00","level":"INFO","msg":"worker started","id":0}
+{"time":"2026-04-22T17:30:21.6964875+03:00","level":"INFO","msg":"request","method":"GET","path":"/api/auth/dev/login","status":200,"latency":"41.5825ms","ip":"::1"}
+{"time":"2026-04-22T17:30:21.7960229+03:00","level":"INFO","msg":"processing generation","worker":1,"generation_id":"fe25ca6d-2df8-40d9-8775-071385d7d442"}
+{"time":"2026-04-22T17:30:21.7968019+03:00","level":"INFO","msg":"request","method":"POST","path":"/api/generations","status":201,"latency":"34.5693ms","ip":"::1"}
+{"time":"2026-04-22T17:30:21.8144677+03:00","level":"INFO","msg":"generation completed","generation_id":"fe25ca6d-2df8-40d9-8775-071385d7d442","images":2,"songs":1,"context_images":0}
+{"time":"2026-04-22T17:30:25.1838295+03:00","level":"INFO","msg":"request","method":"POST","path":"/api/generations","status":201,"latency":"19.5375ms","ip":"::1"}
+{"time":"2026-04-22T17:30:25.1838295+03:00","level":"INFO","msg":"processing generation","worker":0,"generation_id":"87930500-4d13-4d34-be24-bf4ea4ec713a"}
+{"time":"2026-04-22T17:30:25.1979965+03:00","level":"INFO","msg":"generation completed","generation_id":"87930500-4d13-4d34-be24-bf4ea4ec713a","images":1,"songs":0,"context_images":2}
+{"time":"2026-04-22T17:30:28.2863546+03:00","level":"INFO","msg":"request","method":"GET","path":"/api/sessions/659cb500-70de-413b-9ab5-073b0044b778","status":200,"latency":"8.2404ms","ip":"::1"}
+{"time":"2026-04-22T17:31:40.1192729+03:00","level":"INFO","msg":"request","method":"GET","path":"/api/user/me","status":401,"latency":"0s","ip":"::1"}
+{"time":"2026-04-22T17:31:40.1338942+03:00","level":"INFO","msg":"request","method":"POST","path":"/api/auth/refresh","status":401,"latency":"0s","ip":"::1"}
+{"time":"2026-04-22T17:32:15.4497801+03:00","level":"INFO","msg":"request","method":"GET","path":"/api/user/me","status":401,"latency":"0s","ip":"::1"}
+{"time":"2026-04-22T17:32:15.4589461+03:00","level":"INFO","msg":"request","method":"POST","path":"/api/auth/refresh","status":401,"latency":"0s","ip":"::1"}
+{"time":"2026-04-22T17:32:17.2413239+03:00","level":"INFO","msg":"request","method":"GET","path":"/api/auth/google/login","status":404,"latency":"0s","ip":"::1"}
+{"time":"2026-04-22T17:32:24.8518342+03:00","level":"INFO","msg":"request","method":"GET","path":"/api/user/me","status":401,"latency":"0s","ip":"::1"}
+{"time":"2026-04-22T17:32:24.8622931+03:00","level":"INFO","msg":"request","method":"POST","path":"/api/auth/refresh","status":401,"latency":"0s","ip":"::1"}
+{"time":"2026-04-22T17:32:26.1282407+03:00","level":"INFO","msg":"request","method":"GET","path":"/api/auth/dev/login","status":200,"latency":"14.8223ms","ip":"::1"}
+{"time":"2026-04-22T17:32:26.1468991+03:00","level":"INFO","msg":"request","method":"GET","path":"/api/user/me","status":200,"latency":"2.2855ms","ip":"::1"}
+{"time":"2026-04-22T17:32:26.1964395+03:00","level":"INFO","msg":"request","method":"GET","path":"/api/billing/balance","status":200,"latency":"2.1237ms","ip":"::1"}
+{"time":"2026-04-22T17:32:26.2183795+03:00","level":"INFO","msg":"request","method":"GET","path":"/api/billing/tariff","status":200,"latency":"24.0637ms","ip":"::1"}
+{"time":"2026-04-22T17:32:26.2223327+03:00","level":"INFO","msg":"request","method":"GET","path":"/api/sessions","status":200,"latency":"28.0169ms","ip":"::1"}
+{"time":"2026-04-22T17:32:38.0500021+03:00","level":"INFO","msg":"processing generation","worker":1,"generation_id":"1d20b252-10b2-4064-8c16-6d1a3530c2eb"}
+{"time":"2026-04-22T17:32:38.0505062+03:00","level":"INFO","msg":"request","method":"POST","path":"/api/generations","status":201,"latency":"20.038ms","ip":"::1"}
+{"time":"2026-04-22T17:32:38.0620692+03:00","level":"INFO","msg":"request","method":"GET","path":"/api/billing/balance","status":200,"latency":"1.2574ms","ip":"::1"}
+{"time":"2026-04-22T17:32:38.0647845+03:00","level":"INFO","msg":"generation completed","generation_id":"1d20b252-10b2-4064-8c16-6d1a3530c2eb","images":3,"songs":1,"context_images":0}
+{"time":"2026-04-22T17:32:38.0647845+03:00","level":"INFO","msg":"request","method":"GET","path":"/api/sessions","status":200,"latency":"4.4797ms","ip":"::1"}
+{"time":"2026-04-22T17:32:38.0672022+03:00","level":"INFO","msg":"request","method":"GET","path":"/api/sessions/8361cb7b-e967-49b4-9306-62c4c778245d","status":200,"latency":"3.9081ms","ip":"::1"}
+{"time":"2026-04-22T17:32:46.6798013+03:00","level":"INFO","msg":"request","method":"GET","path":"/api/sessions/8361cb7b-e967-49b4-9306-62c4c778245d","status":200,"latency":"5.5328ms","ip":"::1"}
+{"time":"2026-04-22T17:33:05.7479341+03:00","level":"INFO","msg":"request","method":"POST","path":"/api/generations","status":201,"latency":"20.6453ms","ip":"::1"}
+{"time":"2026-04-22T17:33:05.7479341+03:00","level":"INFO","msg":"processing generation","worker":0,"generation_id":"0ccba21a-0693-4e8b-82bc-37c18fffb728"}
+{"time":"2026-04-22T17:33:05.7569042+03:00","level":"INFO","msg":"request","method":"GET","path":"/api/billing/balance","status":200,"latency":"1.5738ms","ip":"::1"}
+{"time":"2026-04-22T17:33:05.7574406+03:00","level":"INFO","msg":"request","method":"GET","path":"/api/sessions","status":200,"latency":"2.6169ms","ip":"::1"}
+{"time":"2026-04-22T17:33:05.7692541+03:00","level":"INFO","msg":"generation completed","generation_id":"0ccba21a-0693-4e8b-82bc-37c18fffb728","images":3,"songs":1,"context_images":3}
+{"time":"2026-04-22T17:33:05.7832772+03:00","level":"INFO","msg":"request","method":"GET","path":"/api/sessions/8361cb7b-e967-49b4-9306-62c4c778245d","status":200,"latency":"27.9468ms","ip":"::1"}
+{"time":"2026-04-22T17:33:27.949501+03:00","level":"INFO","msg":"request","method":"GET","path":"/api/billing/tariff","status":200,"latency":"1.1113ms","ip":"::1"}
+{"time":"2026-04-22T17:33:27.9500072+03:00","level":"INFO","msg":"request","method":"GET","path":"/api/sessions","status":200,"latency":"2.1225ms","ip":"::1"}
+{"time":"2026-04-22T17:33:27.9513681+03:00","level":"INFO","msg":"request","method":"GET","path":"/api/billing/balance","status":200,"latency":"3.4834ms","ip":"::1"}
+{"time":"2026-04-22T17:33:32.5581431+03:00","level":"INFO","msg":"request","method":"GET","path":"/api/user/me","status":200,"latency":"3.1804ms","ip":"::1"}
+{"time":"2026-04-22T17:33:32.6022741+03:00","level":"INFO","msg":"request","method":"GET","path":"/api/billing/tariff","status":200,"latency":"1.7742ms","ip":"::1"}
+{"time":"2026-04-22T17:33:32.6037464+03:00","level":"INFO","msg":"request","method":"GET","path":"/api/billing/balance","status":200,"latency":"3.2465ms","ip":"::1"}
+{"time":"2026-04-22T17:33:32.6037464+03:00","level":"INFO","msg":"request","method":"GET","path":"/api/sessions","status":200,"latency":"3.2465ms","ip":"::1"}
+{"time":"2026-04-22T17:33:33.7698771+03:00","level":"INFO","msg":"request","method":"GET","path":"/api/user/me","status":200,"latency":"3.3585ms","ip":"::1"}
+{"time":"2026-04-22T17:33:33.7965505+03:00","level":"INFO","msg":"request","method":"GET","path":"/api/billing/tariff","status":200,"latency":"1.9913ms","ip":"::1"}
+{"time":"2026-04-22T17:33:33.7978512+03:00","level":"INFO","msg":"request","method":"GET","path":"/api/sessions","status":200,"latency":"3.292ms","ip":"::1"}
+{"time":"2026-04-22T17:33:33.7991117+03:00","level":"INFO","msg":"request","method":"GET","path":"/api/billing/balance","status":200,"latency":"4.5525ms","ip":"::1"}
+{"time":"2026-04-22T17:33:35.5871486+03:00","level":"INFO","msg":"request","method":"POST","path":"/api/auth/logout","status":200,"latency":"0s","ip":"::1"}
+{"time":"2026-04-22T17:33:35.6008168+03:00","level":"INFO","msg":"request","method":"GET","path":"/api/user/me","status":401,"latency":"502.8µs","ip":"::1"}
+{"time":"2026-04-22T17:33:35.6008168+03:00","level":"INFO","msg":"request","method":"GET","path":"/api/billing/balance","status":401,"latency":"502.8µs","ip":"::1"}
+{"time":"2026-04-22T17:33:35.6008168+03:00","level":"INFO","msg":"request","method":"GET","path":"/api/sessions","status":401,"latency":"0s","ip":"::1"}
+{"time":"2026-04-22T17:33:35.606821+03:00","level":"INFO","msg":"request","method":"POST","path":"/api/auth/refresh","status":401,"latency":"502.5µs","ip":"::1"}
+{"time":"2026-04-22T17:33:35.606821+03:00","level":"INFO","msg":"request","method":"POST","path":"/api/auth/refresh","status":401,"latency":"0s","ip":"::1"}
+{"time":"2026-04-22T17:33:35.606821+03:00","level":"INFO","msg":"request","method":"POST","path":"/api/auth/refresh","status":401,"latency":"0s","ip":"::1"}
+{"time":"2026-04-22T17:33:37.306246+03:00","level":"INFO","msg":"request","method":"POST","path":"/api/auth/logout","status":200,"latency":"0s","ip":"::1"}
+{"time":"2026-04-22T17:33:37.3155056+03:00","level":"INFO","msg":"request","method":"GET","path":"/api/user/me","status":401,"latency":"0s","ip":"::1"}
+{"time":"2026-04-22T17:33:37.3155056+03:00","level":"INFO","msg":"request","method":"GET","path":"/api/sessions","status":401,"latency":"0s","ip":"::1"}
+{"time":"2026-04-22T17:33:37.3155056+03:00","level":"INFO","msg":"request","method":"GET","path":"/api/billing/balance","status":401,"latency":"0s","ip":"::1"}
+{"time":"2026-04-22T17:33:37.3215049+03:00","level":"INFO","msg":"request","method":"POST","path":"/api/auth/refresh","status":401,"latency":"0s","ip":"::1"}
+{"time":"2026-04-22T17:33:37.3215049+03:00","level":"INFO","msg":"request","method":"POST","path":"/api/auth/refresh","status":401,"latency":"504µs","ip":"::1"}
+{"time":"2026-04-22T17:33:37.3215049+03:00","level":"INFO","msg":"request","method":"POST","path":"/api/auth/refresh","status":401,"latency":"0s","ip":"::1"}
+{"time":"2026-04-22T17:33:37.9856828+03:00","level":"INFO","msg":"request","method":"POST","path":"/api/auth/logout","status":200,"latency":"0s","ip":"::1"}
+{"time":"2026-04-22T17:33:37.9947774+03:00","level":"INFO","msg":"request","method":"GET","path":"/api/billing/balance","status":401,"latency":"0s","ip":"::1"}
+{"time":"2026-04-22T17:33:37.9947774+03:00","level":"INFO","msg":"request","method":"GET","path":"/api/user/me","status":401,"latency":"0s","ip":"::1"}
+{"time":"2026-04-22T17:33:37.9952826+03:00","level":"INFO","msg":"request","method":"GET","path":"/api/sessions","status":401,"latency":"0s","ip":"::1"}
+{"time":"2026-04-22T17:33:38.0007847+03:00","level":"INFO","msg":"request","method":"POST","path":"/api/auth/refresh","status":401,"latency":"0s","ip":"::1"}
+{"time":"2026-04-22T17:33:38.0007847+03:00","level":"INFO","msg":"request","method":"POST","path":"/api/auth/refresh","status":401,"latency":"0s","ip":"::1"}
+{"time":"2026-04-22T17:33:38.0007847+03:00","level":"INFO","msg":"request","method":"POST","path":"/api/auth/refresh","status":401,"latency":"0s","ip":"::1"}
+{"time":"2026-04-22T17:33:38.3545733+03:00","level":"INFO","msg":"request","method":"POST","path":"/api/auth/logout","status":200,"latency":"0s","ip":"::1"}
+{"time":"2026-04-22T17:33:38.3640812+03:00","level":"INFO","msg":"request","method":"GET","path":"/api/billing/balance","status":401,"latency":"0s","ip":"::1"}
+{"time":"2026-04-22T17:33:38.3640812+03:00","level":"INFO","msg":"request","method":"GET","path":"/api/user/me","status":401,"latency":"504.5µs","ip":"::1"}
+{"time":"2026-04-22T17:33:38.3640812+03:00","level":"INFO","msg":"request","method":"GET","path":"/api/sessions","status":401,"latency":"0s","ip":"::1"}
+{"time":"2026-04-22T17:33:38.3694049+03:00","level":"INFO","msg":"request","method":"POST","path":"/api/auth/refresh","status":401,"latency":"0s","ip":"::1"}
+{"time":"2026-04-22T17:33:38.3699308+03:00","level":"INFO","msg":"request","method":"POST","path":"/api/auth/refresh","status":401,"latency":"0s","ip":"::1"}
+{"time":"2026-04-22T17:33:38.3704564+03:00","level":"INFO","msg":"request","method":"POST","path":"/api/auth/refresh","status":401,"latency":"0s","ip":"::1"}
+{"time":"2026-04-22T17:33:39.4493383+03:00","level":"INFO","msg":"request","method":"GET","path":"/api/user/me","status":401,"latency":"0s","ip":"::1"}
+{"time":"2026-04-22T17:33:39.460985+03:00","level":"INFO","msg":"request","method":"POST","path":"/api/auth/refresh","status":401,"latency":"0s","ip":"::1"}
+{"time":"2026-04-22T17:33:41.0582661+03:00","level":"INFO","msg":"request","method":"GET","path":"/api/auth/dev/login","status":200,"latency":"16.4287ms","ip":"::1"}
+{"time":"2026-04-22T17:33:41.0651054+03:00","level":"INFO","msg":"request","method":"GET","path":"/api/user/me","status":200,"latency":"2.3253ms","ip":"::1"}
+{"time":"2026-04-22T17:33:41.0791258+03:00","level":"INFO","msg":"request","method":"GET","path":"/api/billing/tariff","status":200,"latency":"1.5122ms","ip":"::1"}
+{"time":"2026-04-22T17:33:41.0796312+03:00","level":"INFO","msg":"request","method":"GET","path":"/api/billing/balance","status":200,"latency":"2.0176ms","ip":"::1"}
+{"time":"2026-04-22T17:33:41.0796312+03:00","level":"INFO","msg":"request","method":"GET","path":"/api/sessions","status":200,"latency":"2.0176ms","ip":"::1"}
+{"time":"2026-04-22T17:33:42.1851705+03:00","level":"INFO","msg":"request","method":"POST","path":"/api/auth/logout","status":200,"latency":"0s","ip":"::1"}
+{"time":"2026-04-22T17:33:42.1959531+03:00","level":"INFO","msg":"request","method":"GET","path":"/api/billing/balance","status":401,"latency":"0s","ip":"::1"}
+{"time":"2026-04-22T17:33:42.1959531+03:00","level":"INFO","msg":"request","method":"GET","path":"/api/user/me","status":401,"latency":"0s","ip":"::1"}
+{"time":"2026-04-22T17:33:42.1970583+03:00","level":"INFO","msg":"request","method":"GET","path":"/api/sessions","status":401,"latency":"0s","ip":"::1"}
+{"time":"2026-04-22T17:33:42.202259+03:00","level":"INFO","msg":"request","method":"POST","path":"/api/auth/refresh","status":401,"latency":"503.9µs","ip":"::1"}
+{"time":"2026-04-22T17:33:42.202259+03:00","level":"INFO","msg":"request","method":"POST","path":"/api/auth/refresh","status":401,"latency":"0s","ip":"::1"}
+{"time":"2026-04-22T17:33:42.202259+03:00","level":"INFO","msg":"request","method":"POST","path":"/api/auth/refresh","status":401,"latency":"0s","ip":"::1"}
+{"time":"2026-04-22T17:33:45.260397+03:00","level":"INFO","msg":"request","method":"GET","path":"/api/user/me","status":401,"latency":"0s","ip":"::1"}
+{"time":"2026-04-22T17:33:45.260397+03:00","level":"INFO","msg":"request","method":"GET","path":"/api/sessions","status":401,"latency":"0s","ip":"::1"}
+{"time":"2026-04-22T17:33:45.260397+03:00","level":"INFO","msg":"request","method":"GET","path":"/api/billing/balance","status":401,"latency":"0s","ip":"::1"}
+{"time":"2026-04-22T17:33:45.2682632+03:00","level":"INFO","msg":"request","method":"POST","path":"/api/auth/refresh","status":401,"latency":"0s","ip":"::1"}
+{"time":"2026-04-22T17:33:45.2689414+03:00","level":"INFO","msg":"request","method":"POST","path":"/api/auth/refresh","status":401,"latency":"0s","ip":"::1"}
+{"time":"2026-04-22T17:33:45.2697103+03:00","level":"INFO","msg":"request","method":"POST","path":"/api/auth/refresh","status":401,"latency":"0s","ip":"::1"}
+{"time":"2026-04-22T17:34:13.7511114+03:00","level":"INFO","msg":"request","method":"GET","path":"/api/billing/balance","status":401,"latency":"0s","ip":"::1"}
+{"time":"2026-04-22T17:34:13.7511114+03:00","level":"INFO","msg":"request","method":"GET","path":"/api/user/me","status":401,"latency":"0s","ip":"::1"}
+{"time":"2026-04-22T17:34:13.7511114+03:00","level":"INFO","msg":"request","method":"GET","path":"/api/sessions","status":401,"latency":"0s","ip":"::1"}
+{"time":"2026-04-22T17:34:13.7590671+03:00","level":"INFO","msg":"request","method":"POST","path":"/api/auth/refresh","status":401,"latency":"0s","ip":"::1"}
+{"time":"2026-04-22T17:34:13.759775+03:00","level":"INFO","msg":"request","method":"POST","path":"/api/auth/refresh","status":401,"latency":"0s","ip":"::1"}
+{"time":"2026-04-22T17:34:13.7603014+03:00","level":"INFO","msg":"request","method":"POST","path":"/api/auth/refresh","status":401,"latency":"0s","ip":"::1"}
+{"time":"2026-04-22T17:34:17.3585135+03:00","level":"INFO","msg":"request","method":"GET","path":"/api/billing/tariff","status":401,"latency":"0s","ip":"::1"}
+{"time":"2026-04-22T17:34:17.3585135+03:00","level":"INFO","msg":"request","method":"GET","path":"/api/billing/balance","status":401,"latency":"504.8µs","ip":"::1"}
+{"time":"2026-04-22T17:34:17.3640483+03:00","level":"INFO","msg":"request","method":"POST","path":"/api/auth/refresh","status":401,"latency":"0s","ip":"::1"}
+{"time":"2026-04-22T17:34:17.3645524+03:00","level":"INFO","msg":"request","method":"POST","path":"/api/auth/refresh","status":401,"latency":"0s","ip":"::1"}
+{"time":"2026-04-22T17:34:18.0854674+03:00","level":"INFO","msg":"request","method":"POST","path":"/api/generations","status":401,"latency":"0s","ip":"::1"}
+{"time":"2026-04-22T17:34:21.4111115+03:00","level":"INFO","msg":"request","method":"POST","path":"/api/auth/logout","status":200,"latency":"0s","ip":"::1"}
+{"time":"2026-04-22T17:34:21.4201706+03:00","level":"INFO","msg":"request","method":"GET","path":"/api/user/me","status":401,"latency":"0s","ip":"::1"}
+{"time":"2026-04-22T17:34:21.4201706+03:00","level":"INFO","msg":"request","method":"GET","path":"/api/billing/balance","status":401,"latency":"0s","ip":"::1"}
+{"time":"2026-04-22T17:34:21.4201706+03:00","level":"INFO","msg":"request","method":"GET","path":"/api/sessions","status":401,"latency":"0s","ip":"::1"}
+{"time":"2026-04-22T17:34:21.4256804+03:00","level":"INFO","msg":"request","method":"POST","path":"/api/auth/refresh","status":401,"latency":"0s","ip":"::1"}
+{"time":"2026-04-22T17:34:21.4256804+03:00","level":"INFO","msg":"request","method":"POST","path":"/api/auth/refresh","status":401,"latency":"0s","ip":"::1"}
+{"time":"2026-04-22T17:34:21.4262621+03:00","level":"INFO","msg":"request","method":"POST","path":"/api/auth/refresh","status":401,"latency":"0s","ip":"::1"}
+{"time":"2026-04-22T17:34:26.8554135+03:00","level":"INFO","msg":"request","method":"GET","path":"/api/user/me","status":401,"latency":"0s","ip":"::1"}
+{"time":"2026-04-22T17:34:26.8575676+03:00","level":"INFO","msg":"request","method":"GET","path":"/api/billing/balance","status":401,"latency":"0s","ip":"::1"}
+{"time":"2026-04-22T17:34:26.85809+03:00","level":"INFO","msg":"request","method":"GET","path":"/api/sessions","status":401,"latency":"0s","ip":"::1"}
+{"time":"2026-04-22T17:34:26.8660081+03:00","level":"INFO","msg":"request","method":"POST","path":"/api/auth/refresh","status":401,"latency":"557.5µs","ip":"::1"}
+{"time":"2026-04-22T17:34:26.8660081+03:00","level":"INFO","msg":"request","method":"POST","path":"/api/auth/refresh","status":401,"latency":"0s","ip":"::1"}
+{"time":"2026-04-22T17:34:26.8684701+03:00","level":"INFO","msg":"request","method":"POST","path":"/api/auth/refresh","status":401,"latency":"0s","ip":"::1"}
+{"time":"2026-04-22T17:34:28.023153+03:00","level":"INFO","msg":"request","method":"GET","path":"/api/user/me","status":401,"latency":"0s","ip":"::1"}
+{"time":"2026-04-22T17:34:28.0334496+03:00","level":"INFO","msg":"request","method":"POST","path":"/api/auth/refresh","status":401,"latency":"0s","ip":"::1"}
+{"time":"2026-04-22T17:34:29.3159379+03:00","level":"INFO","msg":"request","method":"GET","path":"/api/auth/dev/login","status":200,"latency":"18.1168ms","ip":"::1"}
+{"time":"2026-04-22T17:34:29.3233155+03:00","level":"INFO","msg":"request","method":"GET","path":"/api/user/me","status":200,"latency":"1.8606ms","ip":"::1"}
+{"time":"2026-04-22T17:34:29.3393452+03:00","level":"INFO","msg":"request","method":"GET","path":"/api/billing/tariff","status":200,"latency":"898µs","ip":"::1"}
+{"time":"2026-04-22T17:34:29.339851+03:00","level":"INFO","msg":"request","method":"GET","path":"/api/billing/balance","status":200,"latency":"2.67ms","ip":"::1"}
+{"time":"2026-04-22T17:34:29.339851+03:00","level":"INFO","msg":"request","method":"GET","path":"/api/sessions","status":200,"latency":"1.4038ms","ip":"::1"}
+{"time":"2026-04-22T17:34:31.5621326+03:00","level":"INFO","msg":"request","method":"POST","path":"/api/generations","status":201,"latency":"16.759ms","ip":"::1"}
+{"time":"2026-04-22T17:34:31.5621326+03:00","level":"INFO","msg":"processing generation","worker":0,"generation_id":"7643f535-a996-40ff-a967-32c120c66cc4"}
+{"time":"2026-04-22T17:34:31.5723128+03:00","level":"INFO","msg":"request","method":"GET","path":"/api/sessions","status":200,"latency":"3.7426ms","ip":"::1"}
+{"time":"2026-04-22T17:34:31.5723128+03:00","level":"INFO","msg":"request","method":"GET","path":"/api/billing/balance","status":200,"latency":"3.7426ms","ip":"::1"}
+{"time":"2026-04-22T17:34:31.5797222+03:00","level":"INFO","msg":"request","method":"GET","path":"/api/sessions/f00b2f73-b93e-46c7-b74b-10ea4bf83c33","status":200,"latency":"4.1321ms","ip":"::1"}
+{"time":"2026-04-22T17:34:31.5806509+03:00","level":"INFO","msg":"generation completed","generation_id":"7643f535-a996-40ff-a967-32c120c66cc4","images":3,"songs":1,"context_images":0}
+{"time":"2026-04-22T17:34:35.5363502+03:00","level":"INFO","msg":"request","method":"POST","path":"/api/generations","status":201,"latency":"17.3761ms","ip":"::1"}
+{"time":"2026-04-22T17:34:35.5363502+03:00","level":"INFO","msg":"processing generation","worker":0,"generation_id":"b98eb8b1-763c-479a-87aa-c738bc65fb95"}
+{"time":"2026-04-22T17:34:35.5446673+03:00","level":"INFO","msg":"request","method":"GET","path":"/api/billing/balance","status":200,"latency":"2.1403ms","ip":"::1"}
+{"time":"2026-04-22T17:34:35.5446673+03:00","level":"INFO","msg":"request","method":"GET","path":"/api/sessions","status":200,"latency":"2.6461ms","ip":"::1"}
+{"time":"2026-04-22T17:34:35.5506405+03:00","level":"INFO","msg":"request","method":"GET","path":"/api/sessions/aa7533aa-8c6a-433f-9ab1-610f66698ee3","status":200,"latency":"3.4263ms","ip":"::1"}
+{"time":"2026-04-22T17:34:35.5506405+03:00","level":"INFO","msg":"generation completed","generation_id":"b98eb8b1-763c-479a-87aa-c738bc65fb95","images":3,"songs":1,"context_images":0}
+{"time":"2026-04-22T17:34:36.4504334+03:00","level":"INFO","msg":"request","method":"GET","path":"/api/sessions/f00b2f73-b93e-46c7-b74b-10ea4bf83c33","status":200,"latency":"7.1111ms","ip":"::1"}
+{"time":"2026-04-22T17:34:36.9274963+03:00","level":"INFO","msg":"request","method":"GET","path":"/api/sessions/aa7533aa-8c6a-433f-9ab1-610f66698ee3","status":200,"latency":"5.7006ms","ip":"::1"}
+{"time":"2026-04-22T17:34:37.399224+03:00","level":"INFO","msg":"request","method":"GET","path":"/api/sessions/f00b2f73-b93e-46c7-b74b-10ea4bf83c33","status":200,"latency":"6.2096ms","ip":"::1"}
+{"time":"2026-04-22T17:34:37.8804906+03:00","level":"INFO","msg":"request","method":"GET","path":"/api/sessions/aa7533aa-8c6a-433f-9ab1-610f66698ee3","status":200,"latency":"6.8546ms","ip":"::1"}
+{"time":"2026-04-22T17:34:38.5679161+03:00","level":"INFO","msg":"request","method":"GET","path":"/api/sessions/f00b2f73-b93e-46c7-b74b-10ea4bf83c33","status":200,"latency":"6.1737ms","ip":"::1"}
+{"time":"2026-04-22T17:35:17.0737725+03:00","level":"INFO","msg":"request","method":"GET","path":"/api/billing/balance","status":200,"latency":"4.3466ms","ip":"::1"}
+{"time":"2026-04-22T17:35:17.0737725+03:00","level":"INFO","msg":"request","method":"GET","path":"/api/sessions","status":200,"latency":"4.3466ms","ip":"::1"}
+{"time":"2026-04-22T17:35:17.0759572+03:00","level":"INFO","msg":"request","method":"GET","path":"/api/sessions/f00b2f73-b93e-46c7-b74b-10ea4bf83c33","status":200,"latency":"5.9871ms","ip":"::1"}
+{"time":"2026-04-22T17:35:33.9361611+03:00","level":"INFO","msg":"request","method":"GET","path":"/api/billing/balance","status":200,"latency":"2.8829ms","ip":"::1"}
+{"time":"2026-04-22T17:35:33.9361611+03:00","level":"INFO","msg":"request","method":"GET","path":"/api/sessions","status":200,"latency":"2.8829ms","ip":"::1"}
+{"time":"2026-04-22T17:35:33.9366694+03:00","level":"INFO","msg":"request","method":"GET","path":"/api/billing/tariff","status":200,"latency":"2.4643ms","ip":"::1"}
+{"time":"2026-04-22T17:35:33.9389248+03:00","level":"INFO","msg":"request","method":"GET","path":"/api/sessions/f00b2f73-b93e-46c7-b74b-10ea4bf83c33","status":200,"latency":"4.7197ms","ip":"::1"}
+{"time":"2026-04-22T17:36:22.8006539+03:00","level":"INFO","msg":"request","method":"GET","path":"/api/billing/balance","status":200,"latency":"3.6362ms","ip":"::1"}
+{"time":"2026-04-22T17:36:22.8006539+03:00","level":"INFO","msg":"request","method":"GET","path":"/api/sessions","status":200,"latency":"3.6362ms","ip":"::1"}
+{"time":"2026-04-22T17:36:22.8027648+03:00","level":"INFO","msg":"request","method":"GET","path":"/api/sessions/f00b2f73-b93e-46c7-b74b-10ea4bf83c33","status":200,"latency":"5.7471ms","ip":"::1"}
+{"time":"2026-04-22T17:36:30.1276904+03:00","level":"INFO","msg":"request","method":"GET","path":"/api/sessions/f00b2f73-b93e-46c7-b74b-10ea4bf83c33","status":200,"latency":"3.8843ms","ip":"::1"}
+{"time":"2026-04-22T17:36:49.4673462+03:00","level":"INFO","msg":"request","method":"GET","path":"/api/billing/tariff","status":200,"latency":"1.4539ms","ip":"::1"}
+{"time":"2026-04-22T17:36:49.4684039+03:00","level":"INFO","msg":"request","method":"GET","path":"/api/billing/balance","status":200,"latency":"2.5116ms","ip":"::1"}
+{"time":"2026-04-22T17:36:49.4684039+03:00","level":"INFO","msg":"request","method":"GET","path":"/api/sessions","status":200,"latency":"2.5116ms","ip":"::1"}
+{"time":"2026-04-22T17:36:49.4711119+03:00","level":"INFO","msg":"request","method":"GET","path":"/api/sessions/f00b2f73-b93e-46c7-b74b-10ea4bf83c33","status":200,"latency":"5.2196ms","ip":"::1"}
+{"time":"2026-04-22T17:39:22.452467+03:00","level":"INFO","msg":"request","method":"GET","path":"/api/user/me","status":200,"latency":"2.1492ms","ip":"::1"}
+{"time":"2026-04-22T17:39:22.4673749+03:00","level":"INFO","msg":"request","method":"GET","path":"/api/billing/tariff","status":200,"latency":"1.1899ms","ip":"::1"}
+{"time":"2026-04-22T17:39:22.4678782+03:00","level":"INFO","msg":"request","method":"GET","path":"/api/billing/balance","status":200,"latency":"1.6932ms","ip":"::1"}
+{"time":"2026-04-22T17:39:22.4678782+03:00","level":"INFO","msg":"request","method":"GET","path":"/api/sessions","status":200,"latency":"2.1972ms","ip":"::1"}
+{"time":"2026-04-22T17:39:33.4542653+03:00","level":"INFO","msg":"request","method":"GET","path":"/api/billing/balance","status":200,"latency":"3.0522ms","ip":"::1"}
+{"time":"2026-04-22T17:39:33.4542653+03:00","level":"INFO","msg":"request","method":"GET","path":"/api/sessions","status":200,"latency":"3.0522ms","ip":"::1"}
+{"time":"2026-04-22T17:39:47.4510062+03:00","level":"INFO","msg":"request","method":"GET","path":"/api/billing/balance","status":200,"latency":"2.1876ms","ip":"::1"}
+{"time":"2026-04-22T17:39:58.4450722+03:00","level":"INFO","msg":"request","method":"GET","path":"/api/billing/balance","status":200,"latency":"1.7975ms","ip":"::1"}
+{"time":"2026-04-22T17:40:36.4519797+03:00","level":"INFO","msg":"request","method":"GET","path":"/api/billing/tariff","status":200,"latency":"1.5106ms","ip":"::1"}
+{"time":"2026-04-22T17:40:36.4526545+03:00","level":"INFO","msg":"request","method":"GET","path":"/api/billing/balance","status":200,"latency":"2.1854ms","ip":"::1"}
+{"time":"2026-04-22T17:40:36.4526545+03:00","level":"INFO","msg":"request","method":"GET","path":"/api/sessions","status":200,"latency":"2.1854ms","ip":"::1"}
+{"time":"2026-04-22T17:44:23.1532747+03:00","level":"INFO","msg":"request","method":"GET","path":"/api/user/me","status":200,"latency":"4.852ms","ip":"::1"}
+{"time":"2026-04-22T17:44:23.1537812+03:00","level":"INFO","msg":"request","method":"GET","path":"/api/billing/balance","status":200,"latency":"2.9322ms","ip":"::1"}
+{"time":"2026-04-22T17:44:23.1537812+03:00","level":"INFO","msg":"request","method":"GET","path":"/api/billing/tariff","status":200,"latency":"1.5529ms","ip":"::1"}
+{"time":"2026-04-22T17:44:23.1550283+03:00","level":"INFO","msg":"request","method":"GET","path":"/api/sessions","status":200,"latency":"2.8ms","ip":"::1"}
+{"time":"2026-04-22T17:44:24.9926127+03:00","level":"INFO","msg":"request","method":"GET","path":"/api/user/me","status":200,"latency":"3.6271ms","ip":"::1"}
+{"time":"2026-04-22T17:44:25.02455+03:00","level":"INFO","msg":"request","method":"GET","path":"/api/billing/tariff","status":200,"latency":"2.0649ms","ip":"::1"}
+{"time":"2026-04-22T17:44:25.026302+03:00","level":"INFO","msg":"request","method":"GET","path":"/api/billing/balance","status":200,"latency":"3.8169ms","ip":"::1"}
+{"time":"2026-04-22T17:44:25.026302+03:00","level":"INFO","msg":"request","method":"GET","path":"/api/sessions","status":200,"latency":"3.8169ms","ip":"::1"}
+{"time":"2026-04-22T17:44:26.8306447+03:00","level":"INFO","msg":"request","method":"POST","path":"/api/auth/logout","status":200,"latency":"0s","ip":"::1"}
+{"time":"2026-04-22T17:44:26.8422048+03:00","level":"INFO","msg":"request","method":"GET","path":"/api/billing/balance","status":401,"latency":"0s","ip":"::1"}
+{"time":"2026-04-22T17:44:26.8422048+03:00","level":"INFO","msg":"request","method":"GET","path":"/api/sessions","status":401,"latency":"0s","ip":"::1"}
+{"time":"2026-04-22T17:44:26.8477147+03:00","level":"INFO","msg":"request","method":"POST","path":"/api/auth/refresh","status":401,"latency":"0s","ip":"::1"}
+{"time":"2026-04-22T17:44:26.8477147+03:00","level":"INFO","msg":"request","method":"POST","path":"/api/auth/refresh","status":401,"latency":"0s","ip":"::1"}
+{"time":"2026-04-22T17:44:29.2604258+03:00","level":"INFO","msg":"request","method":"GET","path":"/api/user/me","status":401,"latency":"0s","ip":"::1"}
+{"time":"2026-04-22T17:44:29.2715321+03:00","level":"INFO","msg":"request","method":"POST","path":"/api/auth/refresh","status":401,"latency":"0s","ip":"::1"}
+{"time":"2026-04-22T17:44:35.4575073+03:00","level":"INFO","msg":"request","method":"GET","path":"/api/user/me","status":401,"latency":"0s","ip":"::1"}
+{"time":"2026-04-22T17:44:35.4630151+03:00","level":"INFO","msg":"request","method":"POST","path":"/api/auth/refresh","status":401,"latency":"0s","ip":"::1"}
+{"time":"2026-04-22T17:44:36.5678588+03:00","level":"INFO","msg":"request","method":"GET","path":"/api/auth/dev/login","status":200,"latency":"19.9829ms","ip":"::1"}
+{"time":"2026-04-22T17:44:36.5755155+03:00","level":"INFO","msg":"request","method":"GET","path":"/api/user/me","status":200,"latency":"2.3427ms","ip":"::1"}
+{"time":"2026-04-22T17:44:36.5919903+03:00","level":"INFO","msg":"request","method":"GET","path":"/api/billing/tariff","status":200,"latency":"2.0778ms","ip":"::1"}
+{"time":"2026-04-22T17:44:36.5928503+03:00","level":"INFO","msg":"request","method":"GET","path":"/api/billing/balance","status":200,"latency":"2.9378ms","ip":"::1"}
+{"time":"2026-04-22T17:44:36.5928503+03:00","level":"INFO","msg":"request","method":"GET","path":"/api/sessions","status":200,"latency":"2.9378ms","ip":"::1"}
+{"time":"2026-04-22T17:44:38.8268712+03:00","level":"INFO","msg":"request","method":"POST","path":"/api/auth/logout","status":200,"latency":"0s","ip":"::1"}
+{"time":"2026-04-22T17:44:38.836362+03:00","level":"INFO","msg":"request","method":"GET","path":"/api/billing/balance","status":401,"latency":"566.7µs","ip":"::1"}
+{"time":"2026-04-22T17:44:38.836362+03:00","level":"INFO","msg":"request","method":"GET","path":"/api/sessions","status":401,"latency":"0s","ip":"::1"}
+{"time":"2026-04-22T17:44:38.8419057+03:00","level":"INFO","msg":"request","method":"POST","path":"/api/auth/refresh","status":401,"latency":"0s","ip":"::1"}
+{"time":"2026-04-22T17:44:38.8419057+03:00","level":"INFO","msg":"request","method":"POST","path":"/api/auth/refresh","status":401,"latency":"0s","ip":"::1"}
+{"time":"2026-04-22T17:44:40.7015648+03:00","level":"INFO","msg":"request","method":"GET","path":"/api/user/me","status":401,"latency":"0s","ip":"::1"}
+{"time":"2026-04-22T17:44:40.712767+03:00","level":"INFO","msg":"request","method":"POST","path":"/api/auth/refresh","status":401,"latency":"0s","ip":"::1"}
+{"time":"2026-04-22T17:44:42.2900093+03:00","level":"INFO","msg":"request","method":"GET","path":"/api/auth/dev/login","status":200,"latency":"17.3248ms","ip":"::1"}
+{"time":"2026-04-22T17:44:42.2972017+03:00","level":"INFO","msg":"request","method":"GET","path":"/api/user/me","status":200,"latency":"1.722ms","ip":"::1"}
+{"time":"2026-04-22T17:44:42.3128918+03:00","level":"INFO","msg":"request","method":"GET","path":"/api/billing/tariff","status":200,"latency":"929.4µs","ip":"::1"}
+{"time":"2026-04-22T17:44:42.3133996+03:00","level":"INFO","msg":"request","method":"GET","path":"/api/billing/balance","status":200,"latency":"1.9432ms","ip":"::1"}
+{"time":"2026-04-22T17:44:42.3133996+03:00","level":"INFO","msg":"request","method":"GET","path":"/api/sessions","status":200,"latency":"1.4372ms","ip":"::1"}
+{"time":"2026-04-22T17:45:30.0811362+03:00","level":"INFO","msg":"request","method":"GET","path":"/api/sessions","status":200,"latency":"3.4479ms","ip":"::1"}
+{"time":"2026-04-22T17:45:30.0811362+03:00","level":"INFO","msg":"request","method":"GET","path":"/api/billing/balance","status":200,"latency":"3.4479ms","ip":"::1"}
+{"time":"2026-04-22T17:47:24.1111095+03:00","level":"INFO","msg":"request","method":"GET","path":"/api/billing/balance","status":200,"latency":"3.7877ms","ip":"::1"}
+{"time":"2026-04-22T17:47:24.1111095+03:00","level":"INFO","msg":"request","method":"GET","path":"/api/sessions","status":200,"latency":"3.7877ms","ip":"::1"}
+{"time":"2026-04-22T17:47:24.1116178+03:00","level":"INFO","msg":"request","method":"GET","path":"/api/billing/tariff","status":200,"latency":"1.6104ms","ip":"::1"}
+{"time":"2026-04-22T17:47:46.8039165+03:00","level":"INFO","msg":"request","method":"GET","path":"/api/user/me","status":200,"latency":"3.1649ms","ip":"::1"}
+{"time":"2026-04-22T17:47:46.8214953+03:00","level":"INFO","msg":"request","method":"GET","path":"/api/billing/tariff","status":200,"latency":"1.5172ms","ip":"::1"}
+{"time":"2026-04-22T17:47:46.8214953+03:00","level":"INFO","msg":"request","method":"GET","path":"/api/billing/balance","status":200,"latency":"2.0238ms","ip":"::1"}
+{"time":"2026-04-22T17:47:46.8228037+03:00","level":"INFO","msg":"request","method":"GET","path":"/api/sessions","status":200,"latency":"2.8256ms","ip":"::1"}
+{"time":"2026-04-22T17:48:05.9916695+03:00","level":"INFO","msg":"request","method":"GET","path":"/api/sessions","status":200,"latency":"3.4717ms","ip":"::1"}
+{"time":"2026-04-22T17:48:05.9916695+03:00","level":"INFO","msg":"request","method":"GET","path":"/api/billing/balance","status":200,"latency":"3.4717ms","ip":"::1"}
+{"time":"2026-04-22T17:48:16.4432193+03:00","level":"INFO","msg":"request","method":"GET","path":"/api/billing/balance","status":200,"latency":"1.8561ms","ip":"::1"}
+{"time":"2026-04-22T17:48:16.4432193+03:00","level":"INFO","msg":"request","method":"GET","path":"/api/sessions","status":200,"latency":"1.8561ms","ip":"::1"}
+{"time":"2026-04-22T17:49:01.895972+03:00","level":"INFO","msg":"request","method":"GET","path":"/api/billing/tariff","status":200,"latency":"1.5367ms","ip":"::1"}
+{"time":"2026-04-22T17:49:01.8972755+03:00","level":"INFO","msg":"request","method":"GET","path":"/api/sessions","status":200,"latency":"2.8402ms","ip":"::1"}
+{"time":"2026-04-22T17:49:01.8972755+03:00","level":"INFO","msg":"request","method":"GET","path":"/api/billing/balance","status":200,"latency":"2.8402ms","ip":"::1"}
+{"time":"2026-04-22T17:49:04.1483097+03:00","level":"INFO","msg":"request","method":"GET","path":"/api/user/me","status":200,"latency":"2.3746ms","ip":"::1"}
+{"time":"2026-04-22T17:49:04.178746+03:00","level":"INFO","msg":"request","method":"GET","path":"/api/billing/tariff","status":200,"latency":"2.0251ms","ip":"::1"}
+{"time":"2026-04-22T17:49:04.1799749+03:00","level":"INFO","msg":"request","method":"GET","path":"/api/billing/balance","status":200,"latency":"3.254ms","ip":"::1"}
+{"time":"2026-04-22T17:49:04.1799749+03:00","level":"INFO","msg":"request","method":"GET","path":"/api/sessions","status":200,"latency":"3.254ms","ip":"::1"}
+{"time":"2026-04-22T17:49:07.5948797+03:00","level":"INFO","msg":"request","method":"GET","path":"/api/user/me","status":200,"latency":"4.4603ms","ip":"::1"}
+{"time":"2026-04-22T17:49:07.6219781+03:00","level":"INFO","msg":"request","method":"GET","path":"/api/billing/balance","status":200,"latency":"4.1531ms","ip":"::1"}
+{"time":"2026-04-22T17:49:07.6219781+03:00","level":"INFO","msg":"request","method":"GET","path":"/api/sessions","status":200,"latency":"4.1531ms","ip":"::1"}
+{"time":"2026-04-22T17:49:07.6219781+03:00","level":"INFO","msg":"request","method":"GET","path":"/api/billing/tariff","status":200,"latency":"1.2567ms","ip":"::1"}
+{"time":"2026-04-22T17:49:37.6383208+03:00","level":"INFO","msg":"request","method":"GET","path":"/api/billing/balance","status":200,"latency":"3.0908ms","ip":"::1"}
+{"time":"2026-04-22T17:50:01.5062664+03:00","level":"INFO","msg":"request","method":"POST","path":"/api/auth/logout","status":200,"latency":"0s","ip":"::1"}
+{"time":"2026-04-22T17:50:03.7345249+03:00","level":"INFO","msg":"request","method":"GET","path":"/api/auth/dev/login","status":200,"latency":"13.9593ms","ip":"::1"}
+{"time":"2026-04-22T17:50:03.7427315+03:00","level":"INFO","msg":"request","method":"GET","path":"/api/user/me","status":200,"latency":"1.7619ms","ip":"::1"}
+{"time":"2026-04-22T17:50:03.757847+03:00","level":"INFO","msg":"request","method":"GET","path":"/api/billing/balance","status":200,"latency":"2.2465ms","ip":"::1"}
+{"time":"2026-04-22T17:50:03.757847+03:00","level":"INFO","msg":"request","method":"GET","path":"/api/sessions","status":200,"latency":"2.2465ms","ip":"::1"}
+{"time":"2026-04-22T17:50:28.5258299+03:00","level":"INFO","msg":"request","method":"GET","path":"/api/billing/tariff","status":200,"latency":"1.313ms","ip":"::1"}
+{"time":"2026-04-22T17:50:28.5263351+03:00","level":"INFO","msg":"request","method":"GET","path":"/api/billing/balance","status":200,"latency":"2.349ms","ip":"::1"}
+{"time":"2026-04-22T17:50:28.5268634+03:00","level":"INFO","msg":"request","method":"GET","path":"/api/sessions","status":200,"latency":"2.8773ms","ip":"::1"}
+{"time":"2026-04-22T17:50:41.4912613+03:00","level":"INFO","msg":"request","method":"GET","path":"/api/billing/balance","status":200,"latency":"3.1493ms","ip":"::1"}
+{"time":"2026-04-22T17:50:41.4925757+03:00","level":"INFO","msg":"request","method":"GET","path":"/api/sessions","status":200,"latency":"1.8446ms","ip":"::1"}
+{"time":"2026-04-22T17:51:21.1427579+03:00","level":"INFO","msg":"request","method":"GET","path":"/api/sessions","status":200,"latency":"3.1415ms","ip":"::1"}
+{"time":"2026-04-22T17:51:21.1427579+03:00","level":"INFO","msg":"request","method":"GET","path":"/api/billing/balance","status":200,"latency":"3.6508ms","ip":"::1"}
+{"time":"2026-04-22T17:51:35.0158365+03:00","level":"INFO","msg":"request","method":"GET","path":"/api/billing/tariff","status":200,"latency":"1.5818ms","ip":"::1"}
+{"time":"2026-04-22T17:51:35.0174544+03:00","level":"INFO","msg":"request","method":"GET","path":"/api/billing/balance","status":200,"latency":"3.1997ms","ip":"::1"}
+{"time":"2026-04-22T17:51:35.0174544+03:00","level":"INFO","msg":"request","method":"GET","path":"/api/sessions","status":200,"latency":"3.1997ms","ip":"::1"}
+{"time":"2026-04-22T17:51:54.811179+03:00","level":"INFO","msg":"request","method":"GET","path":"/api/billing/balance","status":200,"latency":"3.1249ms","ip":"::1"}
+{"time":"2026-04-22T17:51:54.811179+03:00","level":"INFO","msg":"request","method":"GET","path":"/api/sessions","status":200,"latency":"3.1249ms","ip":"::1"}
+{"time":"2026-04-22T17:52:09.0237526+03:00","level":"INFO","msg":"request","method":"GET","path":"/api/sessions","status":200,"latency":"3.5788ms","ip":"::1"}
+{"time":"2026-04-22T17:52:09.0237526+03:00","level":"INFO","msg":"request","method":"GET","path":"/api/billing/balance","status":200,"latency":"3.5788ms","ip":"::1"}
+{"time":"2026-04-22T17:52:34.0500387+03:00","level":"INFO","msg":"request","method":"GET","path":"/api/billing/balance","status":200,"latency":"3.1548ms","ip":"::1"}
+{"time":"2026-04-22T17:52:34.0500387+03:00","level":"INFO","msg":"request","method":"GET","path":"/api/sessions","status":200,"latency":"3.1548ms","ip":"::1"}
+{"time":"2026-04-22T17:53:11.6818949+03:00","level":"INFO","msg":"request","method":"GET","path":"/api/billing/tariff","status":200,"latency":"1.9625ms","ip":"::1"}
+{"time":"2026-04-22T17:53:11.6828637+03:00","level":"INFO","msg":"request","method":"GET","path":"/api/sessions","status":200,"latency":"2.9313ms","ip":"::1"}
+{"time":"2026-04-22T17:53:11.6828637+03:00","level":"INFO","msg":"request","method":"GET","path":"/api/billing/balance","status":200,"latency":"2.9313ms","ip":"::1"}
+{"time":"2026-04-22T17:53:37.5626064+03:00","level":"INFO","msg":"request","method":"GET","path":"/api/sessions","status":200,"latency":"1.8958ms","ip":"::1"}
+{"time":"2026-04-22T17:53:37.5626064+03:00","level":"INFO","msg":"request","method":"GET","path":"/api/billing/balance","status":200,"latency":"1.8958ms","ip":"::1"}
+{"time":"2026-04-22T17:54:07.5724888+03:00","level":"INFO","msg":"request","method":"GET","path":"/api/billing/balance","status":200,"latency":"1.9002ms","ip":"::1"}
+{"time":"2026-04-22T17:54:38.0412604+03:00","level":"INFO","msg":"request","method":"GET","path":"/api/billing/tariff","status":200,"latency":"1.5896ms","ip":"::1"}
+{"time":"2026-04-22T17:54:38.0424293+03:00","level":"INFO","msg":"request","method":"GET","path":"/api/billing/balance","status":200,"latency":"2.2361ms","ip":"::1"}
+{"time":"2026-04-22T17:54:38.0424293+03:00","level":"INFO","msg":"request","method":"GET","path":"/api/sessions","status":200,"latency":"2.2361ms","ip":"::1"}
+{"time":"2026-04-22T17:54:56.8690593+03:00","level":"INFO","msg":"request","method":"GET","path":"/api/billing/balance","status":200,"latency":"2.7862ms","ip":"::1"}
+{"time":"2026-04-22T17:54:56.8690593+03:00","level":"INFO","msg":"request","method":"GET","path":"/api/sessions","status":200,"latency":"2.7862ms","ip":"::1"}
+{"time":"2026-04-22T17:55:57.4130972+03:00","level":"INFO","msg":"request","method":"GET","path":"/api/user/me","status":200,"latency":"3.6417ms","ip":"::1"}
+{"time":"2026-04-22T17:55:57.4207778+03:00","level":"INFO","msg":"request","method":"GET","path":"/api/billing/tariff","status":200,"latency":"1.9026ms","ip":"::1"}
+{"time":"2026-04-22T17:55:57.422597+03:00","level":"INFO","msg":"request","method":"GET","path":"/api/sessions","status":200,"latency":"3.7218ms","ip":"::1"}
+{"time":"2026-04-22T17:55:57.422597+03:00","level":"INFO","msg":"request","method":"GET","path":"/api/billing/balance","status":200,"latency":"3.7218ms","ip":"::1"}
+{"time":"2026-04-22T17:56:17.4550858+03:00","level":"INFO","msg":"request","method":"GET","path":"/api/billing/balance","status":200,"latency":"2.2632ms","ip":"::1"}
+{"time":"2026-04-22T17:56:17.4550858+03:00","level":"INFO","msg":"request","method":"GET","path":"/api/sessions","status":200,"latency":"2.2632ms","ip":"::1"}
+{"time":"2026-04-22T17:56:45.4515392+03:00","level":"INFO","msg":"request","method":"GET","path":"/api/billing/balance","status":200,"latency":"2.5516ms","ip":"::1"}
+{"time":"2026-04-22T17:56:45.4515392+03:00","level":"INFO","msg":"request","method":"GET","path":"/api/sessions","status":200,"latency":"2.5516ms","ip":"::1"}
+{"time":"2026-04-22T17:57:27.450286+03:00","level":"INFO","msg":"request","method":"GET","path":"/api/billing/tariff","status":200,"latency":"1.5308ms","ip":"::1"}
+{"time":"2026-04-22T17:57:27.4512175+03:00","level":"INFO","msg":"request","method":"GET","path":"/api/billing/balance","status":200,"latency":"2.4623ms","ip":"::1"}
+{"time":"2026-04-22T17:58:26.3303674+03:00","level":"INFO","msg":"request","method":"GET","path":"/api/billing/balance","status":200,"latency":"3.6485ms","ip":"::1"}
+{"time":"2026-04-22T17:58:26.3314411+03:00","level":"INFO","msg":"request","method":"GET","path":"/api/sessions","status":200,"latency":"2.782ms","ip":"::1"}
+{"time":"2026-04-22T17:58:28.4111035+03:00","level":"INFO","msg":"request","method":"GET","path":"/api/user/me","status":200,"latency":"3.3187ms","ip":"::1"}
+{"time":"2026-04-22T17:58:28.4425384+03:00","level":"INFO","msg":"request","method":"GET","path":"/api/billing/tariff","status":200,"latency":"2.6297ms","ip":"::1"}
+{"time":"2026-04-22T17:58:28.4442228+03:00","level":"INFO","msg":"request","method":"GET","path":"/api/billing/balance","status":200,"latency":"4.3141ms","ip":"::1"}
+{"time":"2026-04-22T17:58:28.4442228+03:00","level":"INFO","msg":"request","method":"GET","path":"/api/sessions","status":200,"latency":"4.3141ms","ip":"::1"}
+{"time":"2026-04-22T17:58:30.5735893+03:00","level":"INFO","msg":"request","method":"POST","path":"/api/auth/logout","status":200,"latency":"0s","ip":"::1"}
+{"time":"2026-04-22T17:58:32.3644375+03:00","level":"INFO","msg":"request","method":"GET","path":"/api/auth/dev/login","status":200,"latency":"17.0924ms","ip":"::1"}
+{"time":"2026-04-22T17:58:32.3723512+03:00","level":"INFO","msg":"request","method":"GET","path":"/api/user/me","status":200,"latency":"1.7322ms","ip":"::1"}
+{"time":"2026-04-22T17:58:32.3899997+03:00","level":"INFO","msg":"request","method":"GET","path":"/api/sessions","status":200,"latency":"2.9303ms","ip":"::1"}
+{"time":"2026-04-22T17:58:32.3899997+03:00","level":"INFO","msg":"request","method":"GET","path":"/api/billing/balance","status":200,"latency":"2.9303ms","ip":"::1"}
+{"time":"2026-04-22T17:59:02.4010558+03:00","level":"INFO","msg":"request","method":"GET","path":"/api/billing/balance","status":200,"latency":"1.938ms","ip":"::1"}
+{"time":"2026-04-22T18:00:23.2713563+03:00","level":"INFO","msg":"request","method":"GET","path":"/api/billing/tariff","status":200,"latency":"2.6546ms","ip":"::1"}
+{"time":"2026-04-22T18:00:23.2724029+03:00","level":"INFO","msg":"request","method":"GET","path":"/api/sessions","status":200,"latency":"3.0351ms","ip":"::1"}
+{"time":"2026-04-22T18:00:23.2724029+03:00","level":"INFO","msg":"request","method":"GET","path":"/api/billing/balance","status":200,"latency":"3.7012ms","ip":"::1"}
+{"time":"2026-04-22T18:00:50.8456319+03:00","level":"INFO","msg":"request","method":"GET","path":"/api/sessions","status":200,"latency":"2.269ms","ip":"::1"}
+{"time":"2026-04-22T18:00:50.8456319+03:00","level":"INFO","msg":"request","method":"GET","path":"/api/billing/balance","status":200,"latency":"2.269ms","ip":"::1"}
+{"time":"2026-04-22T18:01:34.4505271+03:00","level":"INFO","msg":"request","method":"GET","path":"/api/user/me","status":200,"latency":"3.9212ms","ip":"::1"}
+{"time":"2026-04-22T18:01:34.4831944+03:00","level":"INFO","msg":"request","method":"GET","path":"/api/billing/tariff","status":200,"latency":"1.5393ms","ip":"::1"}
+{"time":"2026-04-22T18:01:34.4843415+03:00","level":"INFO","msg":"request","method":"GET","path":"/api/billing/balance","status":200,"latency":"3.1919ms","ip":"::1"}
+{"time":"2026-04-22T18:01:34.4843415+03:00","level":"INFO","msg":"request","method":"GET","path":"/api/sessions","status":200,"latency":"3.1919ms","ip":"::1"}
+{"time":"2026-04-22T18:02:03.4505925+03:00","level":"INFO","msg":"request","method":"GET","path":"/api/billing/balance","status":200,"latency":"3.2347ms","ip":"::1"}
+{"time":"2026-04-22T18:02:03.4505925+03:00","level":"INFO","msg":"request","method":"GET","path":"/api/sessions","status":200,"latency":"3.2347ms","ip":"::1"}
+{"time":"2026-04-22T18:03:10.6000762+03:00","level":"INFO","msg":"request","method":"GET","path":"/api/billing/tariff","status":200,"latency":"2.1425ms","ip":"::1"}
+{"time":"2026-04-22T18:03:10.6009226+03:00","level":"INFO","msg":"request","method":"GET","path":"/api/sessions","status":200,"latency":"2.9889ms","ip":"::1"}
+{"time":"2026-04-22T18:03:10.6009226+03:00","level":"INFO","msg":"request","method":"GET","path":"/api/billing/balance","status":200,"latency":"2.9889ms","ip":"::1"}
+{"time":"2026-04-22T18:03:12.1994711+03:00","level":"INFO","msg":"request","method":"GET","path":"/api/user/me","status":200,"latency":"2.6583ms","ip":"::1"}
+{"time":"2026-04-22T18:03:12.2294747+03:00","level":"INFO","msg":"request","method":"GET","path":"/api/billing/tariff","status":200,"latency":"1.5414ms","ip":"::1"}
+{"time":"2026-04-22T18:03:12.2311275+03:00","level":"INFO","msg":"request","method":"GET","path":"/api/sessions","status":200,"latency":"3.1942ms","ip":"::1"}
+{"time":"2026-04-22T18:03:12.2311275+03:00","level":"INFO","msg":"request","method":"GET","path":"/api/billing/balance","status":200,"latency":"3.1942ms","ip":"::1"}
+{"time":"2026-04-22T18:03:28.9323582+03:00","level":"INFO","msg":"request","method":"GET","path":"/api/sessions","status":200,"latency":"2.8297ms","ip":"::1"}
+{"time":"2026-04-22T18:03:28.9323582+03:00","level":"INFO","msg":"request","method":"GET","path":"/api/billing/balance","status":200,"latency":"2.8297ms","ip":"::1"}
+{"time":"2026-04-22T18:03:47.3091535+03:00","level":"INFO","msg":"request","method":"GET","path":"/api/billing/balance","status":200,"latency":"2.3722ms","ip":"::1"}
+{"time":"2026-04-22T18:03:47.3091535+03:00","level":"INFO","msg":"request","method":"GET","path":"/api/sessions","status":200,"latency":"2.3722ms","ip":"::1"}
+{"time":"2026-04-22T18:04:08.570915+03:00","level":"INFO","msg":"request","method":"GET","path":"/api/billing/balance","status":200,"latency":"2.3835ms","ip":"::1"}
+{"time":"2026-04-22T18:04:08.570915+03:00","level":"INFO","msg":"request","method":"GET","path":"/api/sessions","status":200,"latency":"2.3835ms","ip":"::1"}
+{"time":"2026-04-22T18:04:14.4302998+03:00","level":"INFO","msg":"request","method":"GET","path":"/api/billing/tariff","status":200,"latency":"2.3015ms","ip":"::1"}
+{"time":"2026-04-22T18:04:31.4911444+03:00","level":"INFO","msg":"request","method":"GET","path":"/api/sessions","status":200,"latency":"2.8528ms","ip":"::1"}
+{"time":"2026-04-22T18:04:31.4911444+03:00","level":"INFO","msg":"request","method":"GET","path":"/api/billing/balance","status":200,"latency":"2.8528ms","ip":"::1"}
+{"time":"2026-04-22T18:05:15.007151+03:00","level":"INFO","msg":"request","method":"GET","path":"/api/billing/tariff","status":200,"latency":"2.5785ms","ip":"::1"}
+{"time":"2026-04-22T18:05:15.0085617+03:00","level":"INFO","msg":"request","method":"GET","path":"/api/billing/balance","status":200,"latency":"3.9892ms","ip":"::1"}
+{"time":"2026-04-22T18:05:15.0085617+03:00","level":"INFO","msg":"request","method":"GET","path":"/api/sessions","status":200,"latency":"3.9892ms","ip":"::1"}
+{"time":"2026-04-22T18:05:32.186003+03:00","level":"INFO","msg":"request","method":"GET","path":"/api/billing/balance","status":200,"latency":"3.2845ms","ip":"::1"}
+{"time":"2026-04-22T18:05:32.186003+03:00","level":"INFO","msg":"request","method":"GET","path":"/api/sessions","status":200,"latency":"3.2845ms","ip":"::1"}
+{"time":"2026-04-22T18:05:59.448907+03:00","level":"INFO","msg":"request","method":"GET","path":"/api/billing/balance","status":200,"latency":"3.2335ms","ip":"::1"}
+{"time":"2026-04-22T18:06:03.9458349+03:00","level":"INFO","msg":"request","method":"GET","path":"/api/sessions","status":200,"latency":"3.4986ms","ip":"::1"}
+{"time":"2026-04-22T18:06:09.9367075+03:00","level":"INFO","msg":"request","method":"GET","path":"/api/billing/balance","status":200,"latency":"2.7563ms","ip":"::1"}
+{"time":"2026-04-22T18:06:14.128908+03:00","level":"INFO","msg":"request","method":"GET","path":"/api/sessions","status":200,"latency":"2.8862ms","ip":"::1"}
+{"time":"2026-04-22T18:06:16.2816798+03:00","level":"INFO","msg":"request","method":"GET","path":"/api/user/me","status":200,"latency":"2.4853ms","ip":"::1"}
+{"time":"2026-04-22T18:06:16.3102497+03:00","level":"INFO","msg":"request","method":"GET","path":"/api/billing/tariff","status":200,"latency":"1.5334ms","ip":"::1"}
+{"time":"2026-04-22T18:06:16.3116122+03:00","level":"INFO","msg":"request","method":"GET","path":"/api/billing/balance","status":200,"latency":"3.4478ms","ip":"::1"}
+{"time":"2026-04-22T18:06:16.3116122+03:00","level":"INFO","msg":"request","method":"GET","path":"/api/sessions","status":200,"latency":"2.8959ms","ip":"::1"}
+{"time":"2026-04-22T18:06:18.6122482+03:00","level":"INFO","msg":"request","method":"POST","path":"/api/auth/logout","status":200,"latency":"0s","ip":"::1"}
+{"time":"2026-04-22T18:06:21.7597763+03:00","level":"INFO","msg":"request","method":"GET","path":"/api/auth/dev/login","status":200,"latency":"15.9086ms","ip":"::1"}
+{"time":"2026-04-22T18:06:21.7679227+03:00","level":"INFO","msg":"request","method":"GET","path":"/api/user/me","status":200,"latency":"1.8719ms","ip":"::1"}
+{"time":"2026-04-22T18:06:21.785882+03:00","level":"INFO","msg":"request","method":"GET","path":"/api/billing/balance","status":200,"latency":"2.2297ms","ip":"::1"}
+{"time":"2026-04-22T18:06:21.785882+03:00","level":"INFO","msg":"request","method":"GET","path":"/api/sessions","status":200,"latency":"2.2297ms","ip":"::1"}
+{"time":"2026-04-22T18:06:56.154056+03:00","level":"INFO","msg":"request","method":"GET","path":"/api/billing/balance","status":200,"latency":"2.7167ms","ip":"::1"}
+{"time":"2026-04-22T18:06:56.154056+03:00","level":"INFO","msg":"request","method":"GET","path":"/api/sessions","status":200,"latency":"2.7167ms","ip":"::1"}
+{"time":"2026-04-22T18:07:06.3878687+03:00","level":"INFO","msg":"request","method":"GET","path":"/api/billing/balance","status":200,"latency":"2.826ms","ip":"::1"}
+{"time":"2026-04-22T18:07:06.3878687+03:00","level":"INFO","msg":"request","method":"GET","path":"/api/sessions","status":200,"latency":"2.826ms","ip":"::1"}

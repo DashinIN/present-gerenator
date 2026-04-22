@@ -1,0 +1,30 @@
+{"time":"2026-04-22T16:49:25.3428667+03:00","level":"INFO","msg":"database connected"}
+{"time":"2026-04-22T16:49:25.3796403+03:00","level":"INFO","msg":"migrations applied"}
+{"time":"2026-04-22T16:49:25.3874964+03:00","level":"INFO","msg":"redis connected"}
+{"time":"2026-04-22T16:49:25.3874964+03:00","level":"INFO","msg":"storage: local","dir":"./data/uploads"}
+[GIN-debug] [WARNING] Running in "debug" mode. Switch to "release" mode in production.
+ - using env:	export GIN_MODE=release
+ - using code:	gin.SetMode(gin.ReleaseMode)
+
+[GIN-debug] GET    /api/health               --> main.main.func1 (3 handlers)
+[GIN-debug] GET    /api/auth/dev/login       --> github.com/you/fungreet/internal/handlers.(*AuthHandler).DevLogin-fm (3 handlers)
+[GIN-debug] POST   /api/auth/refresh         --> github.com/you/fungreet/internal/handlers.(*AuthHandler).Refresh-fm (3 handlers)
+[GIN-debug] POST   /api/auth/logout          --> github.com/you/fungreet/internal/handlers.(*AuthHandler).Logout-fm (3 handlers)
+[GIN-debug] GET    /api/user/me              --> github.com/you/fungreet/internal/handlers.(*AuthHandler).Me-fm (4 handlers)
+[GIN-debug] GET    /api/billing/balance      --> github.com/you/fungreet/internal/handlers.(*BillingHandler).Balance-fm (4 handlers)
+[GIN-debug] GET    /api/billing/tariff       --> github.com/you/fungreet/internal/handlers.(*BillingHandler).Tariff-fm (4 handlers)
+[GIN-debug] GET    /api/billing/estimate     --> github.com/you/fungreet/internal/handlers.(*BillingHandler).Estimate-fm (4 handlers)
+[GIN-debug] GET    /api/billing/transactions --> github.com/you/fungreet/internal/handlers.(*BillingHandler).Transactions-fm (4 handlers)
+[GIN-debug] POST   /api/generations          --> github.com/you/fungreet/internal/handlers.(*GenerationHandler).Create-fm (4 handlers)
+[GIN-debug] GET    /api/generations          --> github.com/you/fungreet/internal/handlers.(*GenerationHandler).List-fm (4 handlers)
+[GIN-debug] GET    /api/generations/:id      --> github.com/you/fungreet/internal/handlers.(*GenerationHandler).Get-fm (4 handlers)
+[GIN-debug] GET    /api/generations/:id/status --> github.com/you/fungreet/internal/handlers.(*GenerationHandler).Status-fm (4 handlers)
+[GIN-debug] POST   /api/uploads              --> github.com/you/fungreet/internal/handlers.(*GenerationHandler).Upload-fm (4 handlers)
+[GIN-debug] GET    /api/files/*key           --> main.main.func2 (3 handlers)
+{"time":"2026-04-22T16:49:25.3880266+03:00","level":"INFO","msg":"server starting","port":"8080"}
+{"time":"2026-04-22T16:49:25.3880266+03:00","level":"INFO","msg":"worker started","id":1}
+{"time":"2026-04-22T16:49:25.388575+03:00","level":"INFO","msg":"worker started","id":0}
+{"time":"2026-04-22T16:49:29.3549879+03:00","level":"INFO","msg":"request","method":"GET","path":"/api/health","status":200,"latency":"0s","ip":"::1"}
+{"time":"2026-04-22T16:49:29.4104388+03:00","level":"INFO","msg":"request","method":"GET","path":"/api/auth/dev/login","status":200,"latency":"23.8737ms","ip":"::1"}
+{"time":"2026-04-22T16:49:29.4674283+03:00","level":"ERROR","msg":"create generation failed","err":"insert generation: pq: null value in column \"input_photos\" of relation \"generation_requests\" violates not-null constraint (23502)"}
+{"time":"2026-04-22T16:49:29.4702105+03:00","level":"INFO","msg":"request","method":"POST","path":"/api/generations","status":500,"latency":"13.7791ms","ip":"::1"}

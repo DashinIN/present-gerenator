@@ -1,0 +1,58 @@
+{"time":"2026-04-22T16:50:34.3107953+03:00","level":"INFO","msg":"database connected"}
+{"time":"2026-04-22T16:50:34.346558+03:00","level":"INFO","msg":"migrations applied"}
+{"time":"2026-04-22T16:50:34.3553191+03:00","level":"INFO","msg":"redis connected"}
+{"time":"2026-04-22T16:50:34.3553191+03:00","level":"INFO","msg":"storage: local","dir":"./data/uploads"}
+[GIN-debug] [WARNING] Running in "debug" mode. Switch to "release" mode in production.
+ - using env:	export GIN_MODE=release
+ - using code:	gin.SetMode(gin.ReleaseMode)
+
+[GIN-debug] GET    /api/health               --> main.main.func1 (3 handlers)
+[GIN-debug] GET    /api/auth/dev/login       --> github.com/you/fungreet/internal/handlers.(*AuthHandler).DevLogin-fm (3 handlers)
+[GIN-debug] POST   /api/auth/refresh         --> github.com/you/fungreet/internal/handlers.(*AuthHandler).Refresh-fm (3 handlers)
+[GIN-debug] POST   /api/auth/logout          --> github.com/you/fungreet/internal/handlers.(*AuthHandler).Logout-fm (3 handlers)
+[GIN-debug] GET    /api/user/me              --> github.com/you/fungreet/internal/handlers.(*AuthHandler).Me-fm (4 handlers)
+[GIN-debug] GET    /api/billing/balance      --> github.com/you/fungreet/internal/handlers.(*BillingHandler).Balance-fm (4 handlers)
+[GIN-debug] GET    /api/billing/tariff       --> github.com/you/fungreet/internal/handlers.(*BillingHandler).Tariff-fm (4 handlers)
+[GIN-debug] GET    /api/billing/estimate     --> github.com/you/fungreet/internal/handlers.(*BillingHandler).Estimate-fm (4 handlers)
+[GIN-debug] GET    /api/billing/transactions --> github.com/you/fungreet/internal/handlers.(*BillingHandler).Transactions-fm (4 handlers)
+[GIN-debug] POST   /api/generations          --> github.com/you/fungreet/internal/handlers.(*GenerationHandler).Create-fm (4 handlers)
+[GIN-debug] GET    /api/generations          --> github.com/you/fungreet/internal/handlers.(*GenerationHandler).List-fm (4 handlers)
+[GIN-debug] GET    /api/generations/:id      --> github.com/you/fungreet/internal/handlers.(*GenerationHandler).Get-fm (4 handlers)
+[GIN-debug] GET    /api/generations/:id/status --> github.com/you/fungreet/internal/handlers.(*GenerationHandler).Status-fm (4 handlers)
+[GIN-debug] POST   /api/uploads              --> github.com/you/fungreet/internal/handlers.(*GenerationHandler).Upload-fm (4 handlers)
+[GIN-debug] GET    /api/files/*key           --> main.main.func2 (3 handlers)
+{"time":"2026-04-22T16:50:34.3558468+03:00","level":"INFO","msg":"server starting","port":"8080"}
+{"time":"2026-04-22T16:50:34.3558468+03:00","level":"INFO","msg":"worker started","id":1}
+{"time":"2026-04-22T16:50:34.3558468+03:00","level":"INFO","msg":"worker started","id":0}
+{"time":"2026-04-22T16:50:38.2473576+03:00","level":"INFO","msg":"request","method":"GET","path":"/api/health","status":200,"latency":"0s","ip":"::1"}
+{"time":"2026-04-22T16:50:38.3041131+03:00","level":"INFO","msg":"request","method":"GET","path":"/api/auth/dev/login","status":200,"latency":"24.687ms","ip":"::1"}
+{"time":"2026-04-22T16:50:38.3695353+03:00","level":"INFO","msg":"processing generation","worker":1,"generation_id":"32109700-d471-49a0-b234-ae6d7f624ab2"}
+{"time":"2026-04-22T16:50:38.3701702+03:00","level":"INFO","msg":"request","method":"POST","path":"/api/generations","status":201,"latency":"22.3218ms","ip":"::1"}
+{"time":"2026-04-22T16:50:38.3807091+03:00","level":"INFO","msg":"generation completed","generation_id":"32109700-d471-49a0-b234-ae6d7f624ab2","images":2,"songs":1}
+{"time":"2026-04-22T16:50:50.6947432+03:00","level":"INFO","msg":"request","method":"GET","path":"/api/generations/32109700-d471-49a0-b234-ae6d7f624ab2/status","status":200,"latency":"2.1186ms","ip":"::1"}
+{"time":"2026-04-22T16:50:50.7773015+03:00","level":"INFO","msg":"request","method":"GET","path":"/api/generations/32109700-d471-49a0-b234-ae6d7f624ab2","status":200,"latency":"2.0178ms","ip":"::1"}
+{"time":"2026-04-22T16:50:50.8661934+03:00","level":"INFO","msg":"request","method":"GET","path":"/api/billing/balance","status":200,"latency":"2.122ms","ip":"::1"}
+{"time":"2026-04-22T16:51:11.1856952+03:00","level":"INFO","msg":"request","method":"GET","path":"/api/files/results/32109700-d471-49a0-b234-ae6d7f624ab2/image_0.png","status":200,"latency":"33.2753ms","ip":"::1"}
+{"time":"2026-04-22T16:51:11.276458+03:00","level":"INFO","msg":"request","method":"GET","path":"/api/files/results/32109700-d471-49a0-b234-ae6d7f624ab2/song_0.mp3","status":200,"latency":"534.1µs","ip":"::1"}
+{"time":"2026-04-22T16:51:13.4684061+03:00","level":"INFO","msg":"request","method":"GET","path":"/api/files/results/32109700-d471-49a0-b234-ae6d7f624ab2/image_0.png","status":200,"latency":"507.5µs","ip":"::1"}
+{"time":"2026-04-22T16:51:54.0031205+03:00","level":"INFO","msg":"request","method":"GET","path":"/api/files/results/32109700-d471-49a0-b234-ae6d7f624ab2/song_0.mp3","status":200,"latency":"0s","ip":"::1"}
+{"time":"2026-04-22T16:52:12.0886649+03:00","level":"INFO","msg":"request","method":"GET","path":"/api/files/results/32109700-d471-49a0-b234-ae6d7f624ab2/song_0.mp3","status":200,"latency":"0s","ip":"::1"}
+{"time":"2026-04-22T16:52:29.0582726+03:00","level":"INFO","msg":"request","method":"GET","path":"/api/generations","status":200,"latency":"3.1594ms","ip":"::1"}
+{"time":"2026-04-22T16:52:29.1425404+03:00","level":"INFO","msg":"request","method":"GET","path":"/api/billing/transactions","status":200,"latency":"2.2563ms","ip":"::1"}
+{"time":"2026-04-22T16:53:08.0049728+03:00","level":"INFO","msg":"request","method":"GET","path":"/api/billing/balance","status":401,"latency":"0s","ip":"::1"}
+{"time":"2026-04-22T16:53:08.1069185+03:00","level":"INFO","msg":"request","method":"GET","path":"/api/auth/dev/login","status":200,"latency":"12.839ms","ip":"::1"}
+{"time":"2026-04-22T16:53:08.1547867+03:00","level":"INFO","msg":"request","method":"GET","path":"/api/generations/32109700-d471-49a0-b234-ae6d7f624ab2","status":403,"latency":"1.9446ms","ip":"::1"}
+{"time":"2026-04-22T16:53:08.2412361+03:00","level":"INFO","msg":"request","method":"GET","path":"/api/auth/dev/login","status":200,"latency":"10.675ms","ip":"::1"}
+{"time":"2026-04-22T16:53:08.2981125+03:00","level":"INFO","msg":"request","method":"POST","path":"/api/generations","status":201,"latency":"11.0014ms","ip":"::1"}
+{"time":"2026-04-22T16:53:08.2986161+03:00","level":"INFO","msg":"processing generation","worker":0,"generation_id":"d5e8e4c1-9fb1-420e-b63a-dcc3e51f42c6"}
+{"time":"2026-04-22T16:53:08.3070133+03:00","level":"INFO","msg":"generation completed","generation_id":"d5e8e4c1-9fb1-420e-b63a-dcc3e51f42c6","images":3,"songs":1}
+{"time":"2026-04-22T16:53:08.3425534+03:00","level":"INFO","msg":"request","method":"POST","path":"/api/generations","status":201,"latency":"12.7109ms","ip":"::1"}
+{"time":"2026-04-22T16:53:08.3425534+03:00","level":"INFO","msg":"processing generation","worker":1,"generation_id":"ada365af-decd-4dcd-8436-f26e1227f487"}
+{"time":"2026-04-22T16:53:08.3518257+03:00","level":"INFO","msg":"generation completed","generation_id":"ada365af-decd-4dcd-8436-f26e1227f487","images":3,"songs":1}
+{"time":"2026-04-22T16:53:08.3778998+03:00","level":"INFO","msg":"request","method":"POST","path":"/api/generations","status":402,"latency":"2.7147ms","ip":"::1"}
+{"time":"2026-04-22T16:53:08.4650673+03:00","level":"INFO","msg":"request","method":"GET","path":"/api/billing/balance","status":200,"latency":"504µs","ip":"::1"}
+{"time":"2026-04-22T16:53:35.7648972+03:00","level":"INFO","msg":"request","method":"POST","path":"/api/auth/refresh","status":200,"latency":"0s","ip":"::1"}
+{"time":"2026-04-22T16:53:35.8603237+03:00","level":"INFO","msg":"request","method":"GET","path":"/api/user/me","status":200,"latency":"1.7984ms","ip":"::1"}
+{"time":"2026-04-22T16:53:35.9374347+03:00","level":"INFO","msg":"request","method":"POST","path":"/api/auth/logout","status":200,"latency":"0s","ip":"::1"}
+{"time":"2026-04-22T16:53:36.0262004+03:00","level":"INFO","msg":"request","method":"GET","path":"/api/user/me","status":200,"latency":"2.1623ms","ip":"::1"}
+{"time":"2026-04-22T16:53:46.5052598+03:00","level":"INFO","msg":"request","method":"POST","path":"/api/auth/logout","status":200,"latency":"0s","ip":"::1"}

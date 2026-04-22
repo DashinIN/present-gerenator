@@ -1,0 +1,165 @@
+package main
+
+import (
+	"context"
+	"fmt"
+	"log/slog"
+	"net/http"
+	"os"
+	"os/signal"
+	"syscall"
+	"time"
+
+	"github.com/gin-gonic/gin"
+	"github.com/redis/go-redis/v9"
+	"github.com/you/fungreet/internal/config"
+	"github.com/you/fungreet/internal/handlers"
+	"github.com/you/fungreet/internal/middleware"
+	"github.com/you/fungreet/internal/repository"
+	"github.com/you/fungreet/internal/services"
+	"github.com/you/fungreet/internal/worker"
+)
+
+func main() {
+	slog.SetDefault(slog.New(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{
+		Level: slog.LevelInfo,
+	})))
+
+	cfg, err := config.Load()
+	if err != nil {
+		slog.Error("config error", "err", err)
+		os.Exit(1)
+	}
+
+	db, err := repository.NewDB(cfg.DatabaseURL)
+	if err != nil {
+		slog.Error("database error", "err", err)
+		os.Exit(1)
+	}
+	defer db.Close()
+	slog.Info("database connected")
+
+	if err := repository.RunMigrations(db, "migrations"); err != nil {
+		slog.Error("migration error", "err", err)
+		os.Exit(1)
+	}
+	slog.Info("migrations applied")
+
+	rdbOpts, err := redis.ParseURL(cfg.RedisURL)
+	if err != nil {
+		slog.Error("redis url error", "err", err)
+		os.Exit(1)
+	}
+	rdb := redis.NewClient(rdbOpts)
+	if err := rdb.Ping(context.Background()).Err(); err != nil {
+		slog.Error("redis connection error", "err", err)
+		os.Exit(1)
+	}
+	defer rdb.Close()
+	slog.Info("redis connected")
+
+	var storage services.StorageService
+	if cfg.StorageMode == "local" {
+		baseURL := fmt.Sprintf("http://localhost:%s", cfg.AppPort)
+		storage, err = services.NewLocalStorage(cfg.StorageLocalDir, baseURL)
+		if err != nil {
+			slog.Error("storage error", "err", err)
+			os.Exit(1)
+		}
+		slog.Info("storage: local", "dir", cfg.StorageLocalDir)
+	} else {
+		slog.Error("only local storage mode is supported in mock mode")
+		os.Exit(1)
+	}
+
+	userRepo := repository.NewUserRepository(db)
+	billingRepo := repository.NewBillingRepository(db)
+	genRepo := repository.NewGenerationRepository(db)
+	sessionRepo := repository.NewSessionRepository(db)
+
+	jwtSvc := services.NewJWTService(cfg.JWTSecret)
+	billingSvc := services.NewBillingService(billingRepo)
+
+	imageGen := &services.MockImageGenerator{}
+	songGen := &services.MockSongGenerator{}
+
+	queue := worker.NewQueue(rdb)
+	w := worker.New(queue, genRepo, sessionRepo, billingSvc, storage, imageGen, songGen, cfg.WorkerCount)
+
+	authH := handlers.NewAuthHandler(userRepo, jwtSvc)
+	billingH := handlers.NewBillingHandler(billingSvc)
+	genH := handlers.NewGenerationHandler(genRepo, sessionRepo, billingSvc, storage, queue)
+	sessionH := handlers.NewSessionHandler(sessionRepo, genRepo)
+
+	if !cfg.IsDev() {
+		gin.SetMode(gin.ReleaseMode)
+	}
+	r := gin.New()
+	r.Use(middleware.Recovery())
+	r.Use(middleware.Logger())
+
+	r.GET("/api/health", func(c *gin.Context) {
+		c.JSON(http.StatusOK, gin.H{"status": "ok", "time": time.Now().UTC()})
+	})
+
+	auth := r.Group("/api/auth")
+	{
+		auth.GET("/dev/login", authH.DevLogin)
+		auth.POST("/refresh", authH.Refresh)
+		auth.POST("/logout", authH.Logout)
+	}
+
+	secured := r.Group("/api")
+	secured.Use(middleware.AuthRequired(jwtSvc))
+	{
+		secured.GET("/user/me", authH.Me)
+
+		secured.GET("/billing/balance", billingH.Balance)
+		secured.GET("/billing/tariff", billingH.Tariff)
+		secured.GET("/billing/estimate", billingH.Estimate)
+		secured.GET("/billing/transactions", billingH.Transactions)
+
+		secured.GET("/sessions", sessionH.List)
+		secured.GET("/sessions/:id", sessionH.Get)
+		secured.PATCH("/sessions/:id", sessionH.UpdateTitle)
+
+		secured.POST("/generations", genH.Create)
+		secured.GET("/generations", genH.List)
+		secured.GET("/generations/:id", genH.Get)
+		secured.GET("/generations/:id/status", genH.Status)
+
+		secured.POST("/uploads", genH.Upload)
+	}
+
+	r.GET("/api/files/*key", func(c *gin.Context) {
+		key := c.Param("key")[1:]
+		http.ServeFile(c.Writer, c.Request, cfg.StorageLocalDir+"/"+key)
+	})
+
+	srv := &http.Server{Addr: ":" + cfg.AppPort, Handler: r}
+
+	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
+	defer stop()
+
+	workerCtx, cancelWorker := context.WithCancel(context.Background())
+	go w.Run(workerCtx)
+
+	go func() {
+		slog.Info("server starting", "port", cfg.AppPort)
+		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+			slog.Error("server error", "err", err)
+			os.Exit(1)
+		}
+	}()
+
+	<-ctx.Done()
+	slog.Info("shutting down...")
+	cancelWorker()
+
+	shutdownCtx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+	if err := srv.Shutdown(shutdownCtx); err != nil {
+		slog.Error("shutdown error", "err", err)
+	}
+	slog.Info("server stopped")
+}
