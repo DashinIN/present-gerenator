@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"path/filepath"
 	"strings"
 	"syscall"
 	"time"
@@ -137,6 +138,8 @@ func main() {
 
 	r.GET("/api/files/*key", func(c *gin.Context) {
 		key := c.Param("key")[1:]
+		filename := filepath.Base(key)
+		c.Header("Content-Disposition", "attachment; filename=\""+filename+"\"")
 		http.ServeFile(c.Writer, c.Request, cfg.StorageLocalDir+"/"+key)
 	})
 

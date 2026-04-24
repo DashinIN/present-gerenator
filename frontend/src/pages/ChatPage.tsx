@@ -1,9 +1,10 @@
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { PanelLeftClose, PanelLeftOpen } from 'lucide-react'
 import { Sidebar } from '@/components/Sidebar'
 import { ChatThread } from '@/components/ChatThread'
 import { ChatInput } from '@/components/ChatInput'
 import { useSession } from '@/hooks/useSessions'
+import { useBalance } from '@/hooks/useAuth'
 import { useQueryClient } from '@tanstack/react-query'
 import { Button } from '@/components/ui/Button'
 
@@ -12,6 +13,19 @@ export function ChatPage() {
   const [noCreditsAt, setNoCreditsAt] = useState<string | null>(null)
   const [sidebarOpen, setSidebarOpen] = useState(true)
   const qc = useQueryClient()
+
+  const { data: balance } = useBalance()
+  const prevBalanceRef = useRef<number | undefined>(undefined)
+
+  useEffect(() => {
+    if (balance === undefined) return
+    const prev = prevBalanceRef.current
+    // Показываем уведомление если баланс стал 0 (или упал ниже) после того как был положительным
+    if (balance <= 0 && (prev === undefined || prev > 0)) {
+      setNoCreditsAt(new Date().toLocaleTimeString('ru-RU'))
+    }
+    prevBalanceRef.current = balance
+  }, [balance])
 
   const { data: thread } = useSession(activeSessionId)
 
