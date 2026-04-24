@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <title>FunGreet — схема обработки инпутов</title>
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+  <style>
+    body { font-family: system-ui, sans-serif; background: #0f1117; color: #e2e8f0; margin: 0; padding: 32px; }
+    h1 { font-size: 20px; color: #a78bfa; margin-bottom: 8px; }
+    p  { font-size: 13px; color: #64748b; margin-bottom: 32px; }
+    .mermaid { background: #1e1e2e; border-radius: 16px; padding: 32px; }
+
+    .legend { display: flex; gap: 24px; flex-wrap: wrap; margin-top: 32px; }
+    .legend-item { display: flex; align-items: center; gap: 8px; font-size: 13px; color: #94a3b8; }
+    .dot { width: 12px; height: 12px; border-radius: 3px; flex-shrink: 0; }
+  </style>
+</head>
+<body>
+  <h1>FunGreet — как инпуты превращаются в генерацию</h1>
+  <p>Стрелки показывают куда попадает каждое поле. Красные метки — поля, которые сохраняются в БД, но пока не используются генераторами.</p>
+
+  <div class="mermaid">
+flowchart TD
+    subgraph UI["🖥️ Форма в браузере (ChatInput)"]
+        A1["📝 Основной промпт\n(image_prompt)"]
+        A2["🎵 Текст песни\n(song_lyrics)"]
+        A3["🎨 Стиль песни\n(song_style)"]
+        A4["🖼️ Фото-референсы\n(photos, до 3шт)"]
+        A5["🔊 Аудио-референс\n(audio)"]
+        A6["🔢 Кол-во картинок\n(image_count 0–3)"]
+        A7["🔢 Кол-во песен\n(song_count 0–3)"]
+    end
+
+    subgraph HANDLER["⚙️ Backend Handler\nPOST /api/generations"]
+        B1["Проверка баланса\nи списание кредитов"]
+        B2["Загрузка файлов\nв Storage"]
+        B3["Запись в БД\ngeneration_requests"]
+        B4["Постановка\nзадачи в Redis"]
+    end
+
+    subgraph DB["🗄️ PostgreSQL"]
+        D1["generation_requests\n─────────────────\nimage_prompt\nsong_lyrics / song_style\nimage_count / song_count\ninput_photos keys\ninput_audio_key\nrecipient_name ⚠️\noccasion ⚠️"]
+    end
+
+    subgraph WORKER["🔧 Worker (async)"]
+        W1["Загружает запись из БД"]
+        W2["Собирает refImages:\ninput_photos +\nresult_images родителя"]
+
+        subgraph PARALLEL["Параллельно"]
+            WI["🖼️ ImageGenerator\n.Generate(prompt, refImages, count)"]
+            WS["🎵 SongGenerator\n.Generate(lyrics, style, count)"]
+        end
+
+        W3["Сохранение результатов\nв Storage + БД"]
+    end
+
+    subgraph RESULT["📦 Результаты"]
+        R1["image_0.png\nimage_1.png\nimage_2.png"]
+        R2["song_0.mp3\nsong_1.mp3"]
+    end
+
+    subgraph PARENT["♻️ Родительская генерация\n(если это не первый запрос в сессии)"]
+        P1["result_images\nпредыдущей генерации"]
+    end
+
+    A1 --> HANDLER
+    A2 --> HANDLER
+    A3 --> HANDLER
+    A4 --> B2
+    A5 --> B2
+    A6 --> HANDLER
+    A7 --> HANDLER
+
+    B2 --> B3
+    B1 --> B3
+    B3 --> DB
+    B3 --> B4
+    B4 --> WORKER
+
+    W1 --> DB
+    DB --> W2
+    P1 -.->|"контекст стиля"| W2
+
+    W2 --> WI
+    DB -->|"image_prompt\nimage_count"| WI
+    DB -->|"song_lyrics\nsong_style\nsong_count"| WS
+
+    WI --> R1
+    WS --> R2
+    R1 --> W3
+    R2 --> W3
+
+    style A5 fill:#7f1d1d,stroke:#ef4444
+    style D1 fill:#1e293b,stroke:#334155
+    style PARALLEL fill:#0f172a,stroke:#334155
+    style PARENT fill:#0f172a,stroke:#6366f1,stroke-dasharray:5
+  </div>
+
+  <div class="legend">
+    <div class="legend-item"><div class="dot" style="background:#ef4444"></div> Аудио-референс: сохраняется в БД, но в songGen пока не передаётся</div>
+    <div class="legend-item"><div class="dot" style="background:#6366f1"></div> Контекст родителя: только картинки, не промпты</div>
+    <div class="legend-item"><div class="dot" style="background:#334155"></div> ⚠️ recipient_name и occasion: в БД есть, в UI нет, в генераторы не идут</div>
+  </div>
+
+  <div style="margin-top:40px; background:#1e293b; border-radius:12px; padding:20px; font-size:13px; line-height:1.8; color:#94a3b8;">
+    <b style="color:#e2e8f0; display:block; margin-bottom:8px;">Ключевые выводы:</b>
+    <b style="color:#a78bfa">image_prompt</b> и <b style="color:#a78bfa">song_lyrics</b> — независимые промпты. Они никак не влияют друг на друга.<br>
+    Связь между картинками и песней только косвенная — через общий контекст запроса.<br>
+    <b style="color:#a78bfa">Фото-референсы</b> идут в ImageGenerator как дополнительный контекст стиля.<br>
+    <b style="color:#a78bfa">Аудио-референс</b> сохраняется, но в SongGenerator пока не передаётся — это точка роста.<br>
+    При повторном запросе в той же сессии, <b style="color:#a78bfa">картинки родителя</b> добавляются к рефам нового запроса.
+  </div>
+
+  <script>mermaid.initialize({ startOnLoad: true, theme: 'dark' })</script>
+</body>
+</html>

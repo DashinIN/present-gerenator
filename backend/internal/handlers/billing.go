@@ -18,7 +18,37 @@ func NewBillingHandler(billing *services.BillingService) *BillingHandler {
 	return &BillingHandler{billing: billing}
 }
 
-// GET /api/billing/balance
+// BalanceResponse — баланс пользователя в кредитах
+type BalanceResponse struct {
+	Balance int `json:"balance" example:"100"`
+}
+
+// EstimateResponse — предварительный расчёт стоимости
+type EstimateResponse struct {
+	Images        int `json:"images" example:"3"`
+	Songs         int `json:"songs" example:"1"`
+	Cost          int `json:"cost" example:"70"`
+	PricePerImage int `json:"price_per_image" example:"15"`
+	PricePerSong  int `json:"price_per_song" example:"25"`
+}
+
+// TransactionsResponse — список транзакций
+type TransactionsResponse struct {
+	Transactions []models.CreditTransaction `json:"transactions"`
+	Limit        int                        `json:"limit" example:"20"`
+	Offset       int                        `json:"offset" example:"0"`
+}
+
+// Balance godoc
+// @Summary      Баланс кредитов
+// @Description  Возвращает текущий баланс кредитов авторизованного пользователя.
+// @Tags         billing
+// @Produce      json
+// @Security     CookieAuth
+// @Success      200  {object}  BalanceResponse
+// @Failure      401  {object}  ErrorResponse
+// @Failure      500  {object}  ErrorResponse
+// @Router       /billing/balance [get]
 func (h *BillingHandler) Balance(c *gin.Context) {
 	userID := middleware.GetUserID(c)
 	balance, err := h.billing.GetBalance(c.Request.Context(), userID)
@@ -29,7 +59,16 @@ func (h *BillingHandler) Balance(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"balance": balance})
 }
 
-// GET /api/billing/tariff
+// Tariff godoc
+// @Summary      Текущий тариф
+// @Description  Возвращает активный тариф с ценами за изображение и песню.
+// @Tags         billing
+// @Produce      json
+// @Security     CookieAuth
+// @Success      200  {object}  models.Tariff
+// @Failure      401  {object}  ErrorResponse
+// @Failure      500  {object}  ErrorResponse
+// @Router       /billing/tariff [get]
 func (h *BillingHandler) Tariff(c *gin.Context) {
 	tariff, err := h.billing.GetActiveTariff(c.Request.Context())
 	if err != nil {
@@ -39,7 +78,19 @@ func (h *BillingHandler) Tariff(c *gin.Context) {
 	c.JSON(http.StatusOK, tariff)
 }
 
-// GET /api/billing/estimate?images=3&songs=1
+// Estimate godoc
+// @Summary      Предварительный расчёт стоимости
+// @Description  Считает стоимость генерации до её запуска. Используется для отображения цены пользователю.
+// @Tags         billing
+// @Produce      json
+// @Security     CookieAuth
+// @Param        images  query     int  false  "Количество изображений (0-3)"  default(0)
+// @Param        songs   query     int  false  "Количество песен (0-3)"         default(0)
+// @Success      200     {object}  EstimateResponse
+// @Failure      400     {object}  ErrorResponse
+// @Failure      401     {object}  ErrorResponse
+// @Failure      500     {object}  ErrorResponse
+// @Router       /billing/estimate [get]
 func (h *BillingHandler) Estimate(c *gin.Context) {
 	images, _ := strconv.Atoi(c.DefaultQuery("images", "0"))
 	songs, _ := strconv.Atoi(c.DefaultQuery("songs", "0"))
@@ -67,7 +118,18 @@ func (h *BillingHandler) Estimate(c *gin.Context) {
 	})
 }
 
-// GET /api/billing/transactions?limit=20&offset=0
+// Transactions godoc
+// @Summary      История транзакций
+// @Description  Возвращает постраничный список кредитных транзакций пользователя (начисления, списания, возвраты).
+// @Tags         billing
+// @Produce      json
+// @Security     CookieAuth
+// @Param        limit   query     int  false  "Лимит записей (макс. 100)"  default(20)
+// @Param        offset  query     int  false  "Смещение"                    default(0)
+// @Success      200     {object}  TransactionsResponse
+// @Failure      401     {object}  ErrorResponse
+// @Failure      500     {object}  ErrorResponse
+// @Router       /billing/transactions [get]
 func (h *BillingHandler) Transactions(c *gin.Context) {
 	userID := middleware.GetUserID(c)
 	limit, _ := strconv.Atoi(c.DefaultQuery("limit", "20"))

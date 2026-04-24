@@ -44,15 +44,62 @@ func NewGenerationHandler(
 	}
 }
 
-// POST /api/generations
-// Поля формы:
-//   session_id     — UUID существующей сессии (опционально; если нет — создаём новую)
-//   parent_id      — UUID предыдущей генерации в треде (опционально)
-//   image_count    — 0..3 (default 3)
-//   song_count     — 0..3 (default 1)
-//   recipient_name, occasion, image_prompt, song_lyrics, song_style
-//   photos[]       — файлы JPG/PNG до 10MB
-//   audio          — файл MP3/WAV/M4A до 25MB
+// CreateGenerationResponse — ответ при создании генерации
+type CreateGenerationResponse struct {
+	ID        string `json:"id" example:"550e8400-e29b-41d4-a716-446655440000"`
+	SessionID string `json:"session_id" example:"550e8400-e29b-41d4-a716-446655440001"`
+	Status    string `json:"status" example:"pending"`
+}
+
+// GenerationListResponse — список генераций
+type GenerationListResponse struct {
+	Generations []models.GenerationRequest `json:"generations"`
+	Limit       int                        `json:"limit" example:"20"`
+	Offset      int                        `json:"offset" example:"0"`
+}
+
+// GenerationStatusResponse — статус генерации
+type GenerationStatusResponse struct {
+	ID           string     `json:"id" example:"550e8400-e29b-41d4-a716-446655440000"`
+	Status       string     `json:"status" example:"completed"`
+	ErrorMessage string     `json:"error_message,omitempty"`
+	CompletedAt  *string    `json:"completed_at,omitempty"`
+	ResultImages []string   `json:"result_images" example:"[\"http://localhost:8080/api/files/uploads/1/abc.jpg\"]"`
+	ResultAudios []string   `json:"result_audios" example:"[\"http://localhost:8080/api/files/uploads/1/abc.mp3\"]"`
+}
+
+// UploadResponse — ответ при загрузке файла
+type UploadResponse struct {
+	Key string `json:"key" example:"uploads/42/uuid.jpg"`
+	URL string `json:"url" example:"http://localhost:8080/api/files/uploads/42/uuid.jpg"`
+}
+
+// Create godoc
+// @Summary      Создать генерацию
+// @Description  Запускает задачу генерации изображений и/или песни. Списывает кредиты. Возвращает ID задачи для последующего опроса статуса через GET /generations/:id/status.
+// @Tags         generations
+// @Accept       multipart/form-data
+// @Produce      json
+// @Security     CookieAuth
+// @Param        session_id      formData  string  false  "UUID существующей сессии (если нет — создаётся новая)"
+// @Param        parent_id       formData  string  false  "UUID родительской генерации в треде"
+// @Param        image_count     formData  int     false  "Количество изображений (0-3)"     default(3)
+// @Param        song_count      formData  int     false  "Количество песен (0-3)"            default(1)
+// @Param        recipient_name  formData  string  false  "Имя получателя поздравления"
+// @Param        occasion        formData  string  false  "Повод (день рождения, новый год и т.д.)"
+// @Param        image_prompt    formData  string  false  "Текстовое описание для генерации изображений"
+// @Param        song_lyrics     formData  string  false  "Текст песни"
+// @Param        song_style      formData  string  false  "Стиль песни (pop, jazz, rock и т.д.)"
+// @Param        photos[]        formData  file    false  "Фото пользователя JPG/PNG до 10MB (макс. 3)"
+// @Param        audio           formData  file    false  "Аудио MP3/WAV/M4A до 25MB"
+// @Success      201             {object}  CreateGenerationResponse
+// @Failure      400             {object}  ErrorResponse
+// @Failure      401             {object}  ErrorResponse
+// @Failure      402             {object}  ErrorResponse  "Недостаточно кредитов"
+// @Failure      403             {object}  ErrorResponse
+// @Failure      404             {object}  ErrorResponse
+// @Failure      500             {object}  ErrorResponse
+// @Router       /generations [post]
 func (h *GenerationHandler) Create(c *gin.Context) {
 	userID := middleware.GetUserID(c)
 
@@ -261,7 +308,18 @@ func (h *GenerationHandler) Create(c *gin.Context) {
 	})
 }
 
-// GET /api/generations
+// List godoc
+// @Summary      Список генераций
+// @Description  Возвращает постраничный список всех генераций текущего пользователя.
+// @Tags         generations
+// @Produce      json
+// @Security     CookieAuth
+// @Param        limit   query     int  false  "Лимит (макс. 100)"  default(20)
+// @Param        offset  query     int  false  "Смещение"           default(0)
+// @Success      200     {object}  GenerationListResponse
+// @Failure      401     {object}  ErrorResponse
+// @Failure      500     {object}  ErrorResponse
+// @Router       /generations [get]
 func (h *GenerationHandler) List(c *gin.Context) {
 	userID := middleware.GetUserID(c)
 	limit, _ := strconv.Atoi(c.DefaultQuery("limit", "20"))
@@ -284,7 +342,20 @@ func (h *GenerationHandler) List(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"generations": gens, "limit": limit, "offset": offset})
 }
 
-// GET /api/generations/:id
+// Get godoc
+// @Summary      Получить генерацию
+// @Description  Возвращает полные данные генерации включая URL результирующих файлов.
+// @Tags         generations
+// @Produce      json
+// @Security     CookieAuth
+// @Param        id   path      string  true  "UUID генерации"
+// @Success      200  {object}  models.GenerationRequest
+// @Failure      400  {object}  ErrorResponse
+// @Failure      401  {object}  ErrorResponse
+// @Failure      403  {object}  ErrorResponse
+// @Failure      404  {object}  ErrorResponse
+// @Failure      500  {object}  ErrorResponse
+// @Router       /generations/{id} [get]
 func (h *GenerationHandler) Get(c *gin.Context) {
 	userID := middleware.GetUserID(c)
 	id, err := uuid.Parse(c.Param("id"))
@@ -310,7 +381,20 @@ func (h *GenerationHandler) Get(c *gin.Context) {
 	c.JSON(http.StatusOK, gen)
 }
 
-// GET /api/generations/:id/status
+// Status godoc
+// @Summary      Статус генерации (polling)
+// @Description  Возвращает текущий статус задачи генерации. Используется для polling-а: опрашивайте каждые 2-5 секунд пока status != completed | failed.
+// @Tags         generations
+// @Produce      json
+// @Security     CookieAuth
+// @Param        id   path      string  true  "UUID генерации"
+// @Success      200  {object}  GenerationStatusResponse
+// @Failure      400  {object}  ErrorResponse
+// @Failure      401  {object}  ErrorResponse
+// @Failure      403  {object}  ErrorResponse
+// @Failure      404  {object}  ErrorResponse
+// @Failure      500  {object}  ErrorResponse
+// @Router       /generations/{id}/status [get]
 func (h *GenerationHandler) Status(c *gin.Context) {
 	userID := middleware.GetUserID(c)
 	id, err := uuid.Parse(c.Param("id"))
@@ -342,7 +426,19 @@ func (h *GenerationHandler) Status(c *gin.Context) {
 	})
 }
 
-// POST /api/uploads
+// Upload godoc
+// @Summary      Загрузить файл
+// @Description  Загружает файл (фото или аудио) в хранилище. Возвращает key для последующего использования при создании генерации. Поддерживаемые форматы: JPG, PNG, MP3, WAV, M4A. Макс. размер: 25MB.
+// @Tags         uploads
+// @Accept       multipart/form-data
+// @Produce      json
+// @Security     CookieAuth
+// @Param        file  formData  file    true  "Файл для загрузки"
+// @Success      200   {object}  UploadResponse
+// @Failure      400   {object}  ErrorResponse
+// @Failure      401   {object}  ErrorResponse
+// @Failure      500   {object}  ErrorResponse
+// @Router       /uploads [post]
 func (h *GenerationHandler) Upload(c *gin.Context) {
 	userID := middleware.GetUserID(c)
 	file, fh, err := c.Request.FormFile("file")

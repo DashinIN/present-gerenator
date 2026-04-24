@@ -1,0 +1,870 @@
+basePath: /api
+definitions:
+  handlers.BalanceResponse:
+    properties:
+      balance:
+        example: 100
+        type: integer
+    type: object
+  handlers.CreateGenerationResponse:
+    properties:
+      id:
+        example: 550e8400-e29b-41d4-a716-446655440000
+        type: string
+      session_id:
+        example: 550e8400-e29b-41d4-a716-446655440001
+        type: string
+      status:
+        example: pending
+        type: string
+    type: object
+  handlers.DevLoginResponse:
+    properties:
+      user_id:
+        example: 42
+        type: integer
+    type: object
+  handlers.ErrorDetail:
+    properties:
+      code:
+        example: unauthorized
+        type: string
+      message:
+        example: Refresh token missing
+        type: string
+    type: object
+  handlers.ErrorResponse:
+    properties:
+      error:
+        $ref: '#/definitions/handlers.ErrorDetail'
+    type: object
+  handlers.EstimateResponse:
+    properties:
+      cost:
+        example: 70
+        type: integer
+      images:
+        example: 3
+        type: integer
+      price_per_image:
+        example: 15
+        type: integer
+      price_per_song:
+        example: 25
+        type: integer
+      songs:
+        example: 1
+        type: integer
+    type: object
+  handlers.GenerationListResponse:
+    properties:
+      generations:
+        items:
+          $ref: '#/definitions/models.GenerationRequest'
+        type: array
+      limit:
+        example: 20
+        type: integer
+      offset:
+        example: 0
+        type: integer
+    type: object
+  handlers.GenerationStatusResponse:
+    properties:
+      completed_at:
+        type: string
+      error_message:
+        type: string
+      id:
+        example: 550e8400-e29b-41d4-a716-446655440000
+        type: string
+      result_audios:
+        example:
+        - '["http://localhost:8080/api/files/uploads/1/abc.mp3"]'
+        items:
+          type: string
+        type: array
+      result_images:
+        example:
+        - '["http://localhost:8080/api/files/uploads/1/abc.jpg"]'
+        items:
+          type: string
+        type: array
+      status:
+        example: completed
+        type: string
+    type: object
+  handlers.LogoutResponse:
+    properties:
+      ok:
+        example: true
+        type: boolean
+    type: object
+  handlers.OkResponse:
+    properties:
+      ok:
+        example: true
+        type: boolean
+    type: object
+  handlers.SessionListResponse:
+    properties:
+      limit:
+        example: 30
+        type: integer
+      offset:
+        example: 0
+        type: integer
+      sessions:
+        items:
+          $ref: '#/definitions/models.GenerationSession'
+        type: array
+    type: object
+  handlers.SessionThreadResponse:
+    properties:
+      generations:
+        items:
+          $ref: '#/definitions/models.GenerationRequest'
+        type: array
+      session:
+        $ref: '#/definitions/models.GenerationSession'
+    type: object
+  handlers.TransactionsResponse:
+    properties:
+      limit:
+        example: 20
+        type: integer
+      offset:
+        example: 0
+        type: integer
+      transactions:
+        items:
+          $ref: '#/definitions/models.CreditTransaction'
+        type: array
+    type: object
+  handlers.UpdateTitleRequest:
+    properties:
+      title:
+        example: Поздравление маме
+        maxLength: 300
+        type: string
+    required:
+    - title
+    type: object
+  handlers.UploadResponse:
+    properties:
+      key:
+        example: uploads/42/uuid.jpg
+        type: string
+      url:
+        example: http://localhost:8080/api/files/uploads/42/uuid.jpg
+        type: string
+    type: object
+  models.CreditTransaction:
+    properties:
+      amount:
+        description: положительное = начисление, отрицательное = списание
+        type: integer
+      created_at:
+        type: string
+      description:
+        type: string
+      id:
+        type: integer
+      reference_id:
+        type: string
+      type:
+        type: string
+      user_id:
+        type: integer
+    type: object
+  models.GenerationRequest:
+    properties:
+      completed_at:
+        type: string
+      created_at:
+        type: string
+      credits_spent:
+        type: integer
+      error_message:
+        type: string
+      id:
+        type: string
+      image_count:
+        type: integer
+      image_prompt:
+        type: string
+      input_audio_key:
+        type: string
+      input_photos:
+        items:
+          type: string
+        type: array
+      occasion:
+        type: string
+      parent_id:
+        type: string
+      recipient_name:
+        type: string
+      result_audios:
+        items:
+          type: string
+        type: array
+      result_images:
+        items:
+          type: string
+        type: array
+      session_id:
+        type: string
+      song_count:
+        type: integer
+      song_lyrics:
+        type: string
+      song_style:
+        type: string
+      status:
+        $ref: '#/definitions/models.GenerationStatus'
+      tariff_id:
+        type: integer
+      user_id:
+        type: integer
+    type: object
+  models.GenerationSession:
+    properties:
+      created_at:
+        type: string
+      id:
+        type: string
+      title:
+        type: string
+      updated_at:
+        type: string
+      user_id:
+        type: integer
+    type: object
+  models.GenerationStatus:
+    enum:
+    - pending
+    - processing_images
+    - processing_audio
+    - completed
+    - failed
+    type: string
+    x-enum-varnames:
+    - StatusPending
+    - StatusProcessingImages
+    - StatusProcessingAudio
+    - StatusCompleted
+    - StatusFailed
+  models.Tariff:
+    properties:
+      created_at:
+        type: string
+      id:
+        type: integer
+      is_active:
+        type: boolean
+      name:
+        type: string
+      price_per_image:
+        type: integer
+      price_per_song:
+        type: integer
+    type: object
+  models.User:
+    properties:
+      avatar_url:
+        type: string
+      created_at:
+        type: string
+      display_name:
+        type: string
+      email:
+        type: string
+      id:
+        type: integer
+    type: object
+info:
+  contact:
+    name: FunGreet Team
+  description: 'API для генерации персонализированных поздравлений: AI-изображения
+    + песни. Аутентификация через httpOnly cookie (access_token).'
+  license:
+    name: MIT
+  title: FunGreet API
+  version: "1.0"
+paths:
+  /auth/dev/login:
+    get:
+      description: Создаёт тестового пользователя или логинится под существующим.
+        Доступен только при APP_ENV=development.
+      parameters:
+      - description: ID существующего пользователя (опционально)
+        in: query
+        name: user_id
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handlers.DevLoginResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      summary: Dev login (только разработка)
+      tags:
+      - auth
+  /auth/logout:
+    post:
+      description: Очищает httpOnly cookie access_token и refresh_token.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handlers.LogoutResponse'
+      security:
+      - CookieAuth: []
+      summary: Выйти из аккаунта
+      tags:
+      - auth
+  /auth/refresh:
+    post:
+      description: Берёт refresh_token из httpOnly cookie и выдаёт новую пару токенов.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handlers.DevLoginResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      summary: Обновить access token
+      tags:
+      - auth
+  /billing/balance:
+    get:
+      description: Возвращает текущий баланс кредитов авторизованного пользователя.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handlers.BalanceResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      security:
+      - CookieAuth: []
+      summary: Баланс кредитов
+      tags:
+      - billing
+  /billing/estimate:
+    get:
+      description: Считает стоимость генерации до её запуска. Используется для отображения
+        цены пользователю.
+      parameters:
+      - default: 0
+        description: Количество изображений (0-3)
+        in: query
+        name: images
+        type: integer
+      - default: 0
+        description: Количество песен (0-3)
+        in: query
+        name: songs
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handlers.EstimateResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      security:
+      - CookieAuth: []
+      summary: Предварительный расчёт стоимости
+      tags:
+      - billing
+  /billing/tariff:
+    get:
+      description: Возвращает активный тариф с ценами за изображение и песню.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.Tariff'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      security:
+      - CookieAuth: []
+      summary: Текущий тариф
+      tags:
+      - billing
+  /billing/transactions:
+    get:
+      description: Возвращает постраничный список кредитных транзакций пользователя
+        (начисления, списания, возвраты).
+      parameters:
+      - default: 20
+        description: Лимит записей (макс. 100)
+        in: query
+        name: limit
+        type: integer
+      - default: 0
+        description: Смещение
+        in: query
+        name: offset
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handlers.TransactionsResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      security:
+      - CookieAuth: []
+      summary: История транзакций
+      tags:
+      - billing
+  /generations:
+    get:
+      description: Возвращает постраничный список всех генераций текущего пользователя.
+      parameters:
+      - default: 20
+        description: Лимит (макс. 100)
+        in: query
+        name: limit
+        type: integer
+      - default: 0
+        description: Смещение
+        in: query
+        name: offset
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handlers.GenerationListResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      security:
+      - CookieAuth: []
+      summary: Список генераций
+      tags:
+      - generations
+    post:
+      consumes:
+      - multipart/form-data
+      description: Запускает задачу генерации изображений и/или песни. Списывает кредиты.
+        Возвращает ID задачи для последующего опроса статуса через GET /generations/:id/status.
+      parameters:
+      - description: UUID существующей сессии (если нет — создаётся новая)
+        in: formData
+        name: session_id
+        type: string
+      - description: UUID родительской генерации в треде
+        in: formData
+        name: parent_id
+        type: string
+      - default: 3
+        description: Количество изображений (0-3)
+        in: formData
+        name: image_count
+        type: integer
+      - default: 1
+        description: Количество песен (0-3)
+        in: formData
+        name: song_count
+        type: integer
+      - description: Имя получателя поздравления
+        in: formData
+        name: recipient_name
+        type: string
+      - description: Повод (день рождения, новый год и т.д.)
+        in: formData
+        name: occasion
+        type: string
+      - description: Текстовое описание для генерации изображений
+        in: formData
+        name: image_prompt
+        type: string
+      - description: Текст песни
+        in: formData
+        name: song_lyrics
+        type: string
+      - description: Стиль песни (pop, jazz, rock и т.д.)
+        in: formData
+        name: song_style
+        type: string
+      - description: Фото пользователя JPG/PNG до 10MB (макс. 3)
+        in: formData
+        name: photos[]
+        type: file
+      - description: Аудио MP3/WAV/M4A до 25MB
+        in: formData
+        name: audio
+        type: file
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/handlers.CreateGenerationResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "402":
+          description: Недостаточно кредитов
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      security:
+      - CookieAuth: []
+      summary: Создать генерацию
+      tags:
+      - generations
+  /generations/{id}:
+    get:
+      description: Возвращает полные данные генерации включая URL результирующих файлов.
+      parameters:
+      - description: UUID генерации
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.GenerationRequest'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      security:
+      - CookieAuth: []
+      summary: Получить генерацию
+      tags:
+      - generations
+  /generations/{id}/status:
+    get:
+      description: 'Возвращает текущий статус задачи генерации. Используется для polling-а:
+        опрашивайте каждые 2-5 секунд пока status != completed | failed.'
+      parameters:
+      - description: UUID генерации
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handlers.GenerationStatusResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      security:
+      - CookieAuth: []
+      summary: Статус генерации (polling)
+      tags:
+      - generations
+  /sessions:
+    get:
+      description: Возвращает список диалоговых сессий (тредов) текущего пользователя,
+        отсортированных по дате обновления.
+      parameters:
+      - default: 30
+        description: Лимит (макс. 100)
+        in: query
+        name: limit
+        type: integer
+      - default: 0
+        description: Смещение
+        in: query
+        name: offset
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handlers.SessionListResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      security:
+      - CookieAuth: []
+      summary: Список сессий
+      tags:
+      - sessions
+  /sessions/{id}:
+    get:
+      description: Возвращает сессию и все генерации в ней (тред). URL изображений
+        и аудио — рабочие ссылки для скачивания.
+      parameters:
+      - description: UUID сессии
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handlers.SessionThreadResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      security:
+      - CookieAuth: []
+      summary: Получить сессию с генерациями
+      tags:
+      - sessions
+    patch:
+      consumes:
+      - application/json
+      description: Изменяет заголовок (название) сессии. Макс. 300 символов.
+      parameters:
+      - description: UUID сессии
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Новый заголовок
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.UpdateTitleRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handlers.OkResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      security:
+      - CookieAuth: []
+      summary: Переименовать сессию
+      tags:
+      - sessions
+  /uploads:
+    post:
+      consumes:
+      - multipart/form-data
+      description: 'Загружает файл (фото или аудио) в хранилище. Возвращает key для
+        последующего использования при создании генерации. Поддерживаемые форматы:
+        JPG, PNG, MP3, WAV, M4A. Макс. размер: 25MB.'
+      parameters:
+      - description: Файл для загрузки
+        in: formData
+        name: file
+        required: true
+        type: file
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handlers.UploadResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      security:
+      - CookieAuth: []
+      summary: Загрузить файл
+      tags:
+      - uploads
+  /user/me:
+    get:
+      description: Возвращает профиль авторизованного пользователя.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.User'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      security:
+      - CookieAuth: []
+      summary: Текущий пользователь
+      tags:
+      - user
+securityDefinitions:
+  CookieAuth:
+    in: cookie
+    name: access_token
+    type: apiKey
+swagger: "2.0"

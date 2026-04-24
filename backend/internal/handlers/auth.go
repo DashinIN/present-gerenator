@@ -13,6 +13,30 @@ import (
 	"github.com/you/fungreet/internal/services"
 )
 
+// DevLoginResponse — ответ на dev login
+type DevLoginResponse struct {
+	UserID int64 `json:"user_id" example:"42"`
+}
+
+// MeResponse — текущий пользователь
+type MeResponse = models.User
+
+// LogoutResponse — ответ при выходе
+type LogoutResponse struct {
+	Ok bool `json:"ok" example:"true"`
+}
+
+// ErrorResponse — стандартная ошибка API
+type ErrorResponse struct {
+	Error ErrorDetail `json:"error"`
+}
+
+// ErrorDetail — детали ошибки
+type ErrorDetail struct {
+	Code    string `json:"code" example:"unauthorized"`
+	Message string `json:"message" example:"Refresh token missing"`
+}
+
 type AuthHandler struct {
 	userRepo *repository.UserRepository
 	jwt      *services.JWTService
@@ -22,8 +46,16 @@ func NewAuthHandler(userRepo *repository.UserRepository, jwt *services.JWTServic
 	return &AuthHandler{userRepo: userRepo, jwt: jwt}
 }
 
-// DevLogin — мок для разработки. GET /api/auth/dev/login?user_id=1
-// При отсутствии user_id создаёт нового тестового пользователя.
+// DevLogin godoc
+// @Summary      Dev login (только разработка)
+// @Description  Создаёт тестового пользователя или логинится под существующим. Доступен только при APP_ENV=development.
+// @Tags         auth
+// @Produce      json
+// @Param        user_id  query     int  false  "ID существующего пользователя (опционально)"
+// @Success      200      {object}  DevLoginResponse
+// @Failure      400      {object}  ErrorResponse
+// @Failure      500      {object}  ErrorResponse
+// @Router       /auth/dev/login [get]
 func (h *AuthHandler) DevLogin(c *gin.Context) {
 	var userID int64
 
@@ -53,6 +85,14 @@ func (h *AuthHandler) DevLogin(c *gin.Context) {
 	h.issueTokens(c, userID)
 }
 
+// Refresh godoc
+// @Summary      Обновить access token
+// @Description  Берёт refresh_token из httpOnly cookie и выдаёт новую пару токенов.
+// @Tags         auth
+// @Produce      json
+// @Success      200  {object}  DevLoginResponse
+// @Failure      401  {object}  ErrorResponse
+// @Router       /auth/refresh [post]
 func (h *AuthHandler) Refresh(c *gin.Context) {
 	cookie, err := c.Cookie("refresh_token")
 	if err != nil {
@@ -67,12 +107,30 @@ func (h *AuthHandler) Refresh(c *gin.Context) {
 	h.issueTokens(c, claims.UserID)
 }
 
+// Logout godoc
+// @Summary      Выйти из аккаунта
+// @Description  Очищает httpOnly cookie access_token и refresh_token.
+// @Tags         auth
+// @Produce      json
+// @Security     CookieAuth
+// @Success      200  {object}  LogoutResponse
+// @Router       /auth/logout [post]
 func (h *AuthHandler) Logout(c *gin.Context) {
 	clearCookie(c, "access_token", "/")
 	clearCookie(c, "refresh_token", "/api/auth/refresh")
 	c.JSON(http.StatusOK, gin.H{"ok": true})
 }
 
+// Me godoc
+// @Summary      Текущий пользователь
+// @Description  Возвращает профиль авторизованного пользователя.
+// @Tags         user
+// @Produce      json
+// @Security     CookieAuth
+// @Success      200  {object}  models.User
+// @Failure      401  {object}  ErrorResponse
+// @Failure      500  {object}  ErrorResponse
+// @Router       /user/me [get]
 func (h *AuthHandler) Me(c *gin.Context) {
 	userID := middleware.GetUserID(c)
 	user, err := h.userRepo.FindByID(c.Request.Context(), userID)

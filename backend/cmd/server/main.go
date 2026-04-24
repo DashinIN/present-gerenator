@@ -1,3 +1,12 @@
+// @title           FunGreet API
+// @version         1.0
+// @description     API для генерации персонализированных поздравлений: AI-изображения + песни. Аутентификация через httpOnly cookie (access_token).
+// @contact.name    FunGreet Team
+// @license.name    MIT
+// @BasePath        /api
+// @securityDefinitions.apikey CookieAuth
+// @in cookie
+// @name access_token
 package main
 
 import (
@@ -14,12 +23,15 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/redis/go-redis/v9"
+	swaggerFiles "github.com/swaggo/files"
+	ginSwagger "github.com/swaggo/gin-swagger"
 	"github.com/you/fungreet/internal/config"
 	"github.com/you/fungreet/internal/handlers"
 	"github.com/you/fungreet/internal/middleware"
 	"github.com/you/fungreet/internal/repository"
 	"github.com/you/fungreet/internal/services"
 	"github.com/you/fungreet/internal/worker"
+	_ "github.com/you/fungreet/docs"
 )
 
 func main() {
@@ -106,6 +118,8 @@ func main() {
 	r.GET("/api/health", func(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{"status": "ok", "time": time.Now().UTC()})
 	})
+
+	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 
 	auth := r.Group("/api/auth")
 	{

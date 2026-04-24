@@ -35,7 +35,41 @@ func (h *SessionHandler) resolveKeys(ctx context.Context, keys []string) []strin
 	return urls
 }
 
-// GET /api/sessions
+// SessionListResponse — список сессий
+type SessionListResponse struct {
+	Sessions []models.GenerationSession `json:"sessions"`
+	Limit    int                        `json:"limit" example:"30"`
+	Offset   int                        `json:"offset" example:"0"`
+}
+
+// SessionThreadResponse — сессия со всеми генерациями
+type SessionThreadResponse struct {
+	Session     models.GenerationSession  `json:"session"`
+	Generations []models.GenerationRequest `json:"generations"`
+}
+
+// UpdateTitleRequest — запрос переименования сессии
+type UpdateTitleRequest struct {
+	Title string `json:"title" binding:"required,max=300" example:"Поздравление маме"`
+}
+
+// OkResponse — простой ответ об успехе
+type OkResponse struct {
+	Ok bool `json:"ok" example:"true"`
+}
+
+// List godoc
+// @Summary      Список сессий
+// @Description  Возвращает список диалоговых сессий (тредов) текущего пользователя, отсортированных по дате обновления.
+// @Tags         sessions
+// @Produce      json
+// @Security     CookieAuth
+// @Param        limit   query     int  false  "Лимит (макс. 100)"  default(30)
+// @Param        offset  query     int  false  "Смещение"           default(0)
+// @Success      200     {object}  SessionListResponse
+// @Failure      401     {object}  ErrorResponse
+// @Failure      500     {object}  ErrorResponse
+// @Router       /sessions [get]
 func (h *SessionHandler) List(c *gin.Context) {
 	userID := middleware.GetUserID(c)
 	limit, _ := strconv.Atoi(c.DefaultQuery("limit", "30"))
@@ -55,7 +89,20 @@ func (h *SessionHandler) List(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"sessions": sessions, "limit": limit, "offset": offset})
 }
 
-// GET /api/sessions/:id  — сессия + все генерации в ней (тред)
+// Get godoc
+// @Summary      Получить сессию с генерациями
+// @Description  Возвращает сессию и все генерации в ней (тред). URL изображений и аудио — рабочие ссылки для скачивания.
+// @Tags         sessions
+// @Produce      json
+// @Security     CookieAuth
+// @Param        id   path      string  true  "UUID сессии"
+// @Success      200  {object}  SessionThreadResponse
+// @Failure      400  {object}  ErrorResponse
+// @Failure      401  {object}  ErrorResponse
+// @Failure      403  {object}  ErrorResponse
+// @Failure      404  {object}  ErrorResponse
+// @Failure      500  {object}  ErrorResponse
+// @Router       /sessions/{id} [get]
 func (h *SessionHandler) Get(c *gin.Context) {
 	userID := middleware.GetUserID(c)
 	id, err := uuid.Parse(c.Param("id"))
@@ -97,7 +144,22 @@ func (h *SessionHandler) Get(c *gin.Context) {
 	})
 }
 
-// PATCH /api/sessions/:id  — переименовать сессию
+// UpdateTitle godoc
+// @Summary      Переименовать сессию
+// @Description  Изменяет заголовок (название) сессии. Макс. 300 символов.
+// @Tags         sessions
+// @Accept       json
+// @Produce      json
+// @Security     CookieAuth
+// @Param        id    path      string              true  "UUID сессии"
+// @Param        body  body      UpdateTitleRequest  true  "Новый заголовок"
+// @Success      200   {object}  OkResponse
+// @Failure      400   {object}  ErrorResponse
+// @Failure      401   {object}  ErrorResponse
+// @Failure      403   {object}  ErrorResponse
+// @Failure      404   {object}  ErrorResponse
+// @Failure      500   {object}  ErrorResponse
+// @Router       /sessions/{id} [patch]
 func (h *SessionHandler) UpdateTitle(c *gin.Context) {
 	userID := middleware.GetUserID(c)
 	id, err := uuid.Parse(c.Param("id"))

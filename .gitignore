@@ -1,9 +1,9 @@
 .claude
-docs
 examples
 
 # env
 .env
+backend/.env
 
 # node
 node_modules/
