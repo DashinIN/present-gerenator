@@ -138,9 +138,17 @@ func main() {
 
 	r.GET("/api/files/*key", func(c *gin.Context) {
 		key := c.Param("key")[1:]
-		filename := filepath.Base(key)
-		c.Header("Content-Disposition", "attachment; filename=\""+filename+"\"")
-		http.ServeFile(c.Writer, c.Request, cfg.StorageLocalDir+"/"+key)
+		filePath := filepath.Join(cfg.StorageLocalDir, filepath.FromSlash(key))
+		f, err := os.Open(filePath)
+		if err != nil {
+			c.Status(http.StatusNotFound)
+			return
+		}
+		defer f.Close()
+		stat, _ := f.Stat()
+		filename := filepath.Base(filePath)
+		c.Writer.Header().Set("Content-Disposition", `attachment; filename="`+filename+`"`)
+		http.ServeContent(c.Writer, c.Request, filename, stat.ModTime(), f)
 	})
 
 	// Раздаём собранный фронтенд в production (когда есть ./web/dist)
