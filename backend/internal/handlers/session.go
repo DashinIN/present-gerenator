@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"context"
 	"net/http"
 	"strconv"
 
@@ -9,15 +10,29 @@ import (
 	"github.com/you/fungreet/internal/middleware"
 	"github.com/you/fungreet/internal/models"
 	"github.com/you/fungreet/internal/repository"
+	"github.com/you/fungreet/internal/services"
 )
 
 type SessionHandler struct {
 	sessionRepo *repository.SessionRepository
 	genRepo     *repository.GenerationRepository
+	storage     services.StorageService
 }
 
-func NewSessionHandler(sessionRepo *repository.SessionRepository, genRepo *repository.GenerationRepository) *SessionHandler {
-	return &SessionHandler{sessionRepo: sessionRepo, genRepo: genRepo}
+func NewSessionHandler(sessionRepo *repository.SessionRepository, genRepo *repository.GenerationRepository, storage services.StorageService) *SessionHandler {
+	return &SessionHandler{sessionRepo: sessionRepo, genRepo: genRepo, storage: storage}
+}
+
+func (h *SessionHandler) resolveKeys(ctx context.Context, keys []string) []string {
+	urls := make([]string, len(keys))
+	for i, key := range keys {
+		if u, err := h.storage.GetURL(ctx, key); err == nil {
+			urls[i] = u
+		} else {
+			urls[i] = key
+		}
+	}
+	return urls
 }
 
 // GET /api/sessions
@@ -70,6 +85,10 @@ func (h *SessionHandler) Get(c *gin.Context) {
 	}
 	if gens == nil {
 		gens = []models.GenerationRequest{}
+	}
+	for i := range gens {
+		gens[i].ResultImages = h.resolveKeys(c.Request.Context(), gens[i].ResultImages)
+		gens[i].ResultAudios = h.resolveKeys(c.Request.Context(), gens[i].ResultAudios)
 	}
 
 	c.JSON(http.StatusOK, gin.H{

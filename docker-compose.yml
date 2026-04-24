@@ -1,0 +1,49 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: fungreet
+      POSTGRES_USER: fungreet
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-fungreet}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U fungreet"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  app:
+    build: .
+    ports:
+      - "8080:8080"
+    environment:
+      APP_ENV: production
+      APP_PORT: "8080"
+      BASE_URL: ${BASE_URL:-http://localhost:8080}
+      DATABASE_URL: postgres://fungreet:${POSTGRES_PASSWORD:-fungreet}@postgres:5432/fungreet?sslmode=disable
+      REDIS_URL: redis://redis:6379
+      JWT_SECRET: ${JWT_SECRET:?JWT_SECRET is required}
+      STORAGE_MODE: local
+      STORAGE_LOCAL_DIR: /data/uploads
+      WORKER_COUNT: ${WORKER_COUNT:-4}
+    volumes:
+      - uploads:/data/uploads
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+  uploads:

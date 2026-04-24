@@ -1,5 +1,5 @@
 import { useState, useRef, useCallback } from 'react'
-import { Paperclip, Send, X, Music } from 'lucide-react'
+import { Paperclip, Send, X, Music, ImageIcon } from 'lucide-react'
 import { useTariff, useBalance } from '@/hooks/useAuth'
 import { Button } from '@/components/ui/Button'
 import { Textarea } from '@/components/ui/Textarea'
@@ -124,21 +124,23 @@ export function ChatInput({ sessionId, parentId, onSent, onInsufficientCredits, 
           </div>
         )}
 
-        {/* Поля песни — плавно появляются когда выбрана хотя бы 1 песня */}
+        {/* Поля песни */}
         <div className={`song-fields${songCount > 0 ? ' open' : ''}`}>
-          <Textarea
-            value={songLyrics}
-            onChange={e => setSongLyrics(e.target.value)}
-            placeholder="Текст песни (необязательно)..."
-            rows={2}
-            style={{ ...inputStyle, resize: 'vertical' }}
-          />
-          <input
-            value={songStyle}
-            onChange={e => setSongStyle(e.target.value)}
-            placeholder="Стиль (весёлый поп, джаз, рок...)"
-            style={inputStyle}
-          />
+          <div style={{ display: 'flex', gap: 8 }}>
+            <Textarea
+              value={songLyrics}
+              onChange={e => setSongLyrics(e.target.value)}
+              placeholder="Текст песни (необязательно)..."
+              rows={2}
+              style={{ ...inputStyle, flex: 2, resize: 'vertical' }}
+            />
+            <input
+              value={songStyle}
+              onChange={e => setSongStyle(e.target.value)}
+              placeholder="Стиль (поп, джаз, рок...)"
+              style={{ ...inputStyle, flex: 1 }}
+            />
+          </div>
         </div>
 
         {/* Прикреплённые файлы */}
@@ -197,8 +199,8 @@ export function ChatInput({ sessionId, parentId, onSent, onInsufficientCredits, 
               <Paperclip size={16} />
             </Button>
 
-            <CountPicker label="Картинки" value={imageCount} max={3} onChange={setImageCount} />
-            <CountPicker label="Песни" value={songCount} max={3} onChange={setSongCount} />
+            <CountPicker icon={<ImageIcon size={13} />} label="Картинки" value={imageCount} max={3} onChange={setImageCount} />
+            <CountPicker icon={<Music size={13} />} label="Песни" value={songCount} max={3} onChange={setSongCount} />
 
             <div style={{ flex: 1 }} />
 
@@ -224,14 +226,14 @@ export function ChatInput({ sessionId, parentId, onSent, onInsufficientCredits, 
   )
 }
 
-function CountPicker({ label, value, max, onChange }: {
-  label: string; value: number; max: number; onChange: (v: number) => void
+function CountPicker({ icon, label, value, max, onChange }: {
+  icon: React.ReactNode; label: string; value: number; max: number; onChange: (v: number) => void
 }) {
   return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '5px 10px', borderRadius: 8, background: 'var(--surface2)', fontSize: 13 }}>
-      <span style={{ color: 'var(--text-muted)', fontSize: 12 }}>{label}</span>
+    <div title={label} style={{ display: 'flex', alignItems: 'center', gap: 2, padding: '3px 6px', borderRadius: 7, background: 'var(--surface2)', fontSize: 12 }}>
+      <span style={{ color: 'var(--text-muted)', display: 'flex', alignItems: 'center' }}>{icon}</span>
       <button onClick={() => onChange(Math.max(0, value - 1))} style={counterBtn}>−</button>
-      <span style={{ minWidth: 16, textAlign: 'center', fontWeight: 600, color: value > 0 ? 'var(--primary)' : 'var(--text-muted)' }}>{value}</span>
+      <span style={{ minWidth: 12, textAlign: 'center', fontWeight: 600, color: value > 0 ? 'var(--primary)' : 'var(--text-muted)' }}>{value}</span>
       <button onClick={() => onChange(Math.min(max, value + 1))} style={counterBtn}>+</button>
     </div>
   )

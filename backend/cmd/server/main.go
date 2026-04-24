@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"strings"
 	"syscall"
 	"time"
 
@@ -60,7 +61,10 @@ func main() {
 
 	var storage services.StorageService
 	if cfg.StorageMode == "local" {
-		baseURL := fmt.Sprintf("http://localhost:%s", cfg.AppPort)
+		baseURL := cfg.BaseURL
+		if baseURL == "" {
+			baseURL = fmt.Sprintf("http://localhost:%s", cfg.AppPort)
+		}
 		storage, err = services.NewLocalStorage(cfg.StorageLocalDir, baseURL)
 		if err != nil {
 			slog.Error("storage error", "err", err)
@@ -89,7 +93,7 @@ func main() {
 	authH := handlers.NewAuthHandler(userRepo, jwtSvc)
 	billingH := handlers.NewBillingHandler(billingSvc)
 	genH := handlers.NewGenerationHandler(genRepo, sessionRepo, billingSvc, storage, queue)
-	sessionH := handlers.NewSessionHandler(sessionRepo, genRepo)
+	sessionH := handlers.NewSessionHandler(sessionRepo, genRepo, storage)
 
 	if !cfg.IsDev() {
 		gin.SetMode(gin.ReleaseMode)
@@ -135,6 +139,20 @@ func main() {
 		key := c.Param("key")[1:]
 		http.ServeFile(c.Writer, c.Request, cfg.StorageLocalDir+"/"+key)
 	})
+
+	// Раздаём собранный фронтенд в production (когда есть ./web/dist)
+	const webDist = "./web/dist"
+	if _, statErr := os.Stat(webDist); statErr == nil {
+		r.Static("/assets", webDist+"/assets")
+		r.NoRoute(func(c *gin.Context) {
+			if strings.HasPrefix(c.Request.URL.Path, "/api") {
+				c.JSON(http.StatusNotFound, gin.H{"error": gin.H{"code": "not_found", "message": "Not found"}})
+				return
+			}
+			c.File(webDist + "/index.html")
+		})
+		slog.Info("serving frontend", "path", webDist)
+	}
 
 	srv := &http.Server{Addr: ":" + cfg.AppPort, Handler: r}
 

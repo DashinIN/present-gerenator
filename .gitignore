@@ -1,3 +1,15 @@
 .claude
 docs
 examples
+
+# env
+.env
+
+# node
+node_modules/
+package-lock.json
+
+# backend
+backend/server.log
+backend/data/
+backend/bin/

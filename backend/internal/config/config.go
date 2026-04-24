@@ -17,6 +17,8 @@ type Config struct {
 
 	JWTSecret string
 
+	BaseURL string // публичный URL сервера (для file ссылок в prod)
+
 	StorageMode     string // "local" | "r2"
 	StorageLocalDir string
 
@@ -34,6 +36,7 @@ func Load() (*Config, error) {
 	cfg := &Config{
 		AppEnv:          getEnv("APP_ENV", "development"),
 		AppPort:         getEnv("APP_PORT", "8080"),
+		BaseURL:         getEnv("BASE_URL", ""),
 		DatabaseURL:     getEnv("DATABASE_URL", ""),
 		RedisURL:        getEnv("REDIS_URL", "redis://localhost:6379"),
 		JWTSecret:       getEnv("JWT_SECRET", ""),

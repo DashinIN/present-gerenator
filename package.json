@@ -1,0 +1,15 @@
+{
+  "private": true,
+  "scripts": {
+    "dev": "npm run infra && concurrently -n back,front -c blue,green \"npm run back\" \"npm run front\"",
+    "infra": "docker compose -f backend/docker-compose.yml up -d",
+    "infra:stop": "docker compose -f backend/docker-compose.yml down",
+    "back": "cd backend && go run ./cmd/server",
+    "front": "cd frontend && npm run dev",
+    "build": "cd frontend && npm run build",
+    "install:front": "cd frontend && npm install"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.2"
+  }
+}

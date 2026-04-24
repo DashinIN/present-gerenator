@@ -18,9 +18,25 @@ export function ChatThread({ generations, noCreditsAt }: ChatThreadProps) {
   if (generations.length === 0) {
     return (
       <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', gap: 12, color: 'var(--text-muted)' }}>
-        <div style={{ fontSize: 40 }}>🎉</div>
-        <div style={{ fontSize: 15, fontWeight: 500 }}>Создайте первое поздравление</div>
-        <div style={{ fontSize: 13 }}>Добавьте промпт и нажмите отправить</div>
+        {noCreditsAt ? (
+          <div style={{ display: 'flex', gap: 10 }}>
+            <BotAvatar />
+            <div style={{
+              background: 'var(--surface)', border: '1px solid var(--error)',
+              borderRadius: '4px 16px 16px 16px', padding: '14px 16px',
+              fontSize: 14, color: 'var(--error)',
+            }}>
+              Кредиты закончились. Пополните баланс, чтобы продолжить.
+              <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 6 }}>{noCreditsAt}</div>
+            </div>
+          </div>
+        ) : (
+          <>
+            <div style={{ fontSize: 40 }}>🎉</div>
+            <div style={{ fontSize: 15, fontWeight: 500 }}>Создайте первое поздравление</div>
+            <div style={{ fontSize: 13 }}>Добавьте промпт и нажмите отправить</div>
+          </>
+        )}
       </div>
     )
   }
@@ -225,7 +241,7 @@ function CompletedState({ gen }: { gen: GenerationRequest }) {
       {gen.result_audios?.length > 0 && (
         <div style={{ padding: '14px 16px 8px', display: 'flex', flexDirection: 'column', gap: 8 }}>
           <div style={{ fontSize: 12, color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: 5, marginBottom: 4 }}>
-            <CheckCircle2 size={13} style={{ color: 'var(--success)' }} /> Готово
+            <CheckCircle2 size={13} style={{ color: 'var(--success)' }} />
           </div>
           {gen.result_audios.map((url, i) => (
             <div key={i} style={{
@@ -244,7 +260,7 @@ function CompletedState({ gen }: { gen: GenerationRequest }) {
       {/* Если только картинки — показываем статус внизу */}
       {gen.result_images?.length > 0 && !gen.result_audios?.length && (
         <div style={{ padding: '10px 16px 8px', display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: 'var(--success)' }}>
-          <CheckCircle2 size={13} /> Готово
+          <CheckCircle2 size={13} />
         </div>
       )}
     </div>
