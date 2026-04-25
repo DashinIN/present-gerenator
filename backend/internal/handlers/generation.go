@@ -26,6 +26,7 @@ type GenerationHandler struct {
 	billing     *services.BillingService
 	storage     services.StorageService
 	queue       *worker.Queue
+	songGen     services.SongGenerator
 }
 
 func NewGenerationHandler(
@@ -34,6 +35,7 @@ func NewGenerationHandler(
 	billing *services.BillingService,
 	storage services.StorageService,
 	queue *worker.Queue,
+	songGen services.SongGenerator,
 ) *GenerationHandler {
 	return &GenerationHandler{
 		genRepo:     genRepo,
@@ -41,6 +43,7 @@ func NewGenerationHandler(
 		billing:     billing,
 		storage:     storage,
 		queue:       queue,
+		songGen:     songGen,
 	}
 }
 
@@ -85,10 +88,9 @@ type UploadResponse struct {
 // @Param        parent_id       formData  string  false  "UUID родительской генерации в треде"
 // @Param        image_count     formData  int     false  "Количество изображений (0-3)"     default(3)
 // @Param        song_count      formData  int     false  "Количество песен (0-3)"            default(1)
-// @Param        recipient_name  formData  string  false  "Имя получателя поздравления"
-// @Param        occasion        formData  string  false  "Повод (день рождения, новый год и т.д.)"
 // @Param        image_prompt    formData  string  false  "Текстовое описание для генерации изображений"
-// @Param        song_lyrics     formData  string  false  "Текст песни"
+// @Param        song_prompt     formData  string  false  "Промт для генерации текста песни (если song_lyrics не задан)"
+// @Param        song_lyrics     formData  string  false  "Текст песни (если задан — song_prompt игнорируется)"
 // @Param        song_style      formData  string  false  "Стиль песни (pop, jazz, rock и т.д.)"
 // @Param        photos[]        formData  file    false  "Фото пользователя JPG/PNG до 10MB (макс. 3)"
 // @Param        audio           formData  file    false  "Аудио MP3/WAV/M4A до 25MB"
@@ -115,7 +117,12 @@ func (h *GenerationHandler) Create(c *gin.Context) {
 		return
 	}
 
-	cost, tariff, err := h.billing.Estimate(c.Request.Context(), imageCount, songCount)
+	lyricsCount := 0
+	if songCount > 0 && c.PostForm("song_prompt") != "" && c.PostForm("song_lyrics") == "" {
+		lyricsCount = 1
+	}
+
+	cost, tariff, err := h.billing.Estimate(c.Request.Context(), imageCount, songCount, lyricsCount)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, apiError("internal_error", "Failed to get tariff"))
 		return
@@ -175,10 +182,7 @@ func (h *GenerationHandler) Create(c *gin.Context) {
 
 	// Если сессии нет — создаём новую, используя prompt как заголовок
 	if sessionID == nil {
-		title := c.PostForm("recipient_name")
-		if title == "" {
-			title = c.PostForm("image_prompt")
-		}
+		title := c.PostForm("image_prompt")
 		if len(title) > 60 {
 			title = title[:60]
 		}
@@ -274,9 +278,8 @@ func (h *GenerationHandler) Create(c *gin.Context) {
 		UserID:        userID,
 		SessionID:     sessionID,
 		ParentID:      parentID,
-		RecipientName: c.PostForm("recipient_name"),
-		Occasion:      c.PostForm("occasion"),
 		ImagePrompt:   c.PostForm("image_prompt"),
+		SongPrompt:    c.PostForm("song_prompt"),
 		SongLyrics:    c.PostForm("song_lyrics"),
 		SongStyle:     c.PostForm("song_style"),
 		ImageCount:    imageCount,
@@ -478,6 +481,82 @@ func (h *GenerationHandler) Upload(c *gin.Context) {
 func (h *GenerationHandler) resolveGenURLs(ctx context.Context, gen *models.GenerationRequest) {
 	gen.ResultImages = h.resolveKeys(ctx, gen.ResultImages)
 	gen.ResultAudios = h.resolveKeys(ctx, gen.ResultAudios)
+}
+
+// LyricsRequest — запрос генерации текста песни
+type LyricsRequest struct {
+	Prompt string `json:"prompt" binding:"required"`
+}
+
+// LyricsResponse — сгенерированный текст песни
+type LyricsResponse struct {
+	Text  string `json:"text" example:"Куплет 1...\nПрипев..."`
+	Title string `json:"title" example:"Поздравление"`
+}
+
+// GenerateLyrics godoc
+// @Summary      Сгенерировать текст песни
+// @Description  Генерирует текст и заголовок песни по промту через Suno AI. Требует SUNO_API_KEY.
+// @Tags         generations
+// @Accept       json
+// @Produce      json
+// @Security     CookieAuth
+// @Param        body  body      LyricsRequest  true  "Промт"
+// @Success      200   {object}  LyricsResponse
+// @Failure      400   {object}  ErrorResponse
+// @Failure      401   {object}  ErrorResponse
+// @Failure      503   {object}  ErrorResponse  "Генератор текста недоступен"
+// @Router       /generations/lyrics [post]
+func (h *GenerationHandler) GenerateLyrics(c *gin.Context) {
+	lg, ok := h.songGen.(services.LyricsGenerator)
+	if !ok {
+		c.JSON(http.StatusServiceUnavailable, apiError("lyrics_unavailable", "Lyrics generator not configured"))
+		return
+	}
+
+	var req LyricsRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, apiError("invalid_param", "prompt required"))
+		return
+	}
+
+	userID := middleware.GetUserID(c)
+
+	tariff, err := h.billing.GetActiveTariff(c.Request.Context())
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, apiError("internal_error", "Failed to get tariff"))
+		return
+	}
+
+	cost := tariff.PricePerLyrics
+	if cost > 0 {
+		balance, err := h.billing.GetBalance(c.Request.Context(), userID)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, apiError("internal_error", "Failed to check balance"))
+			return
+		}
+		if balance < cost {
+			c.JSON(http.StatusPaymentRequired, apiError("insufficient_credits",
+				fmt.Sprintf("Need %d credits, have %d", cost, balance)))
+			return
+		}
+		if err := h.billing.Charge(c.Request.Context(), userID, cost, uuid.New(), "Lyrics generation"); err != nil {
+			c.JSON(http.StatusInternalServerError, apiError("internal_error", "Failed to charge credits"))
+			return
+		}
+	}
+
+	text, title, err := lg.GenerateLyrics(c.Request.Context(), req.Prompt)
+	if err != nil {
+		if cost > 0 {
+			_ = h.billing.Refund(c.Request.Context(), userID, cost, uuid.New())
+		}
+		slog.Error("lyrics generation failed", "err", err)
+		c.JSON(http.StatusInternalServerError, apiError("generation_failed", err.Error()))
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"text": text, "title": title})
 }
 
 func (h *GenerationHandler) resolveKeys(ctx context.Context, keys []string) []string {

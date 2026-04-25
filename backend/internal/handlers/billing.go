@@ -104,17 +104,18 @@ func (h *BillingHandler) Estimate(c *gin.Context) {
 		return
 	}
 
-	cost, tariff, err := h.billing.Estimate(c.Request.Context(), images, songs)
+	cost, tariff, err := h.billing.Estimate(c.Request.Context(), images, songs, 0)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, apiError("internal_error", err.Error()))
 		return
 	}
 	c.JSON(http.StatusOK, gin.H{
-		"images":         images,
-		"songs":          songs,
-		"cost":           cost,
+		"images":          images,
+		"songs":           songs,
+		"cost":            cost,
 		"price_per_image": tariff.PricePerImage,
 		"price_per_song":  tariff.PricePerSong,
+		"price_per_lyrics": tariff.PricePerLyrics,
 	})
 }
 

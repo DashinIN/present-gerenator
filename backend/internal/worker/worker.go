@@ -147,21 +147,74 @@ func (w *Worker) process(ctx context.Context, task *Task) error {
 			_ = w.genRepo.UpdateStatus(ctx, gen.ID, models.StatusProcessingAudio, "")
 		}
 		eg.Go(func() error {
-			songs, err := w.songGen.Generate(egCtx, gen.SongLyrics, gen.SongStyle, gen.SongCount)
-			if err != nil {
-				return fmt.Errorf("song generation: %w", err)
-			}
-			keys := make([]string, len(songs))
-			for i, song := range songs {
-				key := fmt.Sprintf("results/%s/song_%d.mp3", gen.ID, i)
-				if err := w.storage.Upload(egCtx, key, bytes.NewReader(song), "audio/mpeg"); err != nil {
-					return fmt.Errorf("upload song %d: %w", i, err)
+			lyrics := gen.SongLyrics
+			if lyrics == "" && gen.SongPrompt != "" {
+				if lg, ok := w.songGen.(services.LyricsGenerator); ok {
+					generated, _, err := lg.GenerateLyrics(egCtx, gen.SongPrompt)
+					if err != nil {
+						return fmt.Errorf("lyrics generation: %w", err)
+					}
+					lyrics = generated
 				}
-				keys[i] = key
 			}
-			mu.Lock()
-			resultAudios = keys
-			mu.Unlock()
+
+			uploadSongs := func(songs [][]byte, offset int) ([]string, error) {
+				keys := make([]string, len(songs))
+				for i, song := range songs {
+					key := fmt.Sprintf("results/%s/song_%d.mp3", gen.ID, offset+i)
+					if err := w.storage.Upload(egCtx, key, bytes.NewReader(song), "audio/mpeg"); err != nil {
+						return nil, fmt.Errorf("upload song %d: %w", offset+i, err)
+					}
+					keys[i] = key
+				}
+				return keys, nil
+			}
+
+			if sg, ok := w.songGen.(services.StreamingSongGenerator); ok {
+				var partialKeys []string
+				songs, err := sg.GenerateStreaming(egCtx, lyrics, gen.SongStyle, gen.SongCount, func(partial [][]byte) {
+					keys, err := uploadSongs(partial, 0)
+					if err != nil {
+						slog.Warn("partial upload failed", "err", err)
+						return
+					}
+					partialKeys = keys
+					if err := w.genRepo.AppendAudios(egCtx, gen.ID, keys); err != nil {
+						slog.Error("AppendAudios failed", "err", err, "generation_id", gen.ID)
+					} else {
+						slog.Info("partial audio saved", "generation_id", gen.ID, "count", len(keys), "keys", keys)
+					}
+				})
+				if err != nil {
+					return fmt.Errorf("song generation: %w", err)
+				}
+				// songs содержит ВСЕ клипы (включая уже скачанные partial).
+				// Загружаем только те, что ещё не были сохранены.
+				newSongs := songs[len(partialKeys):]
+				var finalKeys []string
+				if len(newSongs) > 0 {
+					keys, err := uploadSongs(newSongs, len(partialKeys))
+					if err != nil {
+						return err
+					}
+					finalKeys = keys
+				}
+				mu.Lock()
+				resultAudios = append(partialKeys, finalKeys...)
+				mu.Unlock()
+			} else {
+				songs, err := w.songGen.Generate(egCtx, lyrics, gen.SongStyle, gen.SongCount)
+				if err != nil {
+					return fmt.Errorf("song generation: %w", err)
+				}
+				keys, err := uploadSongs(songs, 0)
+				if err != nil {
+					return err
+				}
+				mu.Lock()
+				resultAudios = keys
+				mu.Unlock()
+			}
 			return nil
 		})
 	}

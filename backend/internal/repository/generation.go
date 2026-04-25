@@ -25,9 +25,8 @@ type CreateGenerationParams struct {
 	UserID        int64
 	SessionID     *uuid.UUID
 	ParentID      *uuid.UUID
-	RecipientName string
-	Occasion      string
 	ImagePrompt   string
+	SongPrompt    string
 	SongLyrics    string
 	SongStyle     string
 	ImageCount    int
@@ -42,16 +41,16 @@ func (r *GenerationRepository) Create(ctx context.Context, p CreateGenerationPar
 	var g models.GenerationRequest
 	err := r.db.QueryRowContext(ctx,
 		`INSERT INTO generation_requests
-		 (id, user_id, session_id, parent_id, recipient_name, occasion, image_prompt,
-		  song_lyrics, song_style, image_count, song_count, input_photos, input_audio_key,
+		 (id, user_id, session_id, parent_id, image_prompt,
+		  song_prompt, song_lyrics, song_style, image_count, song_count, input_photos, input_audio_key,
 		  credits_spent, tariff_id)
-		 VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15)
-		 RETURNING id, user_id, session_id, parent_id, status, recipient_name, occasion,
-		           image_prompt, song_lyrics, song_style, image_count, song_count,
+		 VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14)
+		 RETURNING id, user_id, session_id, parent_id, status,
+		           image_prompt, song_prompt, song_lyrics, song_style, image_count, song_count,
 		           input_photos, input_audio_key, result_images, result_audios,
 		           error_message, credits_spent, tariff_id, created_at, completed_at`,
 		p.ID, p.UserID, p.SessionID, p.ParentID,
-		p.RecipientName, p.Occasion, p.ImagePrompt, p.SongLyrics, p.SongStyle,
+		p.ImagePrompt, p.SongPrompt, p.SongLyrics, p.SongStyle,
 		p.ImageCount, p.SongCount, pq.Array(p.InputPhotos), p.InputAudioKey,
 		p.CreditsSpent, p.TariffID,
 	).Scan(scanGeneration(&g)...)
@@ -64,8 +63,8 @@ func (r *GenerationRepository) Create(ctx context.Context, p CreateGenerationPar
 func (r *GenerationRepository) GetByID(ctx context.Context, id uuid.UUID) (*models.GenerationRequest, error) {
 	var g models.GenerationRequest
 	err := r.db.QueryRowContext(ctx,
-		`SELECT id, user_id, session_id, parent_id, status, recipient_name, occasion,
-		        image_prompt, song_lyrics, song_style, image_count, song_count,
+		`SELECT id, user_id, session_id, parent_id, status,
+		        image_prompt, song_prompt, song_lyrics, song_style, image_count, song_count,
 		        input_photos, input_audio_key, result_images, result_audios,
 		        error_message, credits_spent, tariff_id, created_at, completed_at
 		 FROM generation_requests WHERE id = $1`, id,
@@ -81,8 +80,8 @@ func (r *GenerationRepository) GetByID(ctx context.Context, id uuid.UUID) (*mode
 
 func (r *GenerationRepository) ListBySession(ctx context.Context, sessionID uuid.UUID) ([]models.GenerationRequest, error) {
 	rows, err := r.db.QueryContext(ctx,
-		`SELECT id, user_id, session_id, parent_id, status, recipient_name, occasion,
-		        image_prompt, song_lyrics, song_style, image_count, song_count,
+		`SELECT id, user_id, session_id, parent_id, status,
+		        image_prompt, song_prompt, song_lyrics, song_style, image_count, song_count,
 		        input_photos, input_audio_key, result_images, result_audios,
 		        error_message, credits_spent, tariff_id, created_at, completed_at
 		 FROM generation_requests WHERE session_id = $1
@@ -107,8 +106,8 @@ func (r *GenerationRepository) ListBySession(ctx context.Context, sessionID uuid
 
 func (r *GenerationRepository) ListByUser(ctx context.Context, userID int64, limit, offset int) ([]models.GenerationRequest, error) {
 	rows, err := r.db.QueryContext(ctx,
-		`SELECT id, user_id, session_id, parent_id, status, recipient_name, occasion,
-		        image_prompt, song_lyrics, song_style, image_count, song_count,
+		`SELECT id, user_id, session_id, parent_id, status,
+		        image_prompt, song_prompt, song_lyrics, song_style, image_count, song_count,
 		        input_photos, input_audio_key, result_images, result_audios,
 		        error_message, credits_spent, tariff_id, created_at, completed_at
 		 FROM generation_requests WHERE user_id = $1
@@ -155,6 +154,15 @@ func (r *GenerationRepository) UpdateResults(ctx context.Context, id uuid.UUID, 
 	return err
 }
 
+// AppendAudios сохраняет частичные результаты аудио, не меняя статус генерации.
+func (r *GenerationRepository) AppendAudios(ctx context.Context, id uuid.UUID, audios []string) error {
+	_, err := r.db.ExecContext(ctx,
+		`UPDATE generation_requests SET result_audios=$1 WHERE id=$2`,
+		pq.Array(audios), id,
+	)
+	return err
+}
+
 func (r *GenerationRepository) IncrementRetry(ctx context.Context, id uuid.UUID) (int, error) {
 	var count int
 	err := r.db.QueryRowContext(ctx,
@@ -167,7 +175,7 @@ func (r *GenerationRepository) IncrementRetry(ctx context.Context, id uuid.UUID)
 func scanGeneration(g *models.GenerationRequest) []any {
 	return []any{
 		&g.ID, &g.UserID, &g.SessionID, &g.ParentID, &g.Status,
-		&g.RecipientName, &g.Occasion, &g.ImagePrompt, &g.SongLyrics, &g.SongStyle,
+		&g.ImagePrompt, &g.SongPrompt, &g.SongLyrics, &g.SongStyle,
 		&g.ImageCount, &g.SongCount,
 		pq.Array(&g.InputPhotos), &g.InputAudioKey,
 		pq.Array(&g.ResultImages), pq.Array(&g.ResultAudios),

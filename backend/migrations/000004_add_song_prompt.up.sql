@@ -1,0 +1,1 @@
+ALTER TABLE generation_requests ADD COLUMN IF NOT EXISTS song_prompt TEXT NOT NULL DEFAULT '';

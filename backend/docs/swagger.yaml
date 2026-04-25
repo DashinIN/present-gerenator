@@ -199,11 +199,7 @@ definitions:
         items:
           type: string
         type: array
-      occasion:
-        type: string
       parent_id:
-        type: string
-      recipient_name:
         type: string
       result_audios:
         items:
@@ -530,14 +526,6 @@ paths:
         in: formData
         name: song_count
         type: integer
-      - description: Имя получателя поздравления
-        in: formData
-        name: recipient_name
-        type: string
-      - description: Повод (день рождения, новый год и т.д.)
-        in: formData
-        name: occasion
-        type: string
       - description: Текстовое описание для генерации изображений
         in: formData
         name: image_prompt

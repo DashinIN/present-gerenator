@@ -23,9 +23,9 @@ func NewBillingRepository(db *sql.DB) *BillingRepository {
 func (r *BillingRepository) GetActiveTariff(ctx context.Context) (*models.Tariff, error) {
 	var t models.Tariff
 	err := r.db.QueryRowContext(ctx,
-		`SELECT id, name, price_per_image, price_per_song, is_active, created_at
+		`SELECT id, name, price_per_image, price_per_song, price_per_lyrics, is_active, created_at
 		 FROM tariffs WHERE is_active = true LIMIT 1`,
-	).Scan(&t.ID, &t.Name, &t.PricePerImage, &t.PricePerSong, &t.IsActive, &t.CreatedAt)
+	).Scan(&t.ID, &t.Name, &t.PricePerImage, &t.PricePerSong, &t.PricePerLyrics, &t.IsActive, &t.CreatedAt)
 	if errors.Is(err, sql.ErrNoRows) {
 		return nil, ErrNotFound
 	}

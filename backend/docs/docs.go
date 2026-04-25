@@ -395,18 +395,6 @@ const docTemplate = `{
                     },
                     {
                         "type": "string",
-                        "description": "Имя получателя поздравления",
-                        "name": "recipient_name",
-                        "in": "formData"
-                    },
-                    {
-                        "type": "string",
-                        "description": "Повод (день рождения, новый год и т.д.)",
-                        "name": "occasion",
-                        "in": "formData"
-                    },
-                    {
-                        "type": "string",
                         "description": "Текстовое описание для генерации изображений",
                         "name": "image_prompt",
                         "in": "formData"
@@ -1188,13 +1176,7 @@ const docTemplate = `{
                         "type": "string"
                     }
                 },
-                "occasion": {
-                    "type": "string"
-                },
                 "parent_id": {
-                    "type": "string"
-                },
-                "recipient_name": {
                     "type": "string"
                 },
                 "result_audios": {

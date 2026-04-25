@@ -24,6 +24,16 @@ type SongGenerator interface {
 	Generate(ctx context.Context, lyrics, style string, count int) ([][]byte, error)
 }
 
+// LyricsGenerator — опциональное расширение SongGenerator: генерирует текст и заголовок песни по промту.
+type LyricsGenerator interface {
+	GenerateLyrics(ctx context.Context, prompt string) (text string, title string, err error)
+}
+
+// StreamingSongGenerator — опциональное расширение: вызывает onPartial когда первый клип готов.
+type StreamingSongGenerator interface {
+	GenerateStreaming(ctx context.Context, lyrics, style string, count int, onPartial func([][]byte)) ([][]byte, error)
+}
+
 // MockImageGenerator возвращает placeholder PNG.
 type MockImageGenerator struct{}
 

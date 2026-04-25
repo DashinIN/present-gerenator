@@ -11,6 +11,7 @@ export interface Tariff {
   name: string
   price_per_image: number
   price_per_song: number
+  price_per_lyrics: number
   is_active: boolean
 }
 
@@ -37,9 +38,8 @@ export interface GenerationRequest {
   session_id?: string
   parent_id?: string
   status: GenerationStatus
-  recipient_name: string
-  occasion: string
   image_prompt: string
+  song_prompt: string
   song_lyrics: string
   song_style: string
   image_count: number

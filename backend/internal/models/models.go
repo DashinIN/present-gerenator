@@ -32,12 +32,13 @@ type OAuthProfile struct {
 }
 
 type Tariff struct {
-	ID            int       `json:"id"`
-	Name          string    `json:"name"`
-	PricePerImage int       `json:"price_per_image"`
-	PricePerSong  int       `json:"price_per_song"`
-	IsActive      bool      `json:"is_active"`
-	CreatedAt     time.Time `json:"created_at"`
+	ID              int       `json:"id"`
+	Name            string    `json:"name"`
+	PricePerImage   int       `json:"price_per_image"`
+	PricePerSong    int       `json:"price_per_song"`
+	PricePerLyrics  int       `json:"price_per_lyrics"`
+	IsActive        bool      `json:"is_active"`
+	CreatedAt       time.Time `json:"created_at"`
 }
 
 type CreditTransaction struct {
@@ -81,9 +82,8 @@ type GenerationRequest struct {
 	SessionID     *uuid.UUID       `json:"session_id,omitempty"`
 	ParentID      *uuid.UUID       `json:"parent_id,omitempty"`
 	Status        GenerationStatus `json:"status"`
-	RecipientName string           `json:"recipient_name"`
-	Occasion      string           `json:"occasion"`
 	ImagePrompt   string           `json:"image_prompt"`
+	SongPrompt    string           `json:"song_prompt"`
 	SongLyrics    string           `json:"song_lyrics"`
 	SongStyle     string           `json:"song_style"`
 	ImageCount    int              `json:"image_count"`

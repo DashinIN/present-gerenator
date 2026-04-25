@@ -98,14 +98,21 @@ func main() {
 	billingSvc := services.NewBillingService(billingRepo)
 
 	imageGen := &services.MockImageGenerator{}
-	songGen := &services.MockSongGenerator{}
+	var songGen services.SongGenerator
+	if cfg.SunoAPIKey != "" {
+		songGen = services.NewSunoAPIGenerator(cfg.SunoAPIKey)
+		slog.Info("song generator: sunoapi.org")
+	} else {
+		songGen = &services.MockSongGenerator{}
+		slog.Info("song generator: mock")
+	}
 
 	queue := worker.NewQueue(rdb)
 	w := worker.New(queue, genRepo, sessionRepo, billingSvc, storage, imageGen, songGen, cfg.WorkerCount)
 
 	authH := handlers.NewAuthHandler(userRepo, jwtSvc)
 	billingH := handlers.NewBillingHandler(billingSvc)
-	genH := handlers.NewGenerationHandler(genRepo, sessionRepo, billingSvc, storage, queue)
+	genH := handlers.NewGenerationHandler(genRepo, sessionRepo, billingSvc, storage, queue, songGen)
 	sessionH := handlers.NewSessionHandler(sessionRepo, genRepo, storage)
 
 	if !cfg.IsDev() {
@@ -142,6 +149,7 @@ func main() {
 		secured.GET("/sessions/:id", sessionH.Get)
 		secured.PATCH("/sessions/:id", sessionH.UpdateTitle)
 
+		secured.POST("/generations/lyrics", genH.GenerateLyrics)
 		secured.POST("/generations", genH.Create)
 		secured.GET("/generations", genH.List)
 		secured.GET("/generations/:id", genH.Get)

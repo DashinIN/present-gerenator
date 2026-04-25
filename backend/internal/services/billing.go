@@ -21,20 +21,20 @@ func (s *BillingService) GetActiveTariff(ctx context.Context) (*models.Tariff, e
 	return s.repo.GetActiveTariff(ctx)
 }
 
-func (s *BillingService) CalculateCost(tariff *models.Tariff, images, songs int) int {
-	return tariff.PricePerImage*images + tariff.PricePerSong*songs
+func (s *BillingService) CalculateCost(tariff *models.Tariff, images, songs, lyrics int) int {
+	return tariff.PricePerImage*images + tariff.PricePerSong*songs + tariff.PricePerLyrics*lyrics
 }
 
 func (s *BillingService) GetBalance(ctx context.Context, userID int64) (int, error) {
 	return s.repo.GetBalance(ctx, userID)
 }
 
-func (s *BillingService) Estimate(ctx context.Context, images, songs int) (int, *models.Tariff, error) {
+func (s *BillingService) Estimate(ctx context.Context, images, songs, lyrics int) (int, *models.Tariff, error) {
 	tariff, err := s.repo.GetActiveTariff(ctx)
 	if err != nil {
 		return 0, nil, fmt.Errorf("get tariff: %w", err)
 	}
-	return s.CalculateCost(tariff, images, songs), tariff, nil
+	return s.CalculateCost(tariff, images, songs, lyrics), tariff, nil
 }
 
 func (s *BillingService) Charge(ctx context.Context, userID int64, amount int, refID uuid.UUID, desc string) error {

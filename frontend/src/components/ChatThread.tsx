@@ -103,10 +103,34 @@ function GenerationMessage({ gen, isNew }: { gen: GenerationRequest; isNew?: boo
 }
 
 function UserPrompt({ gen }: { gen: GenerationRequest }) {
-  const prompt = gen.image_prompt || gen.song_lyrics || ''
   return (
     <div style={{ fontSize: 14, color: '#fff' }}>
-      {prompt && <div>{prompt}</div>}
+      {/* Промт изображений */}
+      {gen.image_prompt && (
+        <div style={{ marginBottom: gen.song_lyrics || gen.song_prompt ? 8 : 0 }}>
+          {gen.image_prompt}
+        </div>
+      )}
+
+      {/* Текст / промт песни */}
+      {(gen.song_lyrics || gen.song_prompt) && (
+        <div style={{
+          background: 'rgba(255,255,255,0.12)',
+          borderRadius: 8,
+          padding: '8px 10px',
+          marginBottom: 4,
+        }}>
+          <div style={{ fontSize: 10, opacity: 0.7, marginBottom: 4, display: 'flex', alignItems: 'center', gap: 4 }}>
+            <Music size={10} />
+            {gen.song_lyrics ? 'Текст песни' : 'Промт для генерации текста'}
+            {gen.song_style && <span style={{ marginLeft: 6, fontStyle: 'italic' }}>{gen.song_style}</span>}
+          </div>
+          <div style={{ fontSize: 13, whiteSpace: 'pre-wrap', lineHeight: 1.5 }}>
+            {gen.song_lyrics || gen.song_prompt}
+          </div>
+        </div>
+      )}
+
       <div style={{ display: 'flex', gap: 12, marginTop: 8, fontSize: 12, opacity: 0.8 }}>
         {gen.image_count > 0 && (
           <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
@@ -120,6 +144,7 @@ function UserPrompt({ gen }: { gen: GenerationRequest }) {
         )}
         <span style={{ marginLeft: 'auto' }}>−{gen.credits_spent} кр.</span>
       </div>
+
       {gen.input_photos?.length > 0 && (
         <div style={{ display: 'flex', gap: 6, marginTop: 8, flexWrap: 'wrap' }}>
           {gen.input_photos.map((url, i) => (
@@ -160,9 +185,14 @@ function SkeletonState({ gen }: { gen: GenerationRequest }) {
     processing_audio: 'Генерирую музыку...',
   }[gen.status] ?? 'Обрабатываю...'
 
+  const readyAudios = gen.result_audios ?? []
+  // Suno всегда отдаёт 2 клипа за задачу — показываем минимум 2 слота
+  const totalAudioSlots = Math.max(gen.song_count, readyAudios.length, gen.song_count > 0 ? 2 : 0)
+  const pendingSlots = totalAudioSlots - readyAudios.length
+  console.log('[SkeletonState]', gen.id, 'status:', gen.status, 'result_audios:', gen.result_audios, 'ready:', readyAudios.length)
+
   return (
     <div style={{ padding: '16px 16px 8px' }}>
-      {/* Статус */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16 }}>
         <span style={{ width: 8, height: 8, borderRadius: '50%', background: 'var(--primary)', display: 'inline-block', animation: 'pulse 1.4s ease-in-out infinite' }} />
         <span style={{ fontSize: 13, color: 'var(--text-muted)' }}>{label}</span>
@@ -177,11 +207,22 @@ function SkeletonState({ gen }: { gen: GenerationRequest }) {
         </div>
       )}
 
-      {/* Скелетоны аудио */}
+      {/* Аудио: готовые плееры + скелетоны для остальных */}
       {gen.song_count > 0 && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-          {Array.from({ length: gen.song_count }).map((_, i) => (
-            <div key={i} className="skeleton" style={{ width: '100%', height: 48, borderRadius: 10 }} />
+          {readyAudios.map((url, i) => (
+            <div key={`ready-${i}`} style={{
+              display: 'flex', alignItems: 'center', gap: 10,
+              background: 'var(--surface2)', borderRadius: 10, padding: '10px 14px',
+            }}>
+              <audio controls src={url} style={{ flex: 1, height: 36 }} />
+              <a href={url} download style={{ color: 'var(--text-muted)', display: 'flex', flexShrink: 0 }} title="Скачать">
+                <Download size={15} />
+              </a>
+            </div>
+          ))}
+          {Array.from({ length: pendingSlots }).map((_, i) => (
+            <div key={`skeleton-${i}`} className="skeleton" style={{ width: '100%', height: 56, borderRadius: 10 }} />
           ))}
         </div>
       )}

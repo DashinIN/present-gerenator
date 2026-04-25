@@ -14,12 +14,14 @@ export function useSession(id: string | null) {
     queryKey: ['session', id],
     queryFn: () => api.sessions.get(id!),
     enabled: !!id,
+    refetchIntervalInBackground: true,
     refetchInterval: (query) => {
       const gens = query.state.data?.generations ?? []
-      const hasPending = gens.some(g =>
-        g.status === 'pending' || g.status === 'processing_images' || g.status === 'processing_audio'
-      )
-      return hasPending ? 2000 : false
+      const hasAudio = gens.some(g => g.status === 'processing_audio')
+      const hasPending = gens.some(g => g.status === 'pending' || g.status === 'processing_images')
+      if (hasAudio) return 500
+      if (hasPending) return 2000
+      return false
     },
   })
 }

@@ -1,5 +1,5 @@
 import { useState, useRef, useCallback } from 'react'
-import { Paperclip, Send, X, Music, ImageIcon } from 'lucide-react'
+import { Paperclip, Send, X, Music, ImageIcon, Sparkles, Loader2 } from 'lucide-react'
 import { useTariff, useBalance } from '@/hooks/useAuth'
 import { Button } from '@/components/ui/Button'
 import { Textarea } from '@/components/ui/Textarea'
@@ -29,6 +29,8 @@ export function ChatInput({ sessionId, parentId, onSent, onInsufficientCredits, 
   const [prompt, setPrompt] = useState('')
   const [songLyrics, setSongLyrics] = useState('')
   const [songStyle, setSongStyle] = useState('')
+  const [lyricsPrompt, setLyricsPrompt] = useState('')
+  const [generatingLyrics, setGeneratingLyrics] = useState(false)
   const [imageCount, setImageCount] = useState(1)
   const [songCount, setSongCount] = useState(1)
   const [files, setFiles] = useState<AttachedFile[]>([])
@@ -67,6 +69,28 @@ export function ChatInput({ sessionId, parentId, onSent, onInsufficientCredits, 
     })
   }
 
+  const generateLyrics = async () => {
+    const p = lyricsPrompt.trim() || prompt.trim()
+    if (!p || generatingLyrics) return
+    setGeneratingLyrics(true)
+    setError('')
+    try {
+      const res = await fetch('/api/generations/lyrics', {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ prompt: p }),
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data?.error?.message ?? `HTTP ${res.status}`)
+      setSongLyrics(data.text ?? '')
+    } catch (e: any) {
+      setError(e.message ?? 'Ошибка генерации текста')
+    } finally {
+      setGeneratingLyrics(false)
+    }
+  }
+
   const send = async () => {
     if (!canSend || notEnough) return
     setSending(true)
@@ -88,7 +112,7 @@ export function ChatInput({ sessionId, parentId, onSent, onInsufficientCredits, 
 
     try {
       const result = await api.generations.create(form)
-      setPrompt(''); setSongLyrics(''); setSongStyle('')
+      setPrompt(''); setSongLyrics(''); setSongStyle(''); setLyricsPrompt('')
       setFiles([])
       qc.invalidateQueries({ queryKey: ['sessions'] })
       qc.invalidateQueries({ queryKey: ['balance'] })
@@ -126,19 +150,57 @@ export function ChatInput({ sessionId, parentId, onSent, onInsufficientCredits, 
 
         {/* Поля песни */}
         <div className={`song-fields${songCount > 0 ? ' open' : ''}`}>
-          <div style={{ display: 'flex', gap: 8 }}>
-            <Textarea
-              value={songLyrics}
-              onChange={e => setSongLyrics(e.target.value)}
-              placeholder="Текст песни (необязательно)..."
-              rows={2}
-              style={{ ...inputStyle, flex: 2, resize: 'vertical' }}
-            />
+          <div style={{ display: 'flex', gap: 8, alignItems: 'flex-start' }}>
+
+            {/* Блок текста песни */}
+            <div style={{ flex: 2, display: 'flex', flexDirection: 'column', gap: 6 }}>
+              {/* Промт для генерации текста */}
+              <div style={{ display: 'flex', gap: 6 }}>
+                <input
+                  value={lyricsPrompt}
+                  onChange={e => setLyricsPrompt(e.target.value)}
+                  onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); generateLyrics() } }}
+                  placeholder="Промт для текста песни (или использует промт выше)..."
+                  disabled={generatingLyrics}
+                  style={{ ...inputStyle, flex: 1 }}
+                />
+                <button
+                  onClick={generateLyrics}
+                  disabled={generatingLyrics || (!lyricsPrompt.trim() && !prompt.trim())}
+                  title="Сгенерировать текст песни"
+                  style={{
+                    display: 'flex', alignItems: 'center', gap: 5,
+                    padding: '0 12px', borderRadius: 8, border: 'none',
+                    background: 'var(--primary)', color: '#fff',
+                    fontSize: 12, fontWeight: 500, cursor: 'pointer',
+                    opacity: generatingLyrics || (!lyricsPrompt.trim() && !prompt.trim()) ? 0.5 : 1,
+                    whiteSpace: 'nowrap', flexShrink: 0,
+                  }}
+                >
+                  {generatingLyrics
+                    ? <><Loader2 size={13} style={{ animation: 'spin 1s linear infinite' }} /> Генерирую...</>
+                    : <><Sparkles size={13} /> Сгенерировать{tariff?.price_per_lyrics ? ` (${tariff.price_per_lyrics} кр.)` : ''}</>
+                  }
+                </button>
+              </div>
+
+              {/* Текст песни — редактируемый */}
+              <Textarea
+                value={songLyrics}
+                onChange={e => setSongLyrics(e.target.value)}
+                placeholder="Текст песни (введите вручную или сгенерируйте выше)..."
+                rows={3}
+                disabled={generatingLyrics}
+                style={{ ...inputStyle, resize: 'vertical', opacity: generatingLyrics ? 0.6 : 1 }}
+              />
+            </div>
+
+            {/* Стиль */}
             <input
               value={songStyle}
               onChange={e => setSongStyle(e.target.value)}
               placeholder="Стиль (поп, джаз, рок...)"
-              style={{ ...inputStyle, flex: 1 }}
+              style={{ ...inputStyle, flex: 1, alignSelf: 'flex-start' }}
             />
           </div>
         </div>
@@ -181,9 +243,10 @@ export function ChatInput({ sessionId, parentId, onSent, onInsufficientCredits, 
             value={prompt}
             onChange={e => setPrompt(e.target.value)}
             onKeyDown={onKeyDown}
-            placeholder="Опишите поздравление... (Enter — отправить, Shift+Enter — новая строка)"
+            placeholder={imageCount > 0 ? 'Опишите поздравление... (Enter — отправить, Shift+Enter — новая строка)' : 'Промт картинок отключён (выбрано 0)'}
             rows={2}
-            disabled={sending}
+            disabled={sending || imageCount === 0}
+            style={imageCount === 0 ? { opacity: 0.4, cursor: 'not-allowed' } : undefined}
           />
 
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 10 }}>
