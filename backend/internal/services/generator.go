@@ -34,6 +34,16 @@ type StreamingSongGenerator interface {
 	GenerateStreaming(ctx context.Context, lyrics, style string, count int, onPartial func([][]byte)) ([][]byte, error)
 }
 
+// AsyncImageGenerator — опциональное расширение: только submit задачи, результат придёт по webhook.
+type AsyncImageGenerator interface {
+	Submit(ctx context.Context, prompt string, refImages []string, callbackURL string) (taskID string, err error)
+}
+
+// AsyncSongGenerator — опциональное расширение: только submit задачи, результат придёт по webhook.
+type AsyncSongGenerator interface {
+	Submit(ctx context.Context, lyrics, style, callbackURL string) (taskID string, err error)
+}
+
 // MockImageGenerator возвращает placeholder PNG.
 type MockImageGenerator struct{}
 

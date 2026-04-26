@@ -11,6 +11,7 @@ import (
 
 type StorageService interface {
 	Upload(ctx context.Context, key string, r io.Reader, contentType string) error
+	Download(ctx context.Context, key string) ([]byte, error)
 	GetURL(ctx context.Context, key string) (string, error)
 	Delete(ctx context.Context, key string) error
 }
@@ -44,6 +45,10 @@ func (s *LocalStorage) Upload(_ context.Context, key string, r io.Reader, _ stri
 
 func (s *LocalStorage) GetURL(_ context.Context, key string) (string, error) {
 	return fmt.Sprintf("%s/api/files/%s", s.baseURL, key), nil
+}
+
+func (s *LocalStorage) Download(_ context.Context, key string) ([]byte, error) {
+	return os.ReadFile(filepath.Join(s.baseDir, filepath.FromSlash(key)))
 }
 
 func (s *LocalStorage) Delete(_ context.Context, key string) error {

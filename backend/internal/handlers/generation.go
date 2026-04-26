@@ -105,11 +105,11 @@ type UploadResponse struct {
 func (h *GenerationHandler) Create(c *gin.Context) {
 	userID := middleware.GetUserID(c)
 
-	imageCount, _ := strconv.Atoi(c.DefaultPostForm("image_count", "3"))
+	imageCount, _ := strconv.Atoi(c.DefaultPostForm("image_count", "1"))
 	songCount, _ := strconv.Atoi(c.DefaultPostForm("song_count", "1"))
 
-	if imageCount < 0 || imageCount > 3 || songCount < 0 || songCount > 3 {
-		c.JSON(http.StatusBadRequest, apiError("invalid_param", "image_count: 0-3, song_count: 0-3"))
+	if imageCount < 0 || imageCount > 1 || songCount < 0 || songCount > 1 {
+		c.JSON(http.StatusBadRequest, apiError("invalid_param", "image_count: 0-1, song_count: 0-1"))
 		return
 	}
 	if imageCount == 0 && songCount == 0 {
@@ -426,6 +426,7 @@ func (h *GenerationHandler) Status(c *gin.Context) {
 		"completed_at":  gen.CompletedAt,
 		"result_images": h.resolveKeys(c.Request.Context(), gen.ResultImages),
 		"result_audios": h.resolveKeys(c.Request.Context(), gen.ResultAudios),
+		"input_photos":  h.resolveKeys(c.Request.Context(), gen.InputPhotos),
 	})
 }
 
@@ -481,6 +482,7 @@ func (h *GenerationHandler) Upload(c *gin.Context) {
 func (h *GenerationHandler) resolveGenURLs(ctx context.Context, gen *models.GenerationRequest) {
 	gen.ResultImages = h.resolveKeys(ctx, gen.ResultImages)
 	gen.ResultAudios = h.resolveKeys(ctx, gen.ResultAudios)
+	gen.InputPhotos = h.resolveKeys(ctx, gen.InputPhotos)
 }
 
 // LyricsRequest — запрос генерации текста песни

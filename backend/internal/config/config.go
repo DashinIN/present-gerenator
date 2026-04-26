@@ -30,6 +30,7 @@ type Config struct {
 	WorkerCount int
 
 	SunoAPIKey string // API ключ sunoapi.org (пусто = mock)
+	KieAPIKey  string // API ключ kie.ai для генерации изображений (пусто = mock)
 }
 
 func Load() (*Config, error) {
@@ -50,6 +51,7 @@ func Load() (*Config, error) {
 		R2Bucket:        getEnv("R2_BUCKET", "fungreet"),
 		WorkerCount:     getEnvInt("WORKER_COUNT", 2),
 		SunoAPIKey:      getEnv("SUNO_API_KEY", ""),
+		KieAPIKey:       getEnv("KIE_API_KEY", ""),
 	}
 
 	if cfg.DatabaseURL == "" {

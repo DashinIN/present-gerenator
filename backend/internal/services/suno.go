@@ -33,9 +33,14 @@ func NewSunoAPIGenerator(apiKey string) *SunoAPIGenerator {
 	}
 }
 
+// Submit реализует AsyncSongGenerator: отправляет задачу и сразу возвращает taskID.
+func (g *SunoAPIGenerator) Submit(ctx context.Context, lyrics, style, callbackURL string) (string, error) {
+	return g.submitGenerate(ctx, lyrics, style, callbackURL)
+}
+
 // Generate реализует SongGenerator: lyrics = текст песни, style = теги стиля.
 func (g *SunoAPIGenerator) Generate(ctx context.Context, lyrics, style string, count int) ([][]byte, error) {
-	taskID, err := g.submitGenerate(ctx, lyrics, style)
+	taskID, err := g.submitGenerate(ctx, lyrics, style, sunoCallbackURL)
 	if err != nil {
 		return nil, fmt.Errorf("suno submit: %w", err)
 	}
@@ -60,7 +65,7 @@ func (g *SunoAPIGenerator) Generate(ctx context.Context, lyrics, style string, c
 // GenerateStreaming реализует StreamingSongGenerator: вызывает onPartial как только первый клип готов.
 // Работает и при FIRST_SUCCESS, и когда Suno пропускает его и сразу отдаёт SUCCESS.
 func (g *SunoAPIGenerator) GenerateStreaming(ctx context.Context, lyrics, style string, count int, onPartial func([][]byte)) ([][]byte, error) {
-	taskID, err := g.submitGenerate(ctx, lyrics, style)
+	taskID, err := g.submitGenerate(ctx, lyrics, style, sunoCallbackURL)
 	if err != nil {
 		return nil, fmt.Errorf("suno submit: %w", err)
 	}
@@ -258,7 +263,7 @@ type sunoClip struct {
 	Duration float64 `json:"duration"`
 }
 
-func (g *SunoAPIGenerator) submitGenerate(ctx context.Context, lyrics, style string) (string, error) {
+func (g *SunoAPIGenerator) submitGenerate(ctx context.Context, lyrics, style, callbackURL string) (string, error) {
 	body, _ := json.Marshal(sunoGenerateRequest{
 		CustomMode:   true,
 		Instrumental: false,
@@ -266,7 +271,7 @@ func (g *SunoAPIGenerator) submitGenerate(ctx context.Context, lyrics, style str
 		Style:        style,
 		Title:        "FunGreet",
 		Model:        sunoModel,
-		CallBackURL:  sunoCallbackURL,
+		CallBackURL:  callbackURL,
 	})
 
 	var resp struct {

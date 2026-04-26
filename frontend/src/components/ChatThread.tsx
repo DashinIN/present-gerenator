@@ -160,6 +160,18 @@ function GenerationResult({ gen }: { gen: GenerationRequest }) {
   const isPending = gen.status === 'pending' || gen.status === 'processing_images' || gen.status === 'processing_audio'
   const isFailed = gen.status === 'failed'
   const isCompleted = gen.status === 'completed'
+  const imageOnly = isCompleted && (gen.result_images?.length ?? 0) > 0 && !(gen.result_audios?.length)
+
+  if (imageOnly) {
+    return (
+      <div style={{ display: 'inline-block' }}>
+        <CompletedState gen={gen} />
+        <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 4 }}>
+          {formatDate(gen.created_at)}
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div style={{
@@ -254,10 +266,8 @@ function CompletedState({ gen }: { gen: GenerationRequest }) {
                 src={url}
                 alt={`result ${i + 1}`}
                 style={{
-                  width: '100%', display: 'block',
-                  borderRadius: gen.result_images.length === 1 ? '4px 16px 0 0' : i === 0 ? '4px 16px 0 0' : i === gen.result_images.length - 1 && !gen.result_audios?.length ? '0 0 0 0' : '0',
-                  objectFit: 'cover',
-                  maxHeight: 420,
+                  width: '70%', display: 'block',
+                  borderRadius: '4px 16px 16px 16px',
                 }}
               />
               <a

@@ -17,18 +17,21 @@ import (
 const maxRetries = 3
 
 type Worker struct {
-	queue       *Queue
-	genRepo     *repository.GenerationRepository
-	sessionRepo *repository.SessionRepository
-	billing     *services.BillingService
-	storage     services.StorageService
-	imageGen    services.ImageGenerator
-	songGen     services.SongGenerator
-	concurrency int
+	queue        *Queue
+	webhookStore *WebhookStore
+	genRepo      *repository.GenerationRepository
+	sessionRepo  *repository.SessionRepository
+	billing      *services.BillingService
+	storage      services.StorageService
+	imageGen     services.ImageGenerator
+	songGen      services.SongGenerator
+	concurrency  int
+	webhookBase  string // если задан — async режим через webhook
 }
 
 func New(
 	queue *Queue,
+	webhookStore *WebhookStore,
 	genRepo *repository.GenerationRepository,
 	sessionRepo *repository.SessionRepository,
 	billing *services.BillingService,
@@ -36,16 +39,19 @@ func New(
 	imageGen services.ImageGenerator,
 	songGen services.SongGenerator,
 	concurrency int,
+	webhookBase string,
 ) *Worker {
 	return &Worker{
-		queue:       queue,
-		genRepo:     genRepo,
-		sessionRepo: sessionRepo,
-		billing:     billing,
-		storage:     storage,
-		imageGen:    imageGen,
-		songGen:     songGen,
-		concurrency: concurrency,
+		queue:        queue,
+		webhookStore: webhookStore,
+		genRepo:      genRepo,
+		sessionRepo:  sessionRepo,
+		billing:      billing,
+		storage:      storage,
+		imageGen:     imageGen,
+		songGen:      songGen,
+		concurrency:  concurrency,
+		webhookBase:  webhookBase,
 	}
 }
 
@@ -99,6 +105,11 @@ func (w *Worker) process(ctx context.Context, task *Task) error {
 		_ = w.genRepo.UpdateStatus(ctx, gen.ID, models.StatusFailed, reason)
 		_ = w.billing.Refund(ctx, gen.UserID, gen.CreditsSpent, gen.ID)
 		return fmt.Errorf("%s", reason)
+	}
+
+	// Async webhook режим — только submit, результат придёт по webhook
+	if w.webhookBase != "" {
+		return w.processAsync(ctx, gen)
 	}
 
 	// Собираем контекстные изображения из родительской генерации
@@ -240,5 +251,82 @@ func (w *Worker) process(ctx context.Context, task *Task) error {
 	slog.Info("generation completed", "generation_id", gen.ID,
 		"images", len(resultImages), "songs", len(resultAudios),
 		"context_images", len(contextImages))
+	return nil
+}
+
+func (w *Worker) processAsync(ctx context.Context, gen *models.GenerationRequest) error {
+	fail := func(reason string) error {
+		_ = w.genRepo.UpdateStatus(ctx, gen.ID, models.StatusFailed, reason)
+		_ = w.billing.Refund(ctx, gen.UserID, gen.CreditsSpent, gen.ID)
+		return fmt.Errorf("%s", reason)
+	}
+
+	var contextImages []string
+	if gen.ParentID != nil {
+		if parent, err := w.genRepo.GetByID(ctx, *gen.ParentID); err == nil {
+			contextImages = parent.ResultImages
+		}
+	}
+	refImages := append(gen.InputPhotos, contextImages...)
+
+	var pendingTypes []string
+
+	if gen.ImageCount > 0 {
+		ag, ok := w.imageGen.(services.AsyncImageGenerator)
+		if !ok {
+			return fail("image generator does not support async mode")
+		}
+		cbURL := w.webhookBase + "/api/webhooks/kie"
+		taskID, err := ag.Submit(ctx, gen.ImagePrompt, refImages, cbURL)
+		if err != nil {
+			return fail(fmt.Sprintf("image submit: %s", err))
+		}
+		if err := w.webhookStore.RegisterTask(ctx, taskID, WebhookTaskMeta{
+			GenID:    gen.ID.String(),
+			UserID:   gen.UserID,
+			TaskType: "image",
+		}); err != nil {
+			return fail(fmt.Sprintf("register image task: %s", err))
+		}
+		pendingTypes = append(pendingTypes, "image")
+		slog.Info("async image submitted", "generation_id", gen.ID, "task_id", taskID)
+	}
+
+	if gen.SongCount > 0 {
+		as, ok := w.songGen.(services.AsyncSongGenerator)
+		if !ok {
+			return fail("song generator does not support async mode")
+		}
+		lyrics := gen.SongLyrics
+		if lyrics == "" && gen.SongPrompt != "" {
+			if lg, ok := w.songGen.(services.LyricsGenerator); ok {
+				generated, _, err := lg.GenerateLyrics(ctx, gen.SongPrompt)
+				if err != nil {
+					return fail(fmt.Sprintf("lyrics generation: %s", err))
+				}
+				lyrics = generated
+			}
+		}
+		cbURL := w.webhookBase + "/api/webhooks/suno"
+		taskID, err := as.Submit(ctx, lyrics, gen.SongStyle, cbURL)
+		if err != nil {
+			return fail(fmt.Sprintf("song submit: %s", err))
+		}
+		if err := w.webhookStore.RegisterTask(ctx, taskID, WebhookTaskMeta{
+			GenID:    gen.ID.String(),
+			UserID:   gen.UserID,
+			TaskType: "song",
+		}); err != nil {
+			return fail(fmt.Sprintf("register song task: %s", err))
+		}
+		pendingTypes = append(pendingTypes, "song")
+		slog.Info("async song submitted", "generation_id", gen.ID, "task_id", taskID)
+	}
+
+	if err := w.webhookStore.InitPending(ctx, gen.ID.String(), pendingTypes); err != nil {
+		return fail(fmt.Sprintf("init pending: %s", err))
+	}
+
+	_ = w.genRepo.UpdateStatus(ctx, gen.ID, models.StatusProcessingImages, "")
 	return nil
 }

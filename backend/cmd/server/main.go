@@ -97,7 +97,14 @@ func main() {
 	jwtSvc := services.NewJWTService(cfg.JWTSecret)
 	billingSvc := services.NewBillingService(billingRepo)
 
-	imageGen := &services.MockImageGenerator{}
+	var imageGen services.ImageGenerator
+	if cfg.KieAPIKey != "" {
+		imageGen = services.NewKieImageGenerator(cfg.KieAPIKey, storage)
+		slog.Info("image generator: kie.ai gpt-image-2")
+	} else {
+		imageGen = &services.MockImageGenerator{}
+		slog.Info("image generator: mock")
+	}
 	var songGen services.SongGenerator
 	if cfg.SunoAPIKey != "" {
 		songGen = services.NewSunoAPIGenerator(cfg.SunoAPIKey)
@@ -108,12 +115,21 @@ func main() {
 	}
 
 	queue := worker.NewQueue(rdb)
-	w := worker.New(queue, genRepo, sessionRepo, billingSvc, storage, imageGen, songGen, cfg.WorkerCount)
+	webhookStore := worker.NewWebhookStore(rdb)
+
+	webhookBase := cfg.BaseURL
+	w := worker.New(queue, webhookStore, genRepo, sessionRepo, billingSvc, storage, imageGen, songGen, cfg.WorkerCount, webhookBase)
+	if webhookBase != "" {
+		slog.Info("worker mode: async webhook", "base_url", webhookBase)
+	} else {
+		slog.Info("worker mode: polling (set BASE_URL for webhook mode)")
+	}
 
 	authH := handlers.NewAuthHandler(userRepo, jwtSvc)
 	billingH := handlers.NewBillingHandler(billingSvc)
 	genH := handlers.NewGenerationHandler(genRepo, sessionRepo, billingSvc, storage, queue, songGen)
 	sessionH := handlers.NewSessionHandler(sessionRepo, genRepo, storage)
+	webhookH := handlers.NewWebhookHandler(webhookStore, genRepo, sessionRepo, billingSvc, storage)
 
 	if !cfg.IsDev() {
 		gin.SetMode(gin.ReleaseMode)
@@ -121,6 +137,9 @@ func main() {
 	r := gin.New()
 	r.Use(middleware.Recovery())
 	r.Use(middleware.Logger())
+
+	r.POST("/api/webhooks/kie", webhookH.KieCallback)
+	r.POST("/api/webhooks/suno", webhookH.SunoCallback)
 
 	r.GET("/api/health", func(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{"status": "ok", "time": time.Now().UTC()})

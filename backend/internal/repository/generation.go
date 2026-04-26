@@ -163,6 +163,15 @@ func (r *GenerationRepository) AppendAudios(ctx context.Context, id uuid.UUID, a
 	return err
 }
 
+// AppendImages сохраняет результаты картинок, не меняя статус генерации.
+func (r *GenerationRepository) AppendImages(ctx context.Context, id uuid.UUID, images []string) error {
+	_, err := r.db.ExecContext(ctx,
+		`UPDATE generation_requests SET result_images=$1 WHERE id=$2`,
+		pq.Array(images), id,
+	)
+	return err
+}
+
 func (r *GenerationRepository) IncrementRetry(ctx context.Context, id uuid.UUID) (int, error) {
 	var count int
 	err := r.db.QueryRowContext(ctx,
