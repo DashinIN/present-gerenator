@@ -158,10 +158,13 @@ func (g *SunoAPIGenerator) GenerateExtend(ctx context.Context, audioID, lyrics, 
 
 // GenerateLyrics генерирует текст песни по описанию через /api/v1/lyrics.
 func (g *SunoAPIGenerator) GenerateLyrics(ctx context.Context, prompt string) (string, string, error) {
-	body, _ := json.Marshal(map[string]string{
+	body, err := json.Marshal(map[string]string{
 		"prompt":      prompt,
 		"callBackUrl": sunoCallbackURL,
 	})
+	if err != nil {
+		return "", "", fmt.Errorf("marshal lyrics request: %w", err)
+	}
 
 	var resp struct {
 		Code int    `json:"code"`
@@ -264,7 +267,7 @@ type sunoClip struct {
 }
 
 func (g *SunoAPIGenerator) submitGenerate(ctx context.Context, lyrics, style, callbackURL string) (string, error) {
-	body, _ := json.Marshal(sunoGenerateRequest{
+	body, err := json.Marshal(sunoGenerateRequest{
 		CustomMode:   true,
 		Instrumental: false,
 		Prompt:       lyrics,
@@ -273,6 +276,9 @@ func (g *SunoAPIGenerator) submitGenerate(ctx context.Context, lyrics, style, ca
 		Model:        sunoModel,
 		CallBackURL:  callbackURL,
 	})
+	if err != nil {
+		return "", fmt.Errorf("marshal generate request: %w", err)
+	}
 
 	var resp struct {
 		Code int    `json:"code"`
@@ -303,7 +309,10 @@ func (g *SunoAPIGenerator) submitExtend(ctx context.Context, audioID, lyrics, st
 		req.Title = "FunGreet"
 	}
 
-	body, _ := json.Marshal(req)
+	body, err := json.Marshal(req)
+	if err != nil {
+		return "", fmt.Errorf("marshal extend request: %w", err)
+	}
 
 	var resp struct {
 		Code int    `json:"code"`

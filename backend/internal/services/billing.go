@@ -45,6 +45,11 @@ func (s *BillingService) Refund(ctx context.Context, userID int64, amount int, r
 	return s.repo.Refund(ctx, userID, amount, &refID)
 }
 
+// TryDailyGrant начисляет 50 кредитов, если сегодня ещё не начислялись.
+func (s *BillingService) TryDailyGrant(ctx context.Context, userID int64) (bool, error) {
+	return s.repo.TryDailyGrant(ctx, userID, 50)
+}
+
 func (s *BillingService) GetTransactions(ctx context.Context, userID int64, limit, offset int) ([]models.CreditTransaction, error) {
 	return s.repo.GetTransactions(ctx, userID, limit, offset)
 }

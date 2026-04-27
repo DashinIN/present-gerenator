@@ -3,7 +3,7 @@ import type {
   GenerationRequest, GenerationSession, SessionThread,
 } from './types'
 
-const BASE = ''  // проксируется через Vite на :8080
+const BASE = '/api/v1'
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
   const res = await fetch(BASE + path, {
@@ -49,30 +49,30 @@ export class ApiError extends Error {
 // Auth
 export const api = {
   auth: {
-    me: () => request<User>('/api/user/me'),
+    me: () => request<User>(`${BASE}/user/me`),
     devLogin: () => request<{ user_id: number }>('/api/auth/dev/login'),
     logout: () => request<void>('/api/auth/logout', { method: 'POST' }),
   },
 
   billing: {
-    balance: () => request<{ balance: number }>('/api/billing/balance'),
-    tariff: () => request<Tariff>('/api/billing/tariff'),
+    balance: () => request<{ balance: number }>(`${BASE}/billing/balance`),
+    tariff: () => request<Tariff>(`${BASE}/billing/tariff`),
     estimate: (images: number, songs: number) =>
       request<{ cost: number; price_per_image: number; price_per_song: number }>(
-        `/api/billing/estimate?images=${images}&songs=${songs}`
+        `${BASE}/billing/estimate?images=${images}&songs=${songs}`
       ),
     transactions: (limit = 20, offset = 0) =>
       request<{ transactions: CreditTransaction[] }>(
-        `/api/billing/transactions?limit=${limit}&offset=${offset}`
+        `${BASE}/billing/transactions?limit=${limit}&offset=${offset}`
       ),
   },
 
   sessions: {
     list: (limit = 30) =>
-      request<{ sessions: GenerationSession[] }>(`/api/sessions?limit=${limit}`),
-    get: (id: string) => request<SessionThread>(`/api/sessions/${id}`),
+      request<{ sessions: GenerationSession[] }>(`${BASE}/sessions?limit=${limit}`),
+    get: (id: string) => request<SessionThread>(`${BASE}/sessions/${id}`),
     rename: (id: string, title: string) =>
-      request<void>(`/api/sessions/${id}`, {
+      request<void>(`${BASE}/sessions/${id}`, {
         method: 'PATCH',
         body: JSON.stringify({ title }),
       }),
@@ -80,7 +80,7 @@ export const api = {
 
   generations: {
     create: (form: FormData) =>
-      fetch('/api/generations', { method: 'POST', credentials: 'include', body: form })
+      fetch(`${BASE}/generations`, { method: 'POST', credentials: 'include', body: form })
         .then(async res => {
           if (!res.ok) throw new ApiError(res.status, await res.json())
           return res.json() as Promise<{ id: string; session_id: string; status: string }>
@@ -93,7 +93,7 @@ export const api = {
         result_images: string[]
         result_audios: string[]
         completed_at?: string
-      }>(`/api/generations/${id}/status`),
-    get: (id: string) => request<GenerationRequest>(`/api/generations/${id}`),
+      }>(`${BASE}/generations/${id}/status`),
+    get: (id: string) => request<GenerationRequest>(`${BASE}/generations/${id}`),
   },
 }

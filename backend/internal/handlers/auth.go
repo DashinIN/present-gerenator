@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"fmt"
+	"log/slog"
 	"net/http"
 	"strconv"
 	"time"
@@ -40,10 +41,11 @@ type ErrorDetail struct {
 type AuthHandler struct {
 	userRepo *repository.UserRepository
 	jwt      *services.JWTService
+	billing  *services.BillingService
 }
 
-func NewAuthHandler(userRepo *repository.UserRepository, jwt *services.JWTService) *AuthHandler {
-	return &AuthHandler{userRepo: userRepo, jwt: jwt}
+func NewAuthHandler(userRepo *repository.UserRepository, jwt *services.JWTService, billing *services.BillingService) *AuthHandler {
+	return &AuthHandler{userRepo: userRepo, jwt: jwt, billing: billing}
 }
 
 // DevLogin godoc
@@ -133,6 +135,11 @@ func (h *AuthHandler) Logout(c *gin.Context) {
 // @Router       /user/me [get]
 func (h *AuthHandler) Me(c *gin.Context) {
 	userID := middleware.GetUserID(c)
+	if granted, err := h.billing.TryDailyGrant(c.Request.Context(), userID); err != nil {
+		slog.Warn("daily grant failed", "user_id", userID, "err", err)
+	} else if granted {
+		slog.Info("daily grant issued", "user_id", userID)
+	}
 	user, err := h.userRepo.FindByID(c.Request.Context(), userID)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, apiError("internal_error", "User not found"))

@@ -164,7 +164,7 @@ function GenerationResult({ gen }: { gen: GenerationRequest }) {
 
   if (imageOnly) {
     return (
-      <div style={{ display: 'inline-block' }}>
+      <div>
         <CompletedState gen={gen} />
         <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 4 }}>
           {formatDate(gen.created_at)}
@@ -201,7 +201,6 @@ function SkeletonState({ gen }: { gen: GenerationRequest }) {
   // Suno всегда отдаёт 2 клипа за задачу — показываем минимум 2 слота
   const totalAudioSlots = Math.max(gen.song_count, readyAudios.length, gen.song_count > 0 ? 2 : 0)
   const pendingSlots = totalAudioSlots - readyAudios.length
-  console.log('[SkeletonState]', gen.id, 'status:', gen.status, 'result_audios:', gen.result_audios, 'ready:', readyAudios.length)
 
   return (
     <div style={{ padding: '16px 16px 8px' }}>

@@ -53,6 +53,7 @@ type CreditTransaction struct {
 
 const (
 	TxTypeInitialGrant      = "initial_grant"
+	TxTypeDailyGrant        = "daily_grant"
 	TxTypeGenerationCharge  = "generation_charge"
 	TxTypeGenerationRefund  = "generation_refund"
 	TxTypePurchase          = "purchase"

@@ -94,3 +94,5 @@ input:focus-visible, textarea:focus-visible {
 }
 .animate-spin { animation: spin 1s linear infinite; }
 .msg-enter { animation: slideUp 0.25s ease; }
+
+.session-item:hover .rename-btn { opacity: 1; }

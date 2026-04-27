@@ -1,10 +1,11 @@
-import { useState, useRef, useEffect } from 'react'
-import { LogOut, Plus, Sparkles, MessageSquare, Sun, Moon, Palette } from 'lucide-react'
-import { useSessions } from '@/hooks/useSessions'
+import { useState, useRef, useEffect, type MouseEvent } from 'react'
+import { LogOut, Plus, Sparkles, MessageSquare, Sun, Moon, Palette, Receipt, Pencil, Check, X } from 'lucide-react'
+import { useSessions, useRenameSession } from '@/hooks/useSessions'
 import { useCurrentUser, useBalance, useLogout } from '@/hooks/useAuth'
 import { useTheme, ACCENT_PRESETS } from '@/lib/theme'
 import { Button } from '@/components/ui/Button'
 import { formatDate, formatCredits } from '@/lib/utils'
+import { TransactionsPanel } from '@/components/TransactionsPanel'
 import type { GenerationSession } from '@/lib/types'
 
 const COLLAPSED_W = 56
@@ -24,6 +25,7 @@ export function Sidebar({ open, activeSessionId, onSelectSession, onNewSession }
   const logout = useLogout()
   const { theme, accent, setTheme, setAccent } = useTheme()
   const [themePopupOpen, setThemePopupOpen] = useState(false)
+  const [txPanelOpen, setTxPanelOpen] = useState(false)
   const popupRef = useRef<HTMLDivElement>(null)
   const paletteRef = useRef<HTMLButtonElement>(null)
 
@@ -43,6 +45,7 @@ export function Sidebar({ open, activeSessionId, onSelectSession, onNewSession }
   const width = open ? EXPANDED_W : COLLAPSED_W
 
   return (
+  <>
     <aside style={{
       width,
       flexShrink: 0,
@@ -221,18 +224,24 @@ export function Sidebar({ open, activeSessionId, onSelectSession, onNewSession }
       }}>
         {open ? (
           <>
-            {/* Баланс */}
-            <div style={{
-              display: 'flex', alignItems: 'center', gap: 8,
-              padding: '8px 10px', borderRadius: 10,
-              background: 'var(--primary-subtle)',
-              whiteSpace: 'nowrap',
-            }}>
+            {/* Баланс + транзакции */}
+            <button
+              onClick={() => setTxPanelOpen(v => !v)}
+              style={{
+                display: 'flex', alignItems: 'center', gap: 8,
+                padding: '8px 10px', borderRadius: 10,
+                background: 'var(--primary-subtle)',
+                whiteSpace: 'nowrap', border: 'none', cursor: 'pointer',
+                width: '100%', textAlign: 'left',
+              }}
+              title="История транзакций"
+            >
               <span style={{ fontSize: 13, color: 'var(--text-muted)' }}>Баланс</span>
+              <Receipt size={13} style={{ color: 'var(--text-muted)', marginLeft: 2 }} />
               <span style={{ marginLeft: 'auto', fontWeight: 600, fontSize: 14 }}>
                 {balance !== undefined ? formatCredits(balance) : '—'}
               </span>
-            </div>
+            </button>
 
             {/* Пользователь */}
             <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
@@ -293,6 +302,8 @@ export function Sidebar({ open, activeSessionId, onSelectSession, onNewSession }
         )}
       </div>
     </aside>
+    {txPanelOpen && <TransactionsPanel onClose={() => setTxPanelOpen(false)} />}
+  </>
   )
 }
 
@@ -301,27 +312,83 @@ function SessionItem({ session, active, onClick }: {
   active: boolean
   onClick: () => void
 }) {
+  const [editing, setEditing] = useState(false)
+  const [draft, setDraft] = useState('')
+  const rename = useRenameSession()
+
+  const startEdit = (e: MouseEvent) => {
+    e.stopPropagation()
+    setDraft(session.title || '')
+    setEditing(true)
+  }
+
+  const commit = () => {
+    if (draft.trim()) rename.mutate({ id: session.id.toString(), title: draft.trim() })
+    setEditing(false)
+  }
+
+  if (editing) {
+    return (
+      <div style={{
+        display: 'flex', alignItems: 'center', gap: 4,
+        padding: '4px 10px', marginBottom: 2,
+      }}>
+        <input
+          autoFocus
+          value={draft}
+          onChange={e => setDraft(e.target.value)}
+          onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); commit() } if (e.key === 'Escape') setEditing(false) }}
+          style={{
+            flex: 1, fontSize: 13, padding: '4px 6px', borderRadius: 6,
+            border: '1px solid var(--primary)', background: 'var(--surface2)',
+            color: 'var(--text)', outline: 'none',
+          }}
+        />
+        <button onClick={commit} style={{ border: 'none', background: 'transparent', cursor: 'pointer', color: 'var(--success)', display: 'flex' }}><Check size={13} /></button>
+        <button onClick={() => setEditing(false)} style={{ border: 'none', background: 'transparent', cursor: 'pointer', color: 'var(--text-muted)', display: 'flex' }}><X size={13} /></button>
+      </div>
+    )
+  }
+
   return (
-    <button
-      onClick={onClick}
-      style={{
-        display: 'block', width: '100%', textAlign: 'left',
-        padding: '8px 10px', borderRadius: 8, border: 'none',
-        background: active ? 'var(--primary-subtle)' : 'transparent',
-        color: active ? 'var(--text)' : 'var(--text-muted)',
-        borderLeft: active ? '2px solid var(--primary)' : '2px solid transparent',
-        cursor: 'pointer', marginBottom: 2,
-        transition: 'background 0.15s, color 0.15s',
-      }}
-      onMouseEnter={e => { if (!active) e.currentTarget.style.background = 'var(--primary-subtle)' }}
-      onMouseLeave={e => { if (!active) e.currentTarget.style.background = 'transparent' }}
+    <div
+      style={{ position: 'relative', marginBottom: 2 }}
+      className="session-item"
     >
-      <div style={{ fontSize: 13, fontWeight: active ? 500 : 400, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-        {session.title || 'Без названия'}
-      </div>
-      <div style={{ fontSize: 11, marginTop: 2, opacity: 0.6 }}>
-        {formatDate(session.updated_at)}
-      </div>
-    </button>
+      <button
+        onClick={onClick}
+        style={{
+          display: 'block', width: '100%', textAlign: 'left',
+          padding: '8px 32px 8px 10px', borderRadius: 8, border: 'none',
+          background: active ? 'var(--primary-subtle)' : 'transparent',
+          color: active ? 'var(--text)' : 'var(--text-muted)',
+          borderLeft: active ? '2px solid var(--primary)' : '2px solid transparent',
+          cursor: 'pointer',
+          transition: 'background 0.15s, color 0.15s',
+        }}
+        onMouseEnter={e => { if (!active) e.currentTarget.style.background = 'var(--primary-subtle)' }}
+        onMouseLeave={e => { if (!active) e.currentTarget.style.background = 'transparent' }}
+      >
+        <div style={{ fontSize: 13, fontWeight: active ? 500 : 400, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+          {session.title || 'Без названия'}
+        </div>
+        <div style={{ fontSize: 11, marginTop: 2, opacity: 0.6 }}>
+          {formatDate(session.updated_at)}
+        </div>
+      </button>
+      <button
+        onClick={startEdit}
+        title="Переименовать"
+        style={{
+          position: 'absolute', right: 6, top: '50%', transform: 'translateY(-50%)',
+          border: 'none', background: 'transparent', cursor: 'pointer',
+          color: 'var(--text-muted)', display: 'flex', padding: 4, borderRadius: 4,
+          opacity: 0, transition: 'opacity 0.15s',
+        }}
+        className="rename-btn"
+      >
+        <Pencil size={12} />
+      </button>
+    </div>
   )
 }

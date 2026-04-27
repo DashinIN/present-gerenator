@@ -87,6 +87,52 @@ func (r *BillingRepository) Refund(ctx context.Context, userID int64, amount int
 	return err
 }
 
+// TryDailyGrant атомарно пополняет баланс до cap, если сегодня ещё не пополнялось.
+// Возвращает true, если начисление произошло (баланс был ниже cap).
+func (r *BillingRepository) TryDailyGrant(ctx context.Context, userID int64, cap int) (bool, error) {
+	tx, err := r.db.BeginTx(ctx, nil)
+	if err != nil {
+		return false, fmt.Errorf("begin tx: %w", err)
+	}
+	defer tx.Rollback()
+
+	// Если сегодня уже пополняли — выходим.
+	var count int
+	if err = tx.QueryRowContext(ctx,
+		`SELECT COUNT(*) FROM credit_transactions
+		 WHERE user_id = $1 AND type = $2 AND created_at >= CURRENT_DATE`,
+		userID, models.TxTypeDailyGrant,
+	).Scan(&count); err != nil {
+		return false, fmt.Errorf("check daily grant: %w", err)
+	}
+	if count > 0 {
+		return false, nil
+	}
+
+	// Считаем текущий баланс.
+	var balance int64
+	if err = tx.QueryRowContext(ctx,
+		`SELECT COALESCE(SUM(amount), 0) FROM credit_transactions WHERE user_id = $1`,
+		userID,
+	).Scan(&balance); err != nil {
+		return false, fmt.Errorf("get balance: %w", err)
+	}
+
+	topup := int64(cap) - balance
+	if topup <= 0 {
+		return false, nil
+	}
+
+	if _, err = tx.ExecContext(ctx,
+		`INSERT INTO credit_transactions (user_id, amount, type, description)
+		 VALUES ($1, $2, $3, 'Ежедневное пополнение до лимита')`,
+		userID, topup, models.TxTypeDailyGrant,
+	); err != nil {
+		return false, fmt.Errorf("insert daily grant: %w", err)
+	}
+	return true, tx.Commit()
+}
+
 func (r *BillingRepository) GetTransactions(ctx context.Context, userID int64, limit, offset int) ([]models.CreditTransaction, error) {
 	rows, err := r.db.QueryContext(ctx,
 		`SELECT id, user_id, amount, type, reference_id, description, created_at

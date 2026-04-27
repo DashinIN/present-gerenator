@@ -155,7 +155,10 @@ func (g *KieImageGenerator) submit(ctx context.Context, prompt string, _ []strin
 	if callbackURL != "" {
 		payload["callBackUrl"] = callbackURL
 	}
-	body, _ := json.Marshal(payload)
+	body, err := json.Marshal(payload)
+	if err != nil {
+		return "", fmt.Errorf("marshal kie request: %w", err)
+	}
 
 	slog.Info("kie submit request", "body", string(body))
 

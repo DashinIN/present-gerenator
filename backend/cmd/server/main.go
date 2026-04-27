@@ -125,7 +125,7 @@ func main() {
 		slog.Info("worker mode: polling (set BASE_URL for webhook mode)")
 	}
 
-	authH := handlers.NewAuthHandler(userRepo, jwtSvc)
+	authH := handlers.NewAuthHandler(userRepo, jwtSvc, billingSvc)
 	billingH := handlers.NewBillingHandler(billingSvc)
 	genH := handlers.NewGenerationHandler(genRepo, sessionRepo, billingSvc, storage, queue, songGen)
 	sessionH := handlers.NewSessionHandler(sessionRepo, genRepo, storage)
@@ -154,7 +154,7 @@ func main() {
 		auth.POST("/logout", authH.Logout)
 	}
 
-	secured := r.Group("/api")
+	secured := r.Group("/api/v1")
 	secured.Use(middleware.AuthRequired(jwtSvc))
 	{
 		secured.GET("/user/me", authH.Me)

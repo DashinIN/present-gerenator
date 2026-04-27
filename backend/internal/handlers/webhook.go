@@ -8,6 +8,7 @@ import (
 	"io"
 	"log/slog"
 	"net/http"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
@@ -84,7 +85,7 @@ func (h *WebhookHandler) processKieCallback(taskID, state, resultJSON, failMsg s
 
 	keys := make([]string, 0, len(rj.ResultURLs))
 	for i, u := range rj.ResultURLs {
-		data, err := downloadURL(u)
+		data, err := downloadURL(ctx, u)
 		if err != nil {
 			slog.Error("kie webhook: download failed", "url", u, "err", err)
 			h.failGeneration(ctx, genID, meta.UserID, "image download failed")
@@ -157,7 +158,7 @@ func (h *WebhookHandler) processSunoCallback(body []byte) {
 		if clip.AudioURL == "" {
 			continue
 		}
-		data, err := downloadURL(clip.AudioURL)
+		data, err := downloadURL(ctx, clip.AudioURL)
 		if err != nil {
 			slog.Error("suno webhook: download failed", "url", clip.AudioURL, "err", err)
 			h.failGeneration(ctx, genID, meta.UserID, "audio download failed")
@@ -218,8 +219,14 @@ func (h *WebhookHandler) failGeneration(ctx context.Context, genID uuid.UUID, us
 	}
 }
 
-func downloadURL(u string) ([]byte, error) {
-	resp, err := http.Get(u) //nolint:noctx
+var downloadClient = &http.Client{Timeout: 60 * time.Second}
+
+func downloadURL(ctx context.Context, u string) ([]byte, error) {
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, u, nil)
+	if err != nil {
+		return nil, err
+	}
+	resp, err := downloadClient.Do(req)
 	if err != nil {
 		return nil, err
 	}
