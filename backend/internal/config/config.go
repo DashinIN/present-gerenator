@@ -22,15 +22,15 @@ type Config struct {
 	StorageMode     string // "local" | "r2"
 	StorageLocalDir string
 
-	R2AccountID  string
-	R2AccessKey  string
-	R2SecretKey  string
-	R2Bucket     string
+	R2AccountID string
+	R2AccessKey string
+	R2SecretKey string
+	R2Bucket    string
 
 	WorkerCount int
 
-	SunoAPIKey string // API ключ sunoapi.org (пусто = mock)
-	KieAPIKey  string // API ключ kie.ai для генерации изображений (пусто = mock)
+	KieAPIKey  string // API ключ kie.ai для изображений и музыки (пусто = mock)
+	FFmpegPath string // путь к ffmpeg для предобработки mashup-аудио
 }
 
 func Load() (*Config, error) {
@@ -50,8 +50,8 @@ func Load() (*Config, error) {
 		R2SecretKey:     getEnv("R2_SECRET_KEY", ""),
 		R2Bucket:        getEnv("R2_BUCKET", "fungreet"),
 		WorkerCount:     getEnvInt("WORKER_COUNT", 2),
-		SunoAPIKey:      getEnv("SUNO_API_KEY", ""),
 		KieAPIKey:       getEnv("KIE_API_KEY", ""),
+		FFmpegPath:      getEnv("FFMPEG_PATH", "ffmpeg"),
 	}
 
 	if cfg.DatabaseURL == "" {

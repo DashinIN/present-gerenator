@@ -10,10 +10,11 @@ interface ChatThreadProps {
 
 export function ChatThread({ generations, noCreditsAt }: ChatThreadProps) {
   const bottomRef = useRef<HTMLDivElement>(null)
+  const lastStatus = generations[generations.length - 1]?.status
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
-  }, [generations.length, generations[generations.length - 1]?.status])
+  }, [generations.length, lastStatus])
 
   if (generations.length === 0) {
     return (
@@ -152,6 +153,27 @@ function UserPrompt({ gen }: { gen: GenerationRequest }) {
           ))}
         </div>
       )}
+
+      {gen.input_audio_keys?.length > 0 && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginTop: 8 }}>
+          {gen.input_audio_keys.map((url, i) => (
+            <div
+              key={i}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 8,
+                background: 'rgba(255,255,255,0.12)',
+                borderRadius: 8,
+                padding: '8px 10px',
+              }}
+            >
+              <Music size={12} />
+              <audio controls src={url} style={{ flex: 1, height: 32 }} />
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   )
 }
@@ -191,11 +213,12 @@ function GenerationResult({ gen }: { gen: GenerationRequest }) {
 }
 
 function SkeletonState({ gen }: { gen: GenerationRequest }) {
-  const label = {
+  const labels: Partial<Record<GenerationRequest['status'], string>> = {
     pending: 'В очереди...',
     processing_images: 'Генерирую картинки...',
     processing_audio: 'Генерирую музыку...',
-  }[gen.status] ?? 'Обрабатываю...'
+  }
+  const label = labels[gen.status] ?? 'Обрабатываю...'
 
   const readyAudios = gen.result_audios ?? []
   // Suno всегда отдаёт 2 клипа за задачу — показываем минимум 2 слота

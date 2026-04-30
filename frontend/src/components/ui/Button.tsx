@@ -1,4 +1,5 @@
-import { ButtonHTMLAttributes, CSSProperties, forwardRef } from 'react'
+import { forwardRef } from 'react'
+import type { ButtonHTMLAttributes, CSSProperties, MouseEvent } from 'react'
 
 interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: 'primary' | 'ghost' | 'danger'
@@ -39,7 +40,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
     const variantStyle = VARIANT_STYLES[variant]
     const sizeStyle = SIZE_STYLES[size]
 
-    const handleMouseEnter = (e: React.MouseEvent<HTMLButtonElement>) => {
+    const handleMouseEnter = (e: MouseEvent<HTMLButtonElement>) => {
       if (!isDisabled) {
         const el = e.currentTarget
         if (variant === 'primary') el.style.opacity = '0.88'
@@ -49,7 +50,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
       onMouseEnter?.(e)
     }
 
-    const handleMouseLeave = (e: React.MouseEvent<HTMLButtonElement>) => {
+    const handleMouseLeave = (e: MouseEvent<HTMLButtonElement>) => {
       const el = e.currentTarget
       el.style.opacity = ''
       el.style.background = variantStyle.background as string

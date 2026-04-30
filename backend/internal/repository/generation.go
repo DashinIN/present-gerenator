@@ -21,20 +21,21 @@ func NewGenerationRepository(db *sql.DB) *GenerationRepository {
 }
 
 type CreateGenerationParams struct {
-	ID            uuid.UUID  // совпадает с ID транзакции биллинга
-	UserID        int64
-	SessionID     *uuid.UUID
-	ParentID      *uuid.UUID
-	ImagePrompt   string
-	SongPrompt    string
-	SongLyrics    string
-	SongStyle     string
-	ImageCount    int
-	SongCount     int
-	InputPhotos   []string
-	InputAudioKey string
-	CreditsSpent  int
-	TariffID      int
+	ID             uuid.UUID // совпадает с ID транзакции биллинга
+	UserID         int64
+	SessionID      *uuid.UUID
+	ParentID       *uuid.UUID
+	ImagePrompt    string
+	SongPrompt     string
+	SongLyrics     string
+	SongStyle      string
+	ImageCount     int
+	SongCount      int
+	InputPhotos    []string
+	InputAudioKey  string
+	InputAudioKeys []string
+	CreditsSpent   int
+	TariffID       int
 }
 
 func (r *GenerationRepository) Create(ctx context.Context, p CreateGenerationParams) (*models.GenerationRequest, error) {
@@ -42,16 +43,16 @@ func (r *GenerationRepository) Create(ctx context.Context, p CreateGenerationPar
 	err := r.db.QueryRowContext(ctx,
 		`INSERT INTO generation_requests
 		 (id, user_id, session_id, parent_id, image_prompt,
-		  song_prompt, song_lyrics, song_style, image_count, song_count, input_photos, input_audio_key,
+		  song_prompt, song_lyrics, song_style, image_count, song_count, input_photos, input_audio_key, input_audio_keys,
 		  credits_spent, tariff_id)
-		 VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14)
+		 VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15)
 		 RETURNING id, user_id, session_id, parent_id, status,
 		           image_prompt, song_prompt, song_lyrics, song_style, image_count, song_count,
-		           input_photos, input_audio_key, result_images, result_audios,
+		           input_photos, input_audio_key, input_audio_keys, result_images, result_audios,
 		           error_message, credits_spent, tariff_id, created_at, completed_at`,
 		p.ID, p.UserID, p.SessionID, p.ParentID,
 		p.ImagePrompt, p.SongPrompt, p.SongLyrics, p.SongStyle,
-		p.ImageCount, p.SongCount, pq.Array(p.InputPhotos), p.InputAudioKey,
+		p.ImageCount, p.SongCount, pq.Array(p.InputPhotos), p.InputAudioKey, pq.Array(p.InputAudioKeys),
 		p.CreditsSpent, p.TariffID,
 	).Scan(scanGeneration(&g)...)
 	if err != nil {
@@ -65,7 +66,7 @@ func (r *GenerationRepository) GetByID(ctx context.Context, id uuid.UUID) (*mode
 	err := r.db.QueryRowContext(ctx,
 		`SELECT id, user_id, session_id, parent_id, status,
 		        image_prompt, song_prompt, song_lyrics, song_style, image_count, song_count,
-		        input_photos, input_audio_key, result_images, result_audios,
+		        input_photos, input_audio_key, input_audio_keys, result_images, result_audios,
 		        error_message, credits_spent, tariff_id, created_at, completed_at
 		 FROM generation_requests WHERE id = $1`, id,
 	).Scan(scanGeneration(&g)...)
@@ -82,7 +83,7 @@ func (r *GenerationRepository) ListBySession(ctx context.Context, sessionID uuid
 	rows, err := r.db.QueryContext(ctx,
 		`SELECT id, user_id, session_id, parent_id, status,
 		        image_prompt, song_prompt, song_lyrics, song_style, image_count, song_count,
-		        input_photos, input_audio_key, result_images, result_audios,
+		        input_photos, input_audio_key, input_audio_keys, result_images, result_audios,
 		        error_message, credits_spent, tariff_id, created_at, completed_at
 		 FROM generation_requests WHERE session_id = $1
 		 ORDER BY created_at ASC`,
@@ -108,7 +109,7 @@ func (r *GenerationRepository) ListByUser(ctx context.Context, userID int64, lim
 	rows, err := r.db.QueryContext(ctx,
 		`SELECT id, user_id, session_id, parent_id, status,
 		        image_prompt, song_prompt, song_lyrics, song_style, image_count, song_count,
-		        input_photos, input_audio_key, result_images, result_audios,
+		        input_photos, input_audio_key, input_audio_keys, result_images, result_audios,
 		        error_message, credits_spent, tariff_id, created_at, completed_at
 		 FROM generation_requests WHERE user_id = $1
 		 ORDER BY created_at DESC LIMIT $2 OFFSET $3`,
@@ -186,7 +187,7 @@ func scanGeneration(g *models.GenerationRequest) []any {
 		&g.ID, &g.UserID, &g.SessionID, &g.ParentID, &g.Status,
 		&g.ImagePrompt, &g.SongPrompt, &g.SongLyrics, &g.SongStyle,
 		&g.ImageCount, &g.SongCount,
-		pq.Array(&g.InputPhotos), &g.InputAudioKey,
+		pq.Array(&g.InputPhotos), &g.InputAudioKey, pq.Array(&g.InputAudioKeys),
 		pq.Array(&g.ResultImages), pq.Array(&g.ResultAudios),
 		&g.ErrorMessage, &g.CreditsSpent, &g.TariffID, &g.CreatedAt, &g.CompletedAt,
 	}

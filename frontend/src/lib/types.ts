@@ -46,6 +46,7 @@ export interface GenerationRequest {
   song_count: number
   input_photos: string[]
   input_audio_key: string
+  input_audio_keys: string[]
   result_images: string[]
   result_audios: string[]
   error_message?: string

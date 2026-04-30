@@ -137,6 +137,10 @@ func (h *SessionHandler) Get(c *gin.Context) {
 		gens[i].ResultImages = h.resolveKeys(c.Request.Context(), gens[i].ResultImages)
 		gens[i].ResultAudios = h.resolveKeys(c.Request.Context(), gens[i].ResultAudios)
 		gens[i].InputPhotos = h.resolveKeys(c.Request.Context(), gens[i].InputPhotos)
+		gens[i].InputAudioKeys = h.resolveKeys(c.Request.Context(), gens[i].InputAudioKeys)
+		if gens[i].InputAudioKey == "" && len(gens[i].InputAudioKeys) > 0 {
+			gens[i].InputAudioKey = gens[i].InputAudioKeys[0]
+		}
 	}
 
 	c.JSON(http.StatusOK, gin.H{

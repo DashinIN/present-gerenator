@@ -15,7 +15,7 @@ import (
 
 const (
 	kieBaseURL         = "https://api.kie.ai/api/v1"
-	kieUploadURL       = "https://api.kie.ai/api/file-stream-upload"
+	kieUploadURL       = "https://kieai.redpandaai.co/api/file-stream-upload"
 	kiePollingInterval = 5 * time.Second
 	kieTimeout         = 5 * time.Minute
 )
@@ -144,13 +144,20 @@ func (g *KieImageGenerator) uploadToKie(ctx context.Context, filename string, da
 	return result.Data.DownloadURL, nil
 }
 
-func (g *KieImageGenerator) submit(ctx context.Context, prompt string, _ []string, callbackURL string) (string, error) {
+func (g *KieImageGenerator) submit(ctx context.Context, prompt string, refImages []string, callbackURL string) (string, error) {
+	model := "gpt-image-2-text-to-image"
+	input := map[string]any{
+		"prompt":       prompt,
+		"aspect_ratio": "1:1",
+	}
+	if len(refImages) > 0 {
+		model = "gpt-image-2-image-to-image"
+		input["input_urls"] = refImages
+	}
+
 	payload := map[string]any{
-		"model": "z-image",
-		"input": map[string]any{
-			"prompt":       prompt,
-			"aspect_ratio": "1:1",
-		},
+		"model": model,
+		"input": input,
 	}
 	if callbackURL != "" {
 		payload["callBackUrl"] = callbackURL
@@ -160,7 +167,7 @@ func (g *KieImageGenerator) submit(ctx context.Context, prompt string, _ []strin
 		return "", fmt.Errorf("marshal kie request: %w", err)
 	}
 
-	slog.Info("kie submit request", "body", string(body))
+	slog.Info("kie image submit", "model", model, "refs", len(refImages), "hasCallback", callbackURL != "")
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost, kieBaseURL+"/jobs/createTask", bytes.NewReader(body))
 	if err != nil {

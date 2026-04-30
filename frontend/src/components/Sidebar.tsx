@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, type MouseEvent } from 'react'
+import { useState, useRef, useEffect, type MouseEvent as ReactMouseEvent } from 'react'
 import { LogOut, Plus, Sparkles, MessageSquare, Sun, Moon, Palette, Receipt, Pencil, Check, X } from 'lucide-react'
 import { useSessions, useRenameSession } from '@/hooks/useSessions'
 import { useCurrentUser, useBalance, useLogout } from '@/hooks/useAuth'
@@ -32,7 +32,7 @@ export function Sidebar({ open, activeSessionId, onSelectSession, onNewSession }
   // Close popup on outside click
   useEffect(() => {
     if (!themePopupOpen) return
-    const handler = (e: MouseEvent) => {
+    const handler = (e: globalThis.MouseEvent) => {
       if (
         popupRef.current && !popupRef.current.contains(e.target as Node) &&
         paletteRef.current && !paletteRef.current.contains(e.target as Node)
@@ -316,7 +316,7 @@ function SessionItem({ session, active, onClick }: {
   const [draft, setDraft] = useState('')
   const rename = useRenameSession()
 
-  const startEdit = (e: MouseEvent) => {
+  const startEdit = (e: ReactMouseEvent) => {
     e.stopPropagation()
     setDraft(session.title || '')
     setEditing(true)

@@ -1,0 +1,760 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>FunGreet — Схемы архитектуры</title>
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: #0f1117;
+      color: #e2e8f0;
+      min-height: 100vh;
+    }
+
+    header {
+      background: #1a1d27;
+      border-bottom: 1px solid #2d3148;
+      padding: 20px 40px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    header .logo { font-size: 28px; }
+    header h1 { font-size: 20px; font-weight: 700; color: #fff; }
+    header p  { font-size: 13px; color: #64748b; margin-top: 2px; }
+
+    nav {
+      display: flex;
+      gap: 8px;
+      padding: 16px 40px;
+      background: #1a1d27;
+      border-bottom: 1px solid #2d3148;
+      flex-wrap: wrap;
+    }
+
+    nav button {
+      padding: 8px 18px;
+      border-radius: 8px;
+      border: 1px solid #2d3148;
+      background: transparent;
+      color: #94a3b8;
+      font-size: 13px;
+      cursor: pointer;
+      transition: all .15s;
+    }
+    nav button:hover  { border-color: #6366f1; color: #a5b4fc; }
+    nav button.active { background: #6366f1; border-color: #6366f1; color: #fff; font-weight: 600; }
+
+    main { padding: 40px; max-width: 1400px; margin: 0 auto; }
+
+    .section { display: none; }
+    .section.visible { display: block; }
+
+    .section-title {
+      font-size: 22px;
+      font-weight: 700;
+      margin-bottom: 8px;
+      color: #fff;
+    }
+    .section-desc {
+      font-size: 14px;
+      color: #64748b;
+      margin-bottom: 32px;
+      line-height: 1.6;
+    }
+
+    .diagram-card {
+      background: #1a1d27;
+      border: 1px solid #2d3148;
+      border-radius: 16px;
+      padding: 32px;
+      margin-bottom: 32px;
+    }
+
+    .diagram-card h2 {
+      font-size: 16px;
+      font-weight: 600;
+      color: #a5b4fc;
+      margin-bottom: 6px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .diagram-card h2 .badge {
+      font-size: 11px;
+      padding: 2px 8px;
+      border-radius: 20px;
+      background: #1e293b;
+      color: #64748b;
+      font-weight: 400;
+    }
+    .diagram-card p {
+      font-size: 13px;
+      color: #475569;
+      margin-bottom: 24px;
+      line-height: 1.5;
+    }
+
+    .mermaid {
+      display: flex;
+      justify-content: center;
+      overflow-x: auto;
+    }
+    .mermaid svg { max-width: 100%; height: auto; }
+
+    .grid-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 24px;
+    }
+
+    @media (max-width: 900px) {
+      .grid-2 { grid-template-columns: 1fr; }
+      main { padding: 20px; }
+      nav { padding: 12px 20px; }
+      header { padding: 16px 20px; }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="logo">🎁</div>
+  <div>
+    <h1>FunGreet — Схемы архитектуры</h1>
+    <p>Функциональная схема сервиса · Флоу API · Генерация контента</p>
+  </div>
+</header>
+
+<nav>
+  <button class="active" onclick="show('functional', this)">Функциональная схема</button>
+  <button onclick="show('api', this)">Флоу API</button>
+  <button onclick="show('generation', this)">Флоу генерации</button>
+  <button onclick="show('auth', this)">Аутентификация</button>
+  <button onclick="show('data', this)">Модели данных</button>
+</nav>
+
+<main>
+
+  <!-- ═══════════════════════════════════════════ FUNCTIONAL ═══ -->
+  <section id="functional" class="section visible">
+    <div class="section-title">Функциональная схема</div>
+    <div class="section-desc">Компоненты системы, их ответственности и связи между слоями.</div>
+
+    <div class="diagram-card">
+      <h2>🏗 Общая архитектура <span class="badge">C4 Container</span></h2>
+      <p>Монолитный Go-бэкенд с встроенным воркером, React-фронтенд, PostgreSQL и Redis.</p>
+      <div class="mermaid">
+graph TB
+    subgraph Browser["🌐 Браузер"]
+        UI["React TS\nChatPage · Sidebar · ChatInput\nChatThread · LoginPage"]
+        APIClient["api.ts\nHTTP-клиент\nauto-refresh JWT"]
+    end
+
+    subgraph Backend["⚙️ Backend — Go · Gin · :8080"]
+        direction TB
+        MW["Middleware\nAuth · Logger · Recovery"]
+        H["Handlers\nauth · user · billing\nsessions · generations\nuploads · webhooks"]
+        SVC["Services\nJWT · Billing · Storage\nKieImageGen · SunoAPIGen"]
+        REPO["Repository\nUser · Billing\nGeneration · Session"]
+        W["Worker\ngoroutines ×2\nBRPop gen_queue"]
+        WS["WebhookStore\nRedis taskID↔genID"]
+    end
+
+    subgraph Infra["🗄 Инфраструктура"]
+        PG[("PostgreSQL\n:5433")]
+        RD[("Redis\n:6379\ngen_queue\nwh:task:*\nwh:gen:*")]
+        FS["Storage\nlocal ./data/uploads\nили Cloudflare R2"]
+    end
+
+    subgraph External["🌍 Внешние AI API"]
+        KIE["kie.ai\nz-image\n$0.004/img"]
+        SUNO["sunoapi.org\naudio · lyrics"]
+    end
+
+    UI --> APIClient
+    APIClient -->|"HTTP cookie"| MW
+    MW --> H
+    H --> SVC
+    H --> REPO
+    SVC --> REPO
+    REPO --> PG
+    H -->|"RPUSH gen_queue"| RD
+    W -->|"BRPop"| RD
+    W --> SVC
+    W --> REPO
+    W --> WS
+    WS --> RD
+    SVC --> FS
+    SVC -->|"POST /jobs/createTask"| KIE
+    SVC -->|"POST /api/v1/generate"| SUNO
+    KIE -->|"POST /api/webhooks/kie"| H
+    SUNO -->|"POST /api/webhooks/suno"| H
+
+    style Browser fill:#1e293b,stroke:#6366f1,color:#e2e8f0
+    style Backend fill:#1a2744,stroke:#3b82f6,color:#e2e8f0
+    style Infra fill:#1a2a1a,stroke:#22c55e,color:#e2e8f0
+    style External fill:#2a1a1a,stroke:#f59e0b,color:#e2e8f0
+      </div>
+    </div>
+
+    <div class="grid-2">
+      <div class="diagram-card">
+        <h2>🔧 Слои бэкенда</h2>
+        <p>Зависимости между пакетами Go.</p>
+        <div class="mermaid">
+graph TD
+    CMD["cmd/server/main.go\nинициализация · DI · роутинг"]
+    MID["middleware/\nJWT cookie · logger · recovery"]
+    HAN["handlers/\nauth · user · billing\nsessions · generations\nuploads · webhook"]
+    SRV["services/\nJWTService · BillingService\nStorageService\nKieImageGenerator\nSunoAPIGenerator"]
+    REP["repository/\nUserRepo · BillingRepo\nGenerationRepo · SessionRepo"]
+    WRK["worker/\nWorker · Queue\nWebhookStore"]
+    MDL["models/\nUser · GenerationRequest\nGenerationSession · Tariff\nCreditTransaction"]
+    DB[("PostgreSQL")]
+    RDS[("Redis")]
+
+    CMD --> MID
+    CMD --> HAN
+    CMD --> WRK
+    HAN --> SRV
+    HAN --> REP
+    WRK --> SRV
+    WRK --> REP
+    SRV --> MDL
+    REP --> MDL
+    REP --> DB
+    WRK --> RDS
+
+    style CMD fill:#312e81,stroke:#6366f1,color:#e2e8f0
+    style MDL fill:#1e3a5f,stroke:#3b82f6,color:#e2e8f0
+    style DB  fill:#14532d,stroke:#22c55e,color:#e2e8f0
+    style RDS fill:#7c2d12,stroke:#f97316,color:#e2e8f0
+        </div>
+      </div>
+
+      <div class="diagram-card">
+        <h2>🎨 Компоненты фронтенда</h2>
+        <p>React-дерево компонентов и React Query хуки.</p>
+        <div class="mermaid">
+graph TD
+    APP["App.tsx\nRoutes"]
+    LP["LoginPage\ndev-логин"]
+    CP["ChatPage\nосновной экран"]
+    SB["Sidebar\nсписок сессий\npoll /sessions"]
+    CI["ChatInput\nформа отправки\nimage + song блоки"]
+    CT["ChatThread\nлента генераций\nauto-scroll"]
+    GM["GenerationMessage\nuser bubble + bot bubble"]
+    SK["SkeletonState\nпрогресс генерации"]
+    CS["CompletedState\nкартинки + аудиоплееры"]
+    APIC["api.ts\nHTTP client\nauto 401→refresh"]
+    RQ["React Query\nuseQuery · useMutation\ninvalidateQueries"]
+
+    APP --> LP
+    APP --> CP
+    CP --> SB
+    CP --> CI
+    CP --> CT
+    CT --> GM
+    GM --> SK
+    GM --> CS
+    CI --> APIC
+    CT --> APIC
+    SB --> APIC
+    APIC --> RQ
+
+    style APP fill:#312e81,stroke:#6366f1,color:#e2e8f0
+    style APIC fill:#1e3a5f,stroke:#3b82f6,color:#e2e8f0
+    style RQ  fill:#1e3a5f,stroke:#3b82f6,color:#e2e8f0
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════ API FLOW ═══ -->
+  <section id="api" class="section">
+    <div class="section-title">Флоу API</div>
+    <div class="section-desc">Sequence-диаграммы ключевых HTTP-запросов от клиента до базы данных.</div>
+
+    <div class="diagram-card">
+      <h2>📋 Карта эндпоинтов</h2>
+      <p>Все REST-маршруты сервиса.</p>
+      <div class="mermaid">
+mindmap
+  root(("🎁 FunGreet\nAPI :8080"))
+    Auth
+      GET /api/auth/dev/login
+      POST /api/auth/refresh
+      POST /api/auth/logout
+    User
+      GET /api/user/me
+    Billing
+      GET /api/billing/balance
+      GET /api/billing/tariff
+      GET /api/billing/estimate
+      GET /api/billing/transactions
+    Sessions
+      GET /api/sessions
+      GET /api/sessions/:id
+      PATCH /api/sessions/:id
+    Generations
+      POST /api/generations
+      GET /api/generations/:id
+      GET /api/generations/:id/status
+      POST /api/generations/lyrics
+    Files
+      POST /api/uploads
+      GET /api/files/*key
+    Webhooks
+      POST /api/webhooks/kie
+      POST /api/webhooks/suno
+      </div>
+    </div>
+
+    <div class="diagram-card">
+      <h2>🚀 POST /api/generations — создание генерации</h2>
+      <p>Полный цикл от отправки формы до постановки в очередь воркера.</p>
+      <div class="mermaid">
+sequenceDiagram
+    participant C  as 🌐 Client
+    participant MW as Middleware
+    participant H  as GenerationHandler
+    participant B  as BillingService
+    participant DB as PostgreSQL
+    participant RD as Redis
+
+    C->>MW: POST /api/generations\nmultipart/form-data\n(image_prompt, song_lyrics, photos[])
+    MW->>MW: validateJWT(cookie)
+    MW->>H: userID extracted
+
+    H->>DB: GetActiveTariff(userID)
+    DB-->>H: tariff (price_per_image, price_per_song)
+
+    H->>B: Charge(userID, cost, description)
+    B->>DB: INSERT credit_transactions (−cost)
+    DB-->>B: ok
+    B-->>H: ok
+
+    H->>DB: INSERT generation_requests\n(status=pending, image_count, song_count\nimage_prompt, song_lyrics, input_photos[])
+    DB-->>H: generation.ID
+
+    H->>RD: RPUSH gen_queue {generationID}
+    RD-->>H: ok
+
+    H-->>C: 202 Accepted\n{id, status: "pending", credits_spent}
+      </div>
+    </div>
+
+    <div class="diagram-card">
+      <h2>🔄 GET /api/generations/:id/status — polling статуса</h2>
+      <p>Фронтенд поллит этот эндпоинт каждые 3 секунды до завершения.</p>
+      <div class="mermaid">
+sequenceDiagram
+    participant C  as 🌐 Client
+    participant H  as GenerationHandler
+    participant DB as PostgreSQL
+    participant S  as StorageService
+
+    loop каждые 3 сек пока status != completed|failed
+        C->>H: GET /api/generations/:id/status
+
+        H->>DB: GetByID(id)
+        DB-->>H: generation\n(status, result_images[], result_audios[]\ninput_photos[])
+
+        H->>S: GetURL(key) для каждого ключа
+        S-->>H: http://localhost:8080/api/files/...
+
+        H-->>C: {status, result_images[], result_audios[]\ninput_photos[], credits_spent}
+    end
+
+    Note over C,H: status=completed → рендер картинок и аудио
+    Note over C,H: status=failed → показ ошибки + возврат кредитов уже произошёл
+      </div>
+    </div>
+
+    <div class="diagram-card">
+      <h2>🔐 Аутентификация и refresh токена</h2>
+      <p>Автоматическое обновление access token через interceptor в api.ts.</p>
+      <div class="mermaid">
+sequenceDiagram
+    participant C  as 🌐 Client (api.ts)
+    participant MW as Middleware
+    participant AH as AuthHandler
+    participant DB as PostgreSQL
+
+    C->>MW: GET /api/sessions\ncookie: access_token (expired)
+    MW-->>C: 401 Unauthorized
+
+    Note over C: interceptor поймал 401
+    C->>AH: POST /api/auth/refresh\ncookie: refresh_token
+
+    AH->>DB: ValidateRefreshToken
+    DB-->>AH: userID
+
+    AH-->>C: Set-Cookie: access_token (new)\n200 OK
+
+    Note over C: повторяет исходный запрос
+    C->>MW: GET /api/sessions\ncookie: access_token (new)
+    MW->>MW: validateJWT → ok
+    MW-->>C: 200 + sessions[]
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════ GENERATION FLOW ═══ -->
+  <section id="generation" class="section">
+    <div class="section-title">Флоу генерации контента</div>
+    <div class="section-desc">Как воркер обрабатывает задачи в двух режимах: polling (dev) и webhook (prod).</div>
+
+    <div class="diagram-card">
+      <h2>🔀 Polling vs Webhook — выбор режима</h2>
+      <p>Режим определяется переменной <code>BASE_URL</code> при старте сервера.</p>
+      <div class="mermaid">
+flowchart TD
+    START(["Worker\nBRPop gen_queue"])
+    CHECK{BASE_URL\nзадан?}
+    POLL["process()\n🔄 Sync polling режим\ndev / local"]
+    ASYNC["processAsync()\n⚡ Webhook режим\nproduction"]
+
+    START --> CHECK
+    CHECK -->|"Нет"| POLL
+    CHECK -->|"Да"| ASYNC
+
+    subgraph SyncFlow["🔄 Sync (polling)"]
+        P1["errgroup: параллельно\nimageGen.Generate()\nsongGen.Generate()"]
+        P2["Upload файлов\nв storage"]
+        P3["UpdateResults()\nstatus=completed"]
+        P1 --> P2 --> P3
+    end
+
+    subgraph AsyncFlow["⚡ Async (webhook)"]
+        A1["imageGen.Submit(cbURL=/webhooks/kie)\nsongGen.Submit(cbURL=/webhooks/suno)"]
+        A2["RegisterTask(taskID→genID)\nInitPending({image,song})"]
+        A3["UpdateStatus=processing\nворкер свободен"]
+        A4["Webhook от kie.ai/suno\nKieCallback / SunoCallback"]
+        A5["Download → Upload\nAppendImages/Audios\nCompletePending"]
+        A6{remaining\n== 0?}
+        A7["UpdateResults()\nstatus=completed"]
+        A1 --> A2 --> A3
+        A4 --> A5 --> A6
+        A6 -->|"Нет"| A3
+        A6 -->|"Да"| A7
+    end
+
+    POLL --> SyncFlow
+    ASYNC --> AsyncFlow
+
+    style SyncFlow fill:#1e3a5f,stroke:#3b82f6,color:#e2e8f0
+    style AsyncFlow fill:#1a2a1a,stroke:#22c55e,color:#e2e8f0
+      </div>
+    </div>
+
+    <div class="diagram-card">
+      <h2>🖼 Генерация изображений — kie.ai z-image</h2>
+      <p>Полный цикл от submit до сохранения в storage.</p>
+      <div class="mermaid">
+sequenceDiagram
+    participant W  as Worker
+    participant K  as KieImageGenerator
+    participant KA as kie.ai API
+    participant S  as Storage
+    participant DB as PostgreSQL
+
+    W->>K: Generate(ctx, prompt, refImages, count)
+
+    opt refImages не пустые
+        K->>S: Download(key) для каждого ref
+        S-->>K: []byte
+        K->>KA: POST /api/file-stream-upload\nmultipart (uploadPath, fileName, file)
+        KA-->>K: {data.downloadUrl}
+    end
+
+    K->>KA: POST /api/v1/jobs/createTask\n{model: z-image, input: {prompt, aspect_ratio: 1:1}}
+    KA-->>K: {data.taskId}
+
+    loop каждые 5 сек (макс 5 мин)
+        K->>KA: GET /api/v1/jobs/recordInfo?taskId=
+        KA-->>K: {data.state, data.resultJson}
+        alt state = generating
+            Note over K: ждём...
+        else state = success
+            K->>K: parse resultJson.resultUrls[]
+        else state = fail
+            K-->>W: error
+        end
+    end
+
+    loop для каждого resultUrl
+        K->>KA: GET {resultUrl}
+        KA-->>K: image bytes (PNG)
+    end
+
+    K-->>W: [][]byte
+
+    loop для каждого изображения
+        W->>S: Upload(results/{genID}/image_N.png, bytes)
+    end
+    W->>DB: UpdateResults(imageKeys[])
+      </div>
+    </div>
+
+    <div class="diagram-card">
+      <h2>🎵 Генерация песни — sunoapi.org (streaming)</h2>
+      <p>Поддержка стриминга: первый клип отдаётся до завершения второго.</p>
+      <div class="mermaid">
+sequenceDiagram
+    participant W  as Worker
+    participant SG as SunoAPIGenerator
+    participant SA as sunoapi.org
+    participant S  as Storage
+    participant DB as PostgreSQL
+
+    opt song_prompt задан, song_lyrics пусты
+        W->>SG: GenerateLyrics(ctx, song_prompt)
+        SG->>SA: POST /api/v1/generate/lyrics {prompt}
+        SA-->>SG: {taskId}
+        loop polling
+            SG->>SA: GET /generate/lyrics/record-info?taskId=
+            SA-->>SG: {status, text, title}
+        end
+        SG-->>W: (lyrics_text, title)
+        W->>DB: save song_lyrics
+    end
+
+    W->>SG: GenerateStreaming(ctx, lyrics, style, count, partialCB)
+    SG->>SA: POST /api/v1/generate\n{lyrics, style, count, callbackType: streaming}
+    SA-->>SG: {taskId}
+
+    loop polling (5 сек, макс 10 мин)
+        SG->>SA: GET /generate/record-info?taskId=
+        SA-->>SG: {status, sunoData[].audioUrl}
+
+        alt status = FIRST_SUCCESS
+            SG->>SA: GET audioUrl[0]
+            SA-->>SG: mp3 bytes
+            SG->>SG: partialCB([clip1])
+            W->>S: Upload(results/{genID}/song_0.mp3)
+            W->>DB: AppendAudios([song_0])
+        else status = SUCCESS
+            SG->>SA: GET audioUrl[1]
+            SA-->>SG: mp3 bytes
+        end
+    end
+
+    SG-->>W: [clip1, clip2]
+    W->>S: Upload(results/{genID}/song_1.mp3)
+    W->>DB: UpdateResults(allAudioKeys[])
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════ AUTH ═══ -->
+  <section id="auth" class="section">
+    <div class="section-title">Аутентификация</div>
+    <div class="section-desc">JWT cookie-схема с автоматическим refresh на клиенте.</div>
+
+    <div class="diagram-card">
+      <h2>🔑 JWT Cookie схема</h2>
+      <p>Два токена: access (15 мин) и refresh (30 дней, ограниченный путём).</p>
+      <div class="mermaid">
+flowchart LR
+    subgraph Tokens["Cookie-банк браузера"]
+        AT["access_token\nJWT · httpOnly\nTTL 15 мин\npath: /"]
+        RT["refresh_token\nJWT · httpOnly\nTTL 30 дней\npath: /api/auth/refresh"]
+    end
+
+    subgraph Flow["Жизненный цикл"]
+        L["Логин\nGET /auth/dev/login"]
+        R["Запрос API\nAuthorization: cookie"]
+        MW["Middleware\nvalidateJWT"]
+        OK["200 OK\n+ payload"]
+        U401["401 Unauthorized\ntoken expired"]
+        REF["POST /auth/refresh\ncookie: refresh_token"]
+        NEW["Новый access_token\nSet-Cookie"]
+        RETRY["Повторный запрос\nnew cookie"]
+    end
+
+    L -->|"Set-Cookie ×2"| Tokens
+    R --> MW
+    AT -->|"читает"| MW
+    MW -->|"valid"| OK
+    MW -->|"expired"| U401
+    U401 -->|"interceptor"| REF
+    RT -->|"читает"| REF
+    REF --> NEW
+    NEW -->|"обновляет"| AT
+    NEW --> RETRY
+    RETRY --> MW
+
+    style Tokens fill:#1e293b,stroke:#6366f1,color:#e2e8f0
+    style Flow fill:#1a2a1a,stroke:#22c55e,color:#e2e8f0
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════ DATA ═══ -->
+  <section id="data" class="section">
+    <div class="section-title">Модели данных</div>
+    <div class="section-desc">Схема БД PostgreSQL и связи между таблицами.</div>
+
+    <div class="diagram-card">
+      <h2>🗃 Entity-Relationship схема</h2>
+      <p>Ключевые таблицы и их связи. Версия миграций: 4.</p>
+      <div class="mermaid">
+erDiagram
+    users {
+        bigint id PK
+        varchar email
+        varchar display_name
+        varchar avatar_url
+        timestamp created_at
+        timestamp updated_at
+    }
+
+    user_identities {
+        bigint id PK
+        bigint user_id FK
+        varchar provider
+        varchar provider_id
+        varchar access_token
+        timestamp created_at
+    }
+
+    tariffs {
+        bigint id PK
+        varchar name
+        int price_per_image
+        int price_per_song
+        int price_per_lyrics
+        bool is_active
+        timestamp created_at
+    }
+
+    credit_transactions {
+        bigint id PK
+        bigint user_id FK
+        int amount
+        varchar type
+        varchar description
+        uuid ref_generation_id FK
+        timestamp created_at
+    }
+
+    generation_sessions {
+        uuid id PK
+        bigint user_id FK
+        varchar title
+        timestamp created_at
+        timestamp updated_at
+    }
+
+    generation_requests {
+        uuid id PK
+        uuid session_id FK
+        uuid parent_id FK
+        bigint user_id FK
+        bigint tariff_id FK
+        varchar status
+        text image_prompt
+        text song_prompt
+        text song_lyrics
+        varchar song_style
+        int image_count
+        int song_count
+        text[] input_photos
+        text result_images
+        text result_audios
+        int credits_spent
+        text error_message
+        int retry_count
+        timestamp created_at
+        timestamp updated_at
+    }
+
+    users ||--o{ user_identities : "has"
+    users ||--o{ credit_transactions : "has"
+    users ||--o{ generation_sessions : "owns"
+    users ||--o{ generation_requests : "creates"
+    generation_sessions ||--o{ generation_requests : "contains"
+    generation_requests ||--o| generation_requests : "parent_id"
+    tariffs ||--o{ generation_requests : "used_by"
+      </div>
+    </div>
+
+    <div class="diagram-card">
+      <h2>📊 Статусы генерации</h2>
+      <p>State machine генерации контента.</p>
+      <div class="mermaid">
+stateDiagram-v2
+    [*] --> pending : POST /api/generations\n(кредиты списаны)
+
+    pending --> processing_images : Worker взял задачу\n(image_count > 0)
+    pending --> processing_audio : Worker взял задачу\n(song_count > 0, images нет)
+
+    processing_images --> processing_audio : Картинки готовы\n(если есть song)
+    processing_images --> completed : Только картинки\nвсё готово
+    processing_audio --> completed : Аудио готово
+
+    pending --> failed : Ошибка генерации\n(retry_count >= 3)
+    processing_images --> failed : Ошибка kie.ai
+    processing_audio --> failed : Ошибка sunoapi
+
+    failed --> pending : Авторефанд кредитов\n(billing.Refund)
+
+    completed --> [*]
+    failed --> [*]
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<script>
+  mermaid.initialize({
+    startOnLoad: true,
+    theme: 'dark',
+    themeVariables: {
+      primaryColor: '#6366f1',
+      primaryTextColor: '#e2e8f0',
+      primaryBorderColor: '#4f46e5',
+      lineColor: '#475569',
+      secondaryColor: '#1e293b',
+      tertiaryColor: '#0f172a',
+      background: '#1a1d27',
+      mainBkg: '#1e293b',
+      nodeBorder: '#4f46e5',
+      clusterBkg: '#1a1d27',
+      titleColor: '#a5b4fc',
+      edgeLabelBackground: '#1e293b',
+      actorBkg: '#1e293b',
+      actorBorder: '#6366f1',
+      actorTextColor: '#e2e8f0',
+      actorLineColor: '#475569',
+      signalColor: '#94a3b8',
+      signalTextColor: '#e2e8f0',
+      labelBoxBkgColor: '#1e293b',
+      labelBoxBorderColor: '#4f46e5',
+      labelTextColor: '#e2e8f0',
+      loopTextColor: '#e2e8f0',
+      noteBkgColor: '#312e81',
+      noteTextColor: '#e2e8f0',
+    },
+    flowchart: { curve: 'basis', padding: 20 },
+    sequence: { actorMargin: 60, messageMargin: 40 },
+  })
+
+  function show(id, btn) {
+    document.querySelectorAll('.section').forEach(s => s.classList.remove('visible'))
+    document.querySelectorAll('nav button').forEach(b => b.classList.remove('active'))
+    document.getElementById(id).classList.add('visible')
+    btn.classList.add('active')
+  }
+</script>
+
+</body>
+</html>

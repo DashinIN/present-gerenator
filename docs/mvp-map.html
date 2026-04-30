@@ -1,0 +1,462 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>FunGreet - MVP-карта проекта</title>
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: #0f1117;
+      color: #e2e8f0;
+      min-height: 100vh;
+    }
+    header {
+      padding: 24px 40px;
+      background: #171a24;
+      border-bottom: 1px solid #2d3148;
+    }
+    header h1 { font-size: 24px; margin-bottom: 8px; color: #fff; }
+    header p { max-width: 920px; color: #94a3b8; line-height: 1.6; font-size: 14px; }
+    nav {
+      position: sticky;
+      top: 0;
+      z-index: 2;
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      padding: 14px 40px;
+      background: #171a24;
+      border-bottom: 1px solid #2d3148;
+    }
+    nav button {
+      border: 1px solid #2d3148;
+      background: transparent;
+      color: #94a3b8;
+      border-radius: 8px;
+      padding: 8px 14px;
+      font-size: 13px;
+      cursor: pointer;
+    }
+    nav button:hover { color: #c4b5fd; border-color: #7c3aed; }
+    nav button.active { background: #7c3aed; border-color: #7c3aed; color: #fff; }
+    main { max-width: 1360px; margin: 0 auto; padding: 36px 40px 56px; }
+    .section { display: none; }
+    .section.visible { display: block; }
+    .section-title { font-size: 22px; font-weight: 700; margin-bottom: 8px; color: #fff; }
+    .section-desc { color: #94a3b8; line-height: 1.6; margin-bottom: 24px; font-size: 14px; }
+    .grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; }
+    .card {
+      background: #171a24;
+      border: 1px solid #2d3148;
+      border-radius: 12px;
+      padding: 22px;
+      margin-bottom: 20px;
+    }
+    .card h2 { color: #c4b5fd; font-size: 16px; margin-bottom: 10px; }
+    .card p, .card li { color: #cbd5e1; font-size: 14px; line-height: 1.65; }
+    .card ul { padding-left: 18px; }
+    .badge-row { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 14px; }
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      border-radius: 999px;
+      padding: 4px 10px;
+      font-size: 12px;
+      border: 1px solid transparent;
+    }
+    .done { color: #86efac; background: rgba(34,197,94,.1); border-color: rgba(34,197,94,.35); }
+    .partial { color: #fde68a; background: rgba(245,158,11,.1); border-color: rgba(245,158,11,.35); }
+    .missing { color: #fca5a5; background: rgba(239,68,68,.1); border-color: rgba(239,68,68,.35); }
+    .risk { color: #f0abfc; background: rgba(217,70,239,.1); border-color: rgba(217,70,239,.35); }
+    .mermaid-wrap {
+      background: #10131d;
+      border: 1px solid #2d3148;
+      border-radius: 12px;
+      padding: 22px;
+      overflow-x: auto;
+      margin-top: 14px;
+    }
+    .mermaid { display: flex; justify-content: center; min-width: 760px; }
+    table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 14px; }
+    th, td { border-bottom: 1px solid #2d3148; padding: 10px 8px; text-align: left; vertical-align: top; }
+    th { color: #c4b5fd; font-weight: 600; }
+    td { color: #cbd5e1; }
+    code { color: #f8fafc; background: #22263a; padding: 2px 6px; border-radius: 5px; }
+    @media (max-width: 900px) {
+      header, nav, main { padding-left: 18px; padding-right: 18px; }
+      .grid { grid-template-columns: 1fr; }
+      .mermaid { min-width: 680px; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>FunGreet - MVP-карта проекта</h1>
+    <p>
+      Рабочая карта текущего состояния проекта: куда движется продукт, какие пользовательские сценарии
+      важны для MVP, как устроена информация и какие API-функции уже есть в коде.
+    </p>
+  </header>
+
+  <nav>
+    <button class="active" onclick="show('review', this)">Ревью</button>
+    <button onclick="show('stories', this)">User stories</button>
+    <button onclick="show('info', this)">Инфоструктура</button>
+    <button onclick="show('api', this)">API</button>
+    <button onclick="show('sequence', this)">Генерация</button>
+    <button onclick="show('gaps', this)">Что делать</button>
+  </nav>
+
+  <main>
+    <section id="review" class="section visible">
+      <div class="section-title">Куда движется проект</div>
+      <div class="section-desc">
+        FunGreet - web-first сервис AI-поздравлений. Пользователь в чатовой форме создает картинку
+        и/или песню, платит кредитами, получает результат в треде и может продолжать итерации.
+      </div>
+
+      <div class="grid">
+        <div class="card">
+          <h2>Что уже собрано</h2>
+          <ul>
+            <li>Go/Gin backend с REST API, Swagger, middleware и graceful shutdown.</li>
+            <li>PostgreSQL как основная база, Redis как очередь и хранилище webhook-состояния.</li>
+            <li>React/Vite frontend с чатовым UX, сессиями, балансом и polling статусов.</li>
+            <li>Worker pipeline для генерации изображений и аудио через mock или внешние API.</li>
+          </ul>
+          <div class="badge-row">
+            <span class="badge done">implemented</span>
+            <span class="badge partial">production partial</span>
+          </div>
+        </div>
+
+        <div class="card">
+          <h2>Главный вектор MVP</h2>
+          <ul>
+            <li>Стабилизировать путь от запроса пользователя до результата генерации.</li>
+            <li>Убрать рассинхрон frontend API routes и backend <code>/api/v1</code>.</li>
+            <li>Защитить биллинг тестами: estimate, charge, refund, failed generation.</li>
+            <li>Подключать production-интеграции после стабилизации core flow.</li>
+          </ul>
+          <div class="badge-row">
+            <span class="badge risk">core risk</span>
+            <span class="badge partial">MVP focus</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>Контейнерная схема</h2>
+        <div class="mermaid-wrap">
+          <div class="mermaid">
+flowchart TB
+  U["Пользователь"] --> FE["Frontend\nReact + Vite\nChat UI"]
+  FE -->|"cookies + HTTP"| API["Backend API\nGo + Gin"]
+  API --> DB[("PostgreSQL\nusers, sessions,\ngenerations, billing")]
+  API --> R[("Redis\nqueue + webhook state")]
+  API --> S["Storage\nlocal files сейчас\nR2 позже"]
+  R --> W["Worker\nasync generation"]
+  W --> DB
+  W --> S
+  W --> AI["AI providers\nKie / Suno\nили mock"]
+  AI -->|"webhook optional"| API
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="stories" class="section">
+      <div class="section-title">Схема user stories для MVP</div>
+      <div class="section-desc">
+        Основной MVP-сценарий - пользователь быстро получает персонализированное поздравление
+        и понимает стоимость результата до отправки.
+      </div>
+
+      <div class="card">
+        <h2>Карта пользовательского пути</h2>
+        <div class="mermaid-wrap">
+          <div class="mermaid">
+flowchart LR
+  A["Войти\nкак пользователь"] --> B["Увидеть баланс\nи историю тредов"]
+  B --> C["Создать новое\nпоздравление"]
+  C --> D{"Что генерировать?"}
+  D -->|"Картинка"| E["Ввести prompt\nи добавить фото"]
+  D -->|"Песня"| F["Ввести lyrics/style\nили сгенерировать lyrics"]
+  D -->|"Оба"| G["Заполнить оба блока"]
+  E --> H["Проверить стоимость"]
+  F --> H
+  G --> H
+  H --> I{"Кредитов хватает?"}
+  I -->|"Да"| J["Отправить задачу"]
+  I -->|"Нет"| K["Показать нехватку\nи путь к пополнению"]
+  J --> L["Ожидать статус\npending/processing"]
+  L --> M["Получить файлы\nimage/audio"]
+  M --> N["Скачать или продолжить\nитерацию в треде"]
+          </div>
+        </div>
+      </div>
+
+      <div class="grid">
+        <div class="card">
+          <h2>Критичные истории</h2>
+          <ul>
+            <li>Как пользователь, я хочу войти без сложной регистрации, чтобы быстро попробовать сервис.</li>
+            <li>Как пользователь, я хочу видеть стоимость до отправки, чтобы контролировать кредиты.</li>
+            <li>Как пользователь, я хочу видеть прогресс генерации, чтобы понимать, что задача не потерялась.</li>
+            <li>Как пользователь, я хочу продолжить тред, чтобы улучшать результат пошагово.</li>
+          </ul>
+        </div>
+        <div class="card">
+          <h2>Необязательное для первой итерации</h2>
+          <ul>
+            <li>Telegram Mini App.</li>
+            <li>Полноценный платежный шлюз.</li>
+            <li>Социальный шаринг и публичные страницы результата.</li>
+            <li>Админка, модерация и A/B-тесты промптов.</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <section id="info" class="section">
+      <div class="section-title">Информационная структура</div>
+      <div class="section-desc">
+        Продуктовая модель строится вокруг пользователя, баланса, сессий-тредов и генераций.
+      </div>
+
+      <div class="card">
+        <h2>Информационная архитектура интерфейса</h2>
+        <div class="mermaid-wrap">
+          <div class="mermaid">
+flowchart TD
+  APP["Приложение"] --> LOGIN["LoginPage"]
+  APP --> CHAT["ChatPage"]
+  CHAT --> SIDEBAR["Sidebar\nсписок сессий\nновая сессия"]
+  CHAT --> THREAD["ChatThread\nистория генераций\nстатусы\nрезультаты"]
+  CHAT --> INPUT["ChatInput\nкартинка\nпесня\nфайлы\nстоимость"]
+  INPUT --> IMAGE["Image block\nimage_prompt\nphotos"]
+  INPUT --> SONG["Song block\nlyrics_prompt\nsong_lyrics\nsong_style"]
+  INPUT --> BILLING["Balance / tariff\ncost check"]
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>Сущности и связи</h2>
+        <div class="mermaid-wrap">
+          <div class="mermaid">
+erDiagram
+  USER ||--o{ USER_IDENTITY : has
+  USER ||--o{ GENERATION_SESSION : owns
+  USER ||--o{ GENERATION_REQUEST : creates
+  USER ||--o{ CREDIT_TRANSACTION : has
+  GENERATION_SESSION ||--o{ GENERATION_REQUEST : contains
+  GENERATION_REQUEST ||--o| GENERATION_REQUEST : parent
+  TARIFF ||--o{ GENERATION_REQUEST : prices
+  GENERATION_REQUEST ||--o{ CREDIT_TRANSACTION : reference
+
+  USER {
+    bigint id
+    string email
+    string display_name
+  }
+  GENERATION_SESSION {
+    uuid id
+    bigint user_id
+    string title
+  }
+  GENERATION_REQUEST {
+    uuid id
+    bigint user_id
+    uuid session_id
+    string status
+    string image_prompt
+    string song_lyrics
+    int credits_spent
+  }
+  CREDIT_TRANSACTION {
+    bigint id
+    bigint user_id
+    int amount
+    string type
+  }
+  TARIFF {
+    int id
+    int price_per_image
+    int price_per_song
+    int price_per_lyrics
+  }
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="api" class="section">
+      <div class="section-title">Функциональная схема API</div>
+      <div class="section-desc">
+        Защищенные пользовательские функции находятся под <code>/api/v1</code>.
+        Auth, files и webhooks живут на отдельных public/service routes.
+      </div>
+
+      <div class="card">
+        <h2>API groups</h2>
+        <div class="mermaid-wrap">
+          <div class="mermaid">
+flowchart TB
+  CLIENT["Frontend api.ts"] --> AUTH["Auth\n/api/auth/dev/login\n/api/auth/refresh\n/api/auth/logout"]
+  CLIENT --> V1["Secured API\n/api/v1 + CookieAuth"]
+  V1 --> USER["User\nGET /user/me"]
+  V1 --> BILL["Billing\n/billing/balance\n/billing/tariff\n/billing/estimate\n/billing/transactions"]
+  V1 --> SESS["Sessions\nGET /sessions\nGET /sessions/:id\nPATCH /sessions/:id"]
+  V1 --> GEN["Generations\nPOST /generations\nPOST /generations/lyrics\nGET /generations\nGET /generations/:id\nGET /generations/:id/status"]
+  V1 --> UP["Uploads\nPOST /uploads"]
+  CLIENT --> FILES["Files\nGET /api/files/*key"]
+  AI["AI providers"] --> WH["Webhooks\nPOST /api/webhooks/kie\nPOST /api/webhooks/suno"]
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>Контракты MVP</h2>
+        <table>
+          <thead>
+            <tr><th>Область</th><th>Назначение</th><th>Статус</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>Auth</td><td>Dev login, refresh/logout через httpOnly cookies.</td><td><span class="badge partial">partial</span></td></tr>
+            <tr><td>Billing</td><td>Баланс, тариф, estimate, история транзакций.</td><td><span class="badge done">implemented</span></td></tr>
+            <tr><td>Sessions</td><td>Список тредов, тред с генерациями, переименование.</td><td><span class="badge done">implemented</span></td></tr>
+            <tr><td>Generations</td><td>Создание multipart-задачи, polling, получение результата.</td><td><span class="badge done">implemented</span></td></tr>
+            <tr><td>Uploads/files</td><td>Загрузка пользовательских файлов и выдача результатов.</td><td><span class="badge partial">local only</span></td></tr>
+            <tr><td>Payments</td><td>Покупка кредитов через платежный шлюз.</td><td><span class="badge missing">missing</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section id="sequence" class="section">
+      <div class="section-title">Функциональная схема генерации</div>
+      <div class="section-desc">
+        Ключевой MVP-поток: создать задачу, списать кредиты, поставить в очередь, обработать worker-ом,
+        сохранить файлы и вернуть результат через polling.
+      </div>
+
+      <div class="card">
+        <h2>Sequence diagram</h2>
+        <div class="mermaid-wrap">
+          <div class="mermaid">
+sequenceDiagram
+  participant User as Пользователь
+  participant FE as Frontend
+  participant API as Backend API
+  participant Bill as BillingService
+  participant DB as PostgreSQL
+  participant Redis as Redis Queue
+  participant Worker as Worker
+  participant AI as AI Provider / Mock
+  participant Store as Storage
+
+  User->>FE: Заполняет prompt, lyrics, files
+  FE->>API: POST /api/v1/generations multipart
+  API->>Bill: Estimate + check balance
+  Bill->>DB: Read tariff and transactions
+  API->>Bill: Charge credits
+  Bill->>DB: Insert generation_charge
+  API->>Store: Upload input files
+  API->>DB: Create generation_request pending
+  API->>Redis: Push task
+  API-->>FE: 201 id, session_id, status
+  FE->>API: Poll session/status
+  Redis-->>Worker: Pop task
+  Worker->>DB: Load generation and parent context
+  Worker->>AI: Generate image/audio
+  AI-->>Worker: Binary results or error
+  Worker->>Store: Save result files
+  Worker->>DB: Update completed/results
+  FE->>API: GET session/status
+  API-->>FE: result_images/result_audios URLs
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="gaps" class="section">
+      <div class="section-title">Что нужно делать дальше</div>
+      <div class="section-desc">
+        Список сфокусирован на ближайшем MVP, а не на полной production-архитектуре.
+      </div>
+
+      <div class="grid">
+        <div class="card">
+          <h2>Сначала стабилизация</h2>
+          <ul>
+            <li>Исправить frontend API paths: убрать двойной <code>/api/v1</code> и привести lyrics к <code>/api/v1/generations/lyrics</code>.</li>
+            <li>Добавить backend-тесты на billing lifecycle и failure refund.</li>
+            <li>Проверить generation create/status/session polling end-to-end.</li>
+            <li>Зафиксировать лимиты UI и backend: сейчас backend принимает 0-1 image/song, часть docs говорит 0-3.</li>
+          </ul>
+        </div>
+
+        <div class="card">
+          <h2>Потом production-ready</h2>
+          <ul>
+            <li>Реализовать OAuth-провайдеры вместо dev login.</li>
+            <li>Подключить R2 или другое S3-compatible хранилище.</li>
+            <li>Добавить покупку кредитов и платежные webhooks.</li>
+            <li>Добавить мониторинг worker-а, ошибок AI API и финансовых событий.</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>Критичные несоответствия текущего кода</h2>
+        <table>
+          <thead>
+            <tr><th>Тема</th><th>Что видно</th><th>Почему важно</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Frontend API base</td>
+              <td><code>request()</code> добавляет <code>/api/v1</code>, но часть методов передает путь уже с <code>/api/v1</code>.</td>
+              <td>Запросы могут уходить на <code>/api/v1/api/v1/...</code>.</td>
+            </tr>
+            <tr>
+              <td>Lyrics route</td>
+              <td>UI вызывает <code>/api/generations/lyrics</code>, backend route находится под <code>/api/v1/generations/lyrics</code>.</td>
+              <td>Генерация текста песни может не работать из интерфейса.</td>
+            </tr>
+            <tr>
+              <td>Docs vs backend limits</td>
+              <td>Swagger/comments местами говорят 0-3, handler ограничивает 0-1.</td>
+              <td>Нужно выбрать MVP-лимит и синхронизировать UI/API/docs.</td>
+            </tr>
+            <tr>
+              <td>Tests</td>
+              <td>Выделенной тестовой базы нет.</td>
+              <td>Риск регрессий в кредитах, возвратах и async worker-е.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    mermaid.initialize({
+      startOnLoad: true,
+      theme: "dark",
+      securityLevel: "loose"
+    });
+
+    function show(id, button) {
+      document.querySelectorAll(".section").forEach(section => section.classList.remove("visible"));
+      document.getElementById(id).classList.add("visible");
+      document.querySelectorAll("nav button").forEach(item => item.classList.remove("active"));
+      button.classList.add("active");
+    }
+  </script>
+</body>
+</html>

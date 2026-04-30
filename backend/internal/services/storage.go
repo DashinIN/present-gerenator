@@ -2,12 +2,16 @@ package services
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"os"
+	"path"
 	"path/filepath"
 	"strings"
 )
+
+var ErrUnsafeStorageKey = errors.New("unsafe storage key")
 
 type StorageService interface {
 	Upload(ctx context.Context, key string, r io.Reader, contentType string) error
@@ -23,14 +27,67 @@ type LocalStorage struct {
 }
 
 func NewLocalStorage(baseDir, baseURL string) (*LocalStorage, error) {
-	if err := os.MkdirAll(baseDir, 0755); err != nil {
+	baseAbs, err := filepath.Abs(baseDir)
+	if err != nil {
+		return nil, fmt.Errorf("resolve storage dir: %w", err)
+	}
+	if err := os.MkdirAll(baseAbs, 0755); err != nil {
 		return nil, fmt.Errorf("create storage dir: %w", err)
 	}
-	return &LocalStorage{baseDir: baseDir, baseURL: strings.TrimRight(baseURL, "/")}, nil
+	return &LocalStorage{baseDir: baseAbs, baseURL: strings.TrimRight(baseURL, "/")}, nil
+}
+
+func CleanStorageKey(key string) (string, error) {
+	if key == "" || strings.ContainsRune(key, '\x00') {
+		return "", ErrUnsafeStorageKey
+	}
+
+	key = strings.ReplaceAll(key, "\\", "/")
+	if strings.HasPrefix(key, "/") {
+		return "", ErrUnsafeStorageKey
+	}
+
+	for _, part := range strings.Split(key, "/") {
+		if part == ".." {
+			return "", ErrUnsafeStorageKey
+		}
+	}
+
+	clean := path.Clean(key)
+	if clean == "." || clean == ".." || strings.HasPrefix(clean, "../") {
+		return "", ErrUnsafeStorageKey
+	}
+	return clean, nil
+}
+
+func SafeLocalStoragePath(baseDir, key string) (string, error) {
+	clean, err := CleanStorageKey(key)
+	if err != nil {
+		return "", err
+	}
+
+	baseAbs, err := filepath.Abs(baseDir)
+	if err != nil {
+		return "", fmt.Errorf("resolve base dir: %w", err)
+	}
+	target := filepath.Join(baseAbs, filepath.FromSlash(clean))
+	targetAbs, err := filepath.Abs(target)
+	if err != nil {
+		return "", fmt.Errorf("resolve target path: %w", err)
+	}
+
+	rel, err := filepath.Rel(baseAbs, targetAbs)
+	if err != nil || rel == ".." || strings.HasPrefix(rel, ".."+string(os.PathSeparator)) || filepath.IsAbs(rel) {
+		return "", ErrUnsafeStorageKey
+	}
+	return targetAbs, nil
 }
 
 func (s *LocalStorage) Upload(_ context.Context, key string, r io.Reader, _ string) error {
-	dest := filepath.Join(s.baseDir, filepath.FromSlash(key))
+	dest, err := SafeLocalStoragePath(s.baseDir, key)
+	if err != nil {
+		return err
+	}
 	if err := os.MkdirAll(filepath.Dir(dest), 0755); err != nil {
 		return fmt.Errorf("mkdir: %w", err)
 	}
@@ -44,13 +101,25 @@ func (s *LocalStorage) Upload(_ context.Context, key string, r io.Reader, _ stri
 }
 
 func (s *LocalStorage) GetURL(_ context.Context, key string) (string, error) {
-	return fmt.Sprintf("%s/api/files/%s", s.baseURL, key), nil
+	clean, err := CleanStorageKey(key)
+	if err != nil {
+		return "", err
+	}
+	return fmt.Sprintf("%s/api/files/%s", s.baseURL, clean), nil
 }
 
 func (s *LocalStorage) Download(_ context.Context, key string) ([]byte, error) {
-	return os.ReadFile(filepath.Join(s.baseDir, filepath.FromSlash(key)))
+	src, err := SafeLocalStoragePath(s.baseDir, key)
+	if err != nil {
+		return nil, err
+	}
+	return os.ReadFile(src)
 }
 
 func (s *LocalStorage) Delete(_ context.Context, key string) error {
-	return os.Remove(filepath.Join(s.baseDir, filepath.FromSlash(key)))
+	target, err := SafeLocalStoragePath(s.baseDir, key)
+	if err != nil {
+		return err
+	}
+	return os.Remove(target)
 }

@@ -3,7 +3,7 @@ import { Paperclip, Send, X, Music, ImageIcon, Sparkles, Loader2 } from 'lucide-
 import { useTariff, useBalance } from '@/hooks/useAuth'
 import { Button } from '@/components/ui/Button'
 import { Textarea } from '@/components/ui/Textarea'
-import { api } from '@/lib/api'
+import { api, ApiError } from '@/lib/api'
 import { useQueryClient } from '@tanstack/react-query'
 import type React from 'react'
 
@@ -19,6 +19,10 @@ interface AttachedFile {
   file: File
   preview?: string
   type: 'image' | 'audio'
+}
+
+function errorMessage(error: unknown, fallback: string) {
+  return error instanceof Error ? error.message : fallback
 }
 
 export function ChatInput({ sessionId, parentId, onSent, onInsufficientCredits, disabled }: ChatInputProps) {
@@ -38,7 +42,8 @@ export function ChatInput({ sessionId, parentId, onSent, onInsufficientCredits, 
   const [sending, setSending] = useState(false)
   const [error, setError] = useState('')
 
-  const fileInputRef = useRef<HTMLInputElement>(null)
+  const imageInputRef = useRef<HTMLInputElement>(null)
+  const audioInputRef = useRef<HTMLInputElement>(null)
 
   const imageCount = imageEnabled ? 1 : 0
   const songCount = songEnabled ? 1 : 0
@@ -63,19 +68,38 @@ export function ChatInput({ sessionId, parentId, onSent, onInsufficientCredits, 
     setSongEnabled(v => !v)
   }
 
-  const handleFiles = useCallback((picked: FileList | null) => {
+  const handleFiles = useCallback((picked: FileList | null, acceptedType: 'image' | 'audio') => {
     if (!picked) return
-    const added: AttachedFile[] = []
+    const next = [...files]
+    let nextAudioCount = next.filter(f => f.type === 'audio').length
+    let nextImageCount = next.filter(f => f.type === 'image').length
+    let changed = false
     for (const f of Array.from(picked)) {
-      if (f.type.startsWith('image/')) {
+      if (acceptedType === 'image' && f.type.startsWith('image/')) {
         const preview = URL.createObjectURL(f)
-        added.push({ file: f, preview, type: 'image' })
-      } else if (f.type.startsWith('audio/')) {
-        added.push({ file: f, type: 'audio' })
+        if (nextImageCount < 3) {
+          next.push({ file: f, preview, type: 'image' })
+          nextImageCount += 1
+          changed = true
+        } else {
+          URL.revokeObjectURL(preview)
+          setError('Можно прикрепить максимум 3 фото')
+        }
+      } else if (acceptedType === 'audio' && f.type.startsWith('audio/')) {
+        if (nextAudioCount < 2) {
+          next.push({ file: f, type: 'audio' })
+          nextAudioCount += 1
+          changed = true
+        } else {
+          setError('Можно прикрепить максимум 2 аудио')
+        }
       }
     }
-    setFiles(prev => [...prev, ...added].slice(0, 4))
-  }, [])
+    if (changed) {
+      setError('')
+      setFiles(next)
+    }
+  }, [files])
 
   const removeFile = (idx: number) => {
     setFiles(prev => {
@@ -92,17 +116,10 @@ export function ChatInput({ sessionId, parentId, onSent, onInsufficientCredits, 
     setGeneratingLyrics(true)
     setError('')
     try {
-      const res = await fetch('/api/generations/lyrics', {
-        method: 'POST',
-        credentials: 'include',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ prompt: p }),
-      })
-      const data = await res.json()
-      if (!res.ok) throw new Error(data?.error?.message ?? `HTTP ${res.status}`)
+      const data = await api.generations.lyrics(p)
       setSongLyrics(data.text ?? '')
-    } catch (e: any) {
-      setError(e.message ?? 'Ошибка генерации текста')
+    } catch (e: unknown) {
+      setError(errorMessage(e, 'Ошибка генерации текста'))
     } finally {
       setGeneratingLyrics(false)
     }
@@ -134,11 +151,11 @@ export function ChatInput({ sessionId, parentId, onSent, onInsufficientCredits, 
       qc.invalidateQueries({ queryKey: ['sessions'] })
       qc.invalidateQueries({ queryKey: ['balance'] })
       onSent(result.id, result.session_id)
-    } catch (e: any) {
-      if (e?.code === 'insufficient_credits') {
+    } catch (e: unknown) {
+      if (e instanceof ApiError && e.code === 'insufficient_credits') {
         onInsufficientCredits?.()
       } else {
-        setError(e.message ?? 'Ошибка отправки')
+        setError(errorMessage(e, 'Ошибка отправки'))
       }
     } finally {
       setSending(false)
@@ -147,6 +164,9 @@ export function ChatInput({ sessionId, parentId, onSent, onInsufficientCredits, 
 
   const truncateName = (name: string, max = 18) =>
     name.length > max ? name.slice(0, max - 1) + '…' : name
+
+  const imageFiles = files.filter(file => file.type === 'image')
+  const audioFiles = files.filter(file => file.type === 'audio')
 
   return (
     <div style={{ padding: '14px 24px 20px', background: 'var(--surface)' }}>
@@ -175,50 +195,51 @@ export function ChatInput({ sessionId, parentId, onSent, onInsufficientCredits, 
             disabled={sending}
           />
 
-          {/* Прикреплённые файлы */}
-          {files.length > 0 && (
+          {imageFiles.length > 0 && (
             <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', marginTop: 8 }}>
-              {files.map((f, i) => (
-                <div key={i} style={{ position: 'relative', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, maxWidth: 72 }}>
-                  {f.type === 'image' && f.preview ? (
-                    <img src={f.preview} alt="" style={{ width: 64, height: 64, borderRadius: 10, objectFit: 'cover' }} />
-                  ) : (
-                    <div style={{ width: 64, height: 64, borderRadius: 10, background: 'var(--primary-subtle)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 4 }}>
-                      <Music size={20} style={{ color: 'var(--primary)' }} />
-                      <span style={{ fontSize: 9, color: 'var(--text-muted)', fontWeight: 600 }}>MP3</span>
-                    </div>
-                  )}
-                  <span style={{ fontSize: 10, color: 'var(--text-muted)', textAlign: 'center', maxWidth: 72, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                    {truncateName(f.file.name)}
-                  </span>
-                  <button
-                    onClick={() => removeFile(i)}
-                    style={{ position: 'absolute', top: -5, right: -5, width: 18, height: 18, borderRadius: '50%', background: 'var(--error)', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-                  >
-                    <X size={10} style={{ color: '#fff' }} />
-                  </button>
-                </div>
-              ))}
+              {imageFiles.map((f) => {
+                const fileIndex = files.indexOf(f)
+                return (
+                  <div key={`${f.file.name}-${fileIndex}`} style={{ position: 'relative', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, maxWidth: 72 }}>
+                    {f.preview ? (
+                      <img src={f.preview} alt="" style={{ width: 64, height: 64, borderRadius: 10, objectFit: 'cover' }} />
+                    ) : null}
+                    <span style={{ fontSize: 10, color: 'var(--text-muted)', textAlign: 'center', maxWidth: 72, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      {truncateName(f.file.name)}
+                    </span>
+                    <button
+                      onClick={() => removeFile(fileIndex)}
+                      style={{ position: 'absolute', top: -5, right: -5, width: 18, height: 18, borderRadius: '50%', background: 'var(--error)', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                    >
+                      <X size={10} style={{ color: '#fff' }} />
+                    </button>
+                  </div>
+                )
+              })}
             </div>
           )}
 
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 8 }}>
             <input
-              ref={fileInputRef}
+              ref={imageInputRef}
               type="file"
-              accept="image/*,audio/*"
+              accept="image/*"
               multiple
               style={{ display: 'none' }}
-              onChange={e => handleFiles(e.target.files)}
+              onChange={e => {
+                handleFiles(e.target.files, 'image')
+                e.currentTarget.value = ''
+              }}
             />
             <button
-              onClick={() => fileInputRef.current?.click()}
+              onClick={() => imageInputRef.current?.click()}
               title="Прикрепить фото"
               style={ghostBtnStyle}
             >
               <Paperclip size={14} style={{ color: 'var(--text-muted)' }} />
               <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>Прикрепить фото</span>
             </button>
+            <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>{imageFiles.length}/3</span>
           </div>
         </SectionBlock>
 
@@ -276,6 +297,66 @@ export function ChatInput({ sessionId, parentId, onSent, onInsufficientCredits, 
               placeholder="Стиль (поп, джаз...)"
               style={{ ...inputStyle, flex: 1, alignSelf: 'flex-start' }}
             />
+          </div>
+
+          {audioFiles.length > 0 && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 10 }}>
+              {audioFiles.map((f) => {
+                const fileIndex = files.indexOf(f)
+                return (
+                  <div
+                    key={`${f.file.name}-${fileIndex}`}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 10,
+                      padding: '10px 12px',
+                      borderRadius: 10,
+                      background: 'var(--surface)',
+                      border: '1px solid var(--border)',
+                    }}
+                  >
+                    <div style={{ width: 36, height: 36, borderRadius: 8, background: 'var(--primary-subtle)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                      <Music size={16} style={{ color: 'var(--primary)' }} />
+                    </div>
+                    <div style={{ minWidth: 0, flex: 1 }}>
+                      <div style={{ fontSize: 13, color: 'var(--text)' }}>{truncateName(f.file.name, 28)}</div>
+                      <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>{formatFileSize(f.file.size)}</div>
+                    </div>
+                    <button
+                      onClick={() => removeFile(fileIndex)}
+                      title="Убрать трек"
+                      style={{ ...iconBtnStyle, flexShrink: 0 }}
+                    >
+                      <X size={14} />
+                    </button>
+                  </div>
+                )
+              })}
+            </div>
+          )}
+
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 10 }}>
+            <input
+              ref={audioInputRef}
+              type="file"
+              accept="audio/*"
+              multiple
+              style={{ display: 'none' }}
+              onChange={e => {
+                handleFiles(e.target.files, 'audio')
+                e.currentTarget.value = ''
+              }}
+            />
+            <button
+              onClick={() => audioInputRef.current?.click()}
+              title="Прикрепить музыку"
+              style={ghostBtnStyle}
+            >
+              <Paperclip size={14} style={{ color: 'var(--text-muted)' }} />
+              <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>Прикрепить музыку</span>
+            </button>
+            <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>{audioFiles.length}/2</span>
           </div>
         </SectionBlock>
 
@@ -387,4 +468,24 @@ const ghostBtnStyle: React.CSSProperties = {
   display: 'flex', alignItems: 'center', gap: 5,
   background: 'none', border: 'none', cursor: 'pointer',
   padding: '4px 8px', borderRadius: 7,
+}
+
+const iconBtnStyle: React.CSSProperties = {
+  width: 28,
+  height: 28,
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  borderRadius: 8,
+  border: '1px solid var(--border)',
+  background: 'var(--bg)',
+  color: 'var(--text-muted)',
+  cursor: 'pointer',
+}
+
+function formatFileSize(bytes: number) {
+  if (bytes < 1024 * 1024) {
+    return `${Math.max(1, Math.round(bytes / 1024))} KB`
+  }
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
 }

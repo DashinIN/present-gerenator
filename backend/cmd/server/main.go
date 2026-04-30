@@ -25,13 +25,13 @@ import (
 	"github.com/redis/go-redis/v9"
 	swaggerFiles "github.com/swaggo/files"
 	ginSwagger "github.com/swaggo/gin-swagger"
+	_ "github.com/you/fungreet/docs"
 	"github.com/you/fungreet/internal/config"
 	"github.com/you/fungreet/internal/handlers"
 	"github.com/you/fungreet/internal/middleware"
 	"github.com/you/fungreet/internal/repository"
 	"github.com/you/fungreet/internal/services"
 	"github.com/you/fungreet/internal/worker"
-	_ "github.com/you/fungreet/docs"
 )
 
 func main() {
@@ -106,9 +106,9 @@ func main() {
 		slog.Info("image generator: mock")
 	}
 	var songGen services.SongGenerator
-	if cfg.SunoAPIKey != "" {
-		songGen = services.NewSunoAPIGenerator(cfg.SunoAPIKey)
-		slog.Info("song generator: sunoapi.org")
+	if cfg.KieAPIKey != "" {
+		songGen = services.NewKieSongGenerator(cfg.KieAPIKey, storage, cfg.FFmpegPath)
+		slog.Info("song generator: kie.ai")
 	} else {
 		songGen = &services.MockSongGenerator{}
 		slog.Info("song generator: mock")
@@ -125,7 +125,7 @@ func main() {
 		slog.Info("worker mode: polling (set BASE_URL for webhook mode)")
 	}
 
-	authH := handlers.NewAuthHandler(userRepo, jwtSvc, billingSvc)
+	authH := handlers.NewAuthHandler(userRepo, jwtSvc, billingSvc, cfg.IsDev())
 	billingH := handlers.NewBillingHandler(billingSvc)
 	genH := handlers.NewGenerationHandler(genRepo, sessionRepo, billingSvc, storage, queue, songGen)
 	sessionH := handlers.NewSessionHandler(sessionRepo, genRepo, storage)
@@ -149,7 +149,9 @@ func main() {
 
 	auth := r.Group("/api/auth")
 	{
-		auth.GET("/dev/login", authH.DevLogin)
+		if cfg.IsDev() {
+			auth.GET("/dev/login", authH.DevLogin)
+		}
 		auth.POST("/refresh", authH.Refresh)
 		auth.POST("/logout", authH.Logout)
 	}
@@ -179,7 +181,11 @@ func main() {
 
 	r.GET("/api/files/*key", func(c *gin.Context) {
 		key := c.Param("key")[1:]
-		filePath := filepath.Join(cfg.StorageLocalDir, filepath.FromSlash(key))
+		filePath, err := services.SafeLocalStoragePath(cfg.StorageLocalDir, key)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": gin.H{"code": "invalid_file_key", "message": "Invalid file key"}})
+			return
+		}
 		f, err := os.Open(filePath)
 		if err != nil {
 			c.Status(http.StatusNotFound)

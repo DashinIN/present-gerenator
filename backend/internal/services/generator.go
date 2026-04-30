@@ -24,6 +24,23 @@ type SongGenerator interface {
 	Generate(ctx context.Context, lyrics, style string, count int) ([][]byte, error)
 }
 
+type MashupSongRequest struct {
+	InputAudioKeys []string
+	Lyrics         string
+	Style          string
+	Prompt         string
+}
+
+type MashupSongGenerator interface {
+	GenerateMashup(ctx context.Context, req MashupSongRequest) ([][]byte, error)
+}
+
+// MashupStreamingSongGenerator — опциональное расширение: для mashup вызывает onPartial,
+// когда первый вариант уже доступен, а затем возвращает полный финальный набор клипов.
+type MashupStreamingSongGenerator interface {
+	GenerateMashupStreaming(ctx context.Context, req MashupSongRequest, onPartial func([][]byte)) ([][]byte, error)
+}
+
 // LyricsGenerator — опциональное расширение SongGenerator: генерирует текст и заголовок песни по промту.
 type LyricsGenerator interface {
 	GenerateLyrics(ctx context.Context, prompt string) (text string, title string, err error)

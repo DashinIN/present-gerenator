@@ -18,7 +18,7 @@ RUN CGO_ENABLED=0 GOOS=linux go build -o /server ./cmd/server
 
 # Stage 3: Финальный образ
 FROM alpine:3.20
-RUN apk add --no-cache ca-certificates tzdata
+RUN apk add --no-cache ca-certificates tzdata ffmpeg
 WORKDIR /app
 COPY --from=backend /server ./server
 COPY --from=backend /app/migrations ./migrations

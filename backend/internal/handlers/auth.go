@@ -39,13 +39,14 @@ type ErrorDetail struct {
 }
 
 type AuthHandler struct {
-	userRepo *repository.UserRepository
-	jwt      *services.JWTService
-	billing  *services.BillingService
+	userRepo      *repository.UserRepository
+	jwt           *services.JWTService
+	billing       *services.BillingService
+	allowDevLogin bool
 }
 
-func NewAuthHandler(userRepo *repository.UserRepository, jwt *services.JWTService, billing *services.BillingService) *AuthHandler {
-	return &AuthHandler{userRepo: userRepo, jwt: jwt, billing: billing}
+func NewAuthHandler(userRepo *repository.UserRepository, jwt *services.JWTService, billing *services.BillingService, allowDevLogin bool) *AuthHandler {
+	return &AuthHandler{userRepo: userRepo, jwt: jwt, billing: billing, allowDevLogin: allowDevLogin}
 }
 
 // DevLogin godoc
@@ -59,6 +60,11 @@ func NewAuthHandler(userRepo *repository.UserRepository, jwt *services.JWTServic
 // @Failure      500      {object}  ErrorResponse
 // @Router       /auth/dev/login [get]
 func (h *AuthHandler) DevLogin(c *gin.Context) {
+	if !h.allowDevLogin {
+		c.JSON(http.StatusNotFound, apiError("not_found", "Not found"))
+		return
+	}
+
 	var userID int64
 
 	if idStr := c.Query("user_id"); idStr != "" {

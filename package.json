@@ -1,10 +1,12 @@
 {
   "private": true,
   "scripts": {
-    "dev": "npm run infra && concurrently -n back,front -c blue,green \"npm run back\" \"npm run front\"",
-    "infra": "docker compose -f backend/docker-compose.yml up -d",
+    "dev": "npm run back && npm run front",
+    "infra": "docker compose -f backend/docker-compose.yml up -d postgres redis",
     "infra:stop": "docker compose -f backend/docker-compose.yml down",
-    "back": "cd backend && go run ./cmd/server",
+    "back": "docker compose -f backend/docker-compose.yml up -d --build backend",
+    "back:stop": "docker compose -f backend/docker-compose.yml stop backend",
+    "back:logs": "docker compose -f backend/docker-compose.yml logs -f backend",
     "front": "cd frontend && npm run dev",
     "build": "cd frontend && npm run build",
     "install:front": "cd frontend && npm install"

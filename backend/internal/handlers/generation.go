@@ -63,12 +63,12 @@ type GenerationListResponse struct {
 
 // GenerationStatusResponse — статус генерации
 type GenerationStatusResponse struct {
-	ID           string     `json:"id" example:"550e8400-e29b-41d4-a716-446655440000"`
-	Status       string     `json:"status" example:"completed"`
-	ErrorMessage string     `json:"error_message,omitempty"`
-	CompletedAt  *string    `json:"completed_at,omitempty"`
-	ResultImages []string   `json:"result_images" example:"[\"http://localhost:8080/api/files/uploads/1/abc.jpg\"]"`
-	ResultAudios []string   `json:"result_audios" example:"[\"http://localhost:8080/api/files/uploads/1/abc.mp3\"]"`
+	ID           string   `json:"id" example:"550e8400-e29b-41d4-a716-446655440000"`
+	Status       string   `json:"status" example:"completed"`
+	ErrorMessage string   `json:"error_message,omitempty"`
+	CompletedAt  *string  `json:"completed_at,omitempty"`
+	ResultImages []string `json:"result_images" example:"[\"http://localhost:8080/api/files/uploads/1/abc.jpg\"]"`
+	ResultAudios []string `json:"result_audios" example:"[\"http://localhost:8080/api/files/uploads/1/abc.mp3\"]"`
 }
 
 // UploadResponse — ответ при загрузке файла
@@ -93,7 +93,7 @@ type UploadResponse struct {
 // @Param        song_lyrics     formData  string  false  "Текст песни (если задан — song_prompt игнорируется)"
 // @Param        song_style      formData  string  false  "Стиль песни (pop, jazz, rock и т.д.)"
 // @Param        photos[]        formData  file    false  "Фото пользователя JPG/PNG до 10MB (макс. 3)"
-// @Param        audio           formData  file    false  "Аудио MP3/WAV/M4A до 25MB"
+// @Param        audio           formData  file    false  "Аудио MP3/WAV/M4A до 25MB, максимум 2 файла"
 // @Success      201             {object}  CreateGenerationResponse
 // @Failure      400             {object}  ErrorResponse
 // @Failure      401             {object}  ErrorResponse
@@ -236,28 +236,39 @@ func (h *GenerationHandler) Create(c *gin.Context) {
 	}
 
 	// Загрузка аудио
-	var audioKey string
-	if audioFiles := form.File["audio"]; len(audioFiles) == 1 {
-		fh := audioFiles[0]
-		if fh.Size > 25<<20 {
-			c.JSON(http.StatusBadRequest, apiError("invalid_param", "Audio max 25MB"))
+	audioKeys := []string{}
+	if audioFiles := form.File["audio"]; len(audioFiles) > 0 {
+		if len(audioFiles) > 2 {
+			c.JSON(http.StatusBadRequest, apiError("invalid_param", "Max 2 audio files"))
 			return
 		}
-		ext := strings.ToLower(filepath.Ext(fh.Filename))
-		if ext != ".mp3" && ext != ".wav" && ext != ".m4a" {
-			c.JSON(http.StatusBadRequest, apiError("invalid_param", "Audio must be MP3, WAV or M4A"))
+		if songCount == 0 {
+			c.JSON(http.StatusBadRequest, apiError("invalid_param", "Audio mashup requires song generation enabled"))
 			return
 		}
-		f, err := fh.Open()
-		if err != nil {
-			c.JSON(http.StatusInternalServerError, apiError("internal_error", "Failed to read audio"))
-			return
-		}
-		defer f.Close()
-		audioKey = fmt.Sprintf("uploads/%d/%s%s", userID, uuid.New().String(), ext)
-		if err := h.storage.Upload(c.Request.Context(), audioKey, f, "audio/mpeg"); err != nil {
-			c.JSON(http.StatusInternalServerError, apiError("internal_error", "Failed to upload audio"))
-			return
+		for _, fh := range audioFiles {
+			if fh.Size > 25<<20 {
+				c.JSON(http.StatusBadRequest, apiError("invalid_param", "Audio max 25MB"))
+				return
+			}
+			ext := strings.ToLower(filepath.Ext(fh.Filename))
+			if ext != ".mp3" && ext != ".wav" && ext != ".m4a" {
+				c.JSON(http.StatusBadRequest, apiError("invalid_param", "Audio must be MP3, WAV or M4A"))
+				return
+			}
+			f, err := fh.Open()
+			if err != nil {
+				c.JSON(http.StatusInternalServerError, apiError("internal_error", "Failed to read audio"))
+				return
+			}
+			key := fmt.Sprintf("uploads/%d/%s%s", userID, uuid.New().String(), ext)
+			if err := h.storage.Upload(c.Request.Context(), key, f, audioContentType(ext)); err != nil {
+				f.Close()
+				c.JSON(http.StatusInternalServerError, apiError("internal_error", "Failed to upload audio"))
+				return
+			}
+			f.Close()
+			audioKeys = append(audioKeys, key)
 		}
 	}
 
@@ -274,20 +285,21 @@ func (h *GenerationHandler) Create(c *gin.Context) {
 	}
 
 	gen, err := h.genRepo.Create(c.Request.Context(), repository.CreateGenerationParams{
-		ID:            genID,
-		UserID:        userID,
-		SessionID:     sessionID,
-		ParentID:      parentID,
-		ImagePrompt:   c.PostForm("image_prompt"),
-		SongPrompt:    c.PostForm("song_prompt"),
-		SongLyrics:    c.PostForm("song_lyrics"),
-		SongStyle:     c.PostForm("song_style"),
-		ImageCount:    imageCount,
-		SongCount:     songCount,
-		InputPhotos:   photoKeys,
-		InputAudioKey: audioKey,
-		CreditsSpent:  cost,
-		TariffID:      tariff.ID,
+		ID:             genID,
+		UserID:         userID,
+		SessionID:      sessionID,
+		ParentID:       parentID,
+		ImagePrompt:    c.PostForm("image_prompt"),
+		SongPrompt:     c.PostForm("song_prompt"),
+		SongLyrics:     c.PostForm("song_lyrics"),
+		SongStyle:      c.PostForm("song_style"),
+		ImageCount:     imageCount,
+		SongCount:      songCount,
+		InputPhotos:    photoKeys,
+		InputAudioKey:  firstOrEmpty(audioKeys),
+		InputAudioKeys: audioKeys,
+		CreditsSpent:   cost,
+		TariffID:       tariff.ID,
 	})
 	if err != nil {
 		slog.Error("create generation failed", "err", err)
@@ -427,6 +439,7 @@ func (h *GenerationHandler) Status(c *gin.Context) {
 		"result_images": h.resolveKeys(c.Request.Context(), gen.ResultImages),
 		"result_audios": h.resolveKeys(c.Request.Context(), gen.ResultAudios),
 		"input_photos":  h.resolveKeys(c.Request.Context(), gen.InputPhotos),
+		"input_audio_keys": h.resolveKeys(c.Request.Context(), gen.InputAudioKeys),
 	})
 }
 
@@ -483,6 +496,10 @@ func (h *GenerationHandler) resolveGenURLs(ctx context.Context, gen *models.Gene
 	gen.ResultImages = h.resolveKeys(ctx, gen.ResultImages)
 	gen.ResultAudios = h.resolveKeys(ctx, gen.ResultAudios)
 	gen.InputPhotos = h.resolveKeys(ctx, gen.InputPhotos)
+	gen.InputAudioKeys = h.resolveKeys(ctx, gen.InputAudioKeys)
+	if gen.InputAudioKey == "" && len(gen.InputAudioKeys) > 0 {
+		gen.InputAudioKey = gen.InputAudioKeys[0]
+	}
 }
 
 // LyricsRequest — запрос генерации текста песни
@@ -498,7 +515,7 @@ type LyricsResponse struct {
 
 // GenerateLyrics godoc
 // @Summary      Сгенерировать текст песни
-// @Description  Генерирует текст и заголовок песни по промту через Suno AI. Требует SUNO_API_KEY.
+// @Description  Генерирует текст и заголовок песни по промту через kie.ai. Требует KIE_API_KEY.
 // @Tags         generations
 // @Accept       json
 // @Produce      json
@@ -571,4 +588,22 @@ func (h *GenerationHandler) resolveKeys(ctx context.Context, keys []string) []st
 		}
 	}
 	return urls
+}
+
+func firstOrEmpty(items []string) string {
+	if len(items) == 0 {
+		return ""
+	}
+	return items[0]
+}
+
+func audioContentType(ext string) string {
+	switch ext {
+	case ".wav":
+		return "audio/wav"
+	case ".m4a":
+		return "audio/mp4"
+	default:
+		return "audio/mpeg"
+	}
 }

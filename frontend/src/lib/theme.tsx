@@ -1,4 +1,6 @@
-import { createContext, useContext, useEffect, useState, ReactNode } from 'react'
+/* eslint-disable react-refresh/only-export-components */
+import { createContext, useContext, useEffect, useState } from 'react'
+import type { ReactNode } from 'react'
 
 type Theme = 'dark' | 'light'
 
@@ -79,7 +81,6 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   const setAccent = (c: string) => { setAccentState(c); localStorage.setItem('accent', c) }
 
   useEffect(() => { applyTheme(theme, accent) }, [theme, accent])
-  useEffect(() => { applyTheme(theme, accent) }, []) // mount
 
   return <Ctx.Provider value={{ theme, accent, setTheme, setAccent }}>{children}</Ctx.Provider>
 }
