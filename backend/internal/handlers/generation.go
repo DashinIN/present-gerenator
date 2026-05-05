@@ -89,11 +89,11 @@ type UploadResponse struct {
 // @Param        image_count     formData  int     false  "Количество изображений (0-3)"     default(3)
 // @Param        song_count      formData  int     false  "Количество песен (0-3)"            default(1)
 // @Param        image_prompt    formData  string  false  "Текстовое описание для генерации изображений"
+// @Param        image_model     formData  string  false  "Модель генерации изображений: gpt-image-2, flux-2-flex, seedream-5-lite"  default(gpt-image-2)
 // @Param        song_prompt     formData  string  false  "Промт для генерации текста песни (если song_lyrics не задан)"
 // @Param        song_lyrics     formData  string  false  "Текст песни (если задан — song_prompt игнорируется)"
 // @Param        song_style      formData  string  false  "Стиль песни (pop, jazz, rock и т.д.)"
 // @Param        photos[]        formData  file    false  "Фото пользователя JPG/PNG до 10MB (макс. 3)"
-// @Param        audio           formData  file    false  "Аудио MP3/WAV/M4A до 25MB, максимум 2 файла"
 // @Success      201             {object}  CreateGenerationResponse
 // @Failure      400             {object}  ErrorResponse
 // @Failure      401             {object}  ErrorResponse
@@ -104,6 +104,11 @@ type UploadResponse struct {
 // @Router       /generations [post]
 func (h *GenerationHandler) Create(c *gin.Context) {
 	userID := middleware.GetUserID(c)
+	imageModel := services.NormalizeImageModel(c.DefaultPostForm("image_model", services.ImageModelBest))
+	if imageModel == "" {
+		c.JSON(http.StatusBadRequest, apiError("invalid_param", "Unsupported image_model"))
+		return
+	}
 
 	imageCount, _ := strconv.Atoi(c.DefaultPostForm("image_count", "1"))
 	songCount, _ := strconv.Atoi(c.DefaultPostForm("song_count", "1"))
@@ -142,6 +147,7 @@ func (h *GenerationHandler) Create(c *gin.Context) {
 	// Разбираем session_id и parent_id
 	var sessionID *uuid.UUID
 	var parentID *uuid.UUID
+	createdSession := false
 
 	if sidStr := c.PostForm("session_id"); sidStr != "" {
 		sid, err := uuid.Parse(sidStr)
@@ -195,6 +201,7 @@ func (h *GenerationHandler) Create(c *gin.Context) {
 			return
 		}
 		sessionID = &sess.ID
+		createdSession = true
 	}
 
 	// Загрузка фото
@@ -235,41 +242,9 @@ func (h *GenerationHandler) Create(c *gin.Context) {
 		}
 	}
 
-	// Загрузка аудио
-	audioKeys := []string{}
 	if audioFiles := form.File["audio"]; len(audioFiles) > 0 {
-		if len(audioFiles) > 2 {
-			c.JSON(http.StatusBadRequest, apiError("invalid_param", "Max 2 audio files"))
-			return
-		}
-		if songCount == 0 {
-			c.JSON(http.StatusBadRequest, apiError("invalid_param", "Audio mashup requires song generation enabled"))
-			return
-		}
-		for _, fh := range audioFiles {
-			if fh.Size > 25<<20 {
-				c.JSON(http.StatusBadRequest, apiError("invalid_param", "Audio max 25MB"))
-				return
-			}
-			ext := strings.ToLower(filepath.Ext(fh.Filename))
-			if ext != ".mp3" && ext != ".wav" && ext != ".m4a" {
-				c.JSON(http.StatusBadRequest, apiError("invalid_param", "Audio must be MP3, WAV or M4A"))
-				return
-			}
-			f, err := fh.Open()
-			if err != nil {
-				c.JSON(http.StatusInternalServerError, apiError("internal_error", "Failed to read audio"))
-				return
-			}
-			key := fmt.Sprintf("uploads/%d/%s%s", userID, uuid.New().String(), ext)
-			if err := h.storage.Upload(c.Request.Context(), key, f, audioContentType(ext)); err != nil {
-				f.Close()
-				c.JSON(http.StatusInternalServerError, apiError("internal_error", "Failed to upload audio"))
-				return
-			}
-			f.Close()
-			audioKeys = append(audioKeys, key)
-		}
+		c.JSON(http.StatusBadRequest, apiError("invalid_param", "Track attachments are no longer supported"))
+		return
 	}
 
 	genID := uuid.New()
@@ -285,25 +260,27 @@ func (h *GenerationHandler) Create(c *gin.Context) {
 	}
 
 	gen, err := h.genRepo.Create(c.Request.Context(), repository.CreateGenerationParams{
-		ID:             genID,
-		UserID:         userID,
-		SessionID:      sessionID,
-		ParentID:       parentID,
-		ImagePrompt:    c.PostForm("image_prompt"),
-		SongPrompt:     c.PostForm("song_prompt"),
-		SongLyrics:     c.PostForm("song_lyrics"),
-		SongStyle:      c.PostForm("song_style"),
-		ImageCount:     imageCount,
-		SongCount:      songCount,
-		InputPhotos:    photoKeys,
-		InputAudioKey:  firstOrEmpty(audioKeys),
-		InputAudioKeys: audioKeys,
-		CreditsSpent:   cost,
-		TariffID:       tariff.ID,
+		ID:           genID,
+		UserID:       userID,
+		SessionID:    sessionID,
+		ParentID:     parentID,
+		ImagePrompt:  c.PostForm("image_prompt"),
+		ImageModel:   imageModel,
+		SongPrompt:   c.PostForm("song_prompt"),
+		SongLyrics:   c.PostForm("song_lyrics"),
+		SongStyle:    c.PostForm("song_style"),
+		ImageCount:   imageCount,
+		SongCount:    songCount,
+		InputPhotos:  photoKeys,
+		CreditsSpent: cost,
+		TariffID:     tariff.ID,
 	})
 	if err != nil {
 		slog.Error("create generation failed", "err", err)
 		_ = h.billing.Refund(c.Request.Context(), userID, cost, genID)
+		if createdSession && sessionID != nil {
+			_ = h.sessionRepo.DeleteIfEmpty(c.Request.Context(), *sessionID, userID)
+		}
 		c.JSON(http.StatusInternalServerError, apiError("internal_error", err.Error()))
 		return
 	}
@@ -312,6 +289,12 @@ func (h *GenerationHandler) Create(c *gin.Context) {
 		GenerationID: gen.ID,
 		UserID:       userID,
 	}); err != nil {
+		slog.Error("enqueue generation failed", "err", err, "generation_id", gen.ID)
+		_ = h.genRepo.Delete(c.Request.Context(), gen.ID)
+		_ = h.billing.Refund(c.Request.Context(), userID, cost, genID)
+		if createdSession && sessionID != nil {
+			_ = h.sessionRepo.DeleteIfEmpty(c.Request.Context(), *sessionID, userID)
+		}
 		c.JSON(http.StatusInternalServerError, apiError("internal_error", "Failed to enqueue"))
 		return
 	}
@@ -432,20 +415,20 @@ func (h *GenerationHandler) Status(c *gin.Context) {
 		return
 	}
 	c.JSON(http.StatusOK, gin.H{
-		"id":            gen.ID,
-		"status":        gen.Status,
-		"error_message": gen.ErrorMessage,
-		"completed_at":  gen.CompletedAt,
-		"result_images": h.resolveKeys(c.Request.Context(), gen.ResultImages),
-		"result_audios": h.resolveKeys(c.Request.Context(), gen.ResultAudios),
-		"input_photos":  h.resolveKeys(c.Request.Context(), gen.InputPhotos),
+		"id":               gen.ID,
+		"status":           gen.Status,
+		"error_message":    gen.ErrorMessage,
+		"completed_at":     gen.CompletedAt,
+		"result_images":    h.resolveKeys(c.Request.Context(), gen.ResultImages),
+		"result_audios":    h.resolveKeys(c.Request.Context(), gen.ResultAudios),
+		"input_photos":     h.resolveKeys(c.Request.Context(), gen.InputPhotos),
 		"input_audio_keys": h.resolveKeys(c.Request.Context(), gen.InputAudioKeys),
 	})
 }
 
 // Upload godoc
 // @Summary      Загрузить файл
-// @Description  Загружает файл (фото или аудио) в хранилище. Возвращает key для последующего использования при создании генерации. Поддерживаемые форматы: JPG, PNG, MP3, WAV, M4A. Макс. размер: 25MB.
+// @Description  Загружает фото в хранилище. Возвращает key для последующего использования при создании генерации. Поддерживаемые форматы: JPG, PNG. Макс. размер: 25MB.
 // @Tags         uploads
 // @Accept       multipart/form-data
 // @Produce      json
@@ -473,7 +456,6 @@ func (h *GenerationHandler) Upload(c *gin.Context) {
 	ext := strings.ToLower(filepath.Ext(fh.Filename))
 	allowed := map[string]string{
 		".jpg": "image/jpeg", ".jpeg": "image/jpeg", ".png": "image/png",
-		".mp3": "audio/mpeg", ".wav": "audio/wav", ".m4a": "audio/mp4",
 	}
 	ct, ok := allowed[ext]
 	if !ok {
@@ -505,12 +487,19 @@ func (h *GenerationHandler) resolveGenURLs(ctx context.Context, gen *models.Gene
 // LyricsRequest — запрос генерации текста песни
 type LyricsRequest struct {
 	Prompt string `json:"prompt" binding:"required"`
+	Count  int    `json:"count,omitempty"`
 }
 
-// LyricsResponse — сгенерированный текст песни
-type LyricsResponse struct {
-	Text  string `json:"text" example:"Куплет 1...\nПрипев..."`
+type LyricsVariant struct {
 	Title string `json:"title" example:"Поздравление"`
+	Text  string `json:"text" example:"Куплет 1...\nПрипев..."`
+}
+
+// LyricsResponse — сгенерированные варианты текста песни
+type LyricsResponse struct {
+	Text     string          `json:"text" example:"Куплет 1...\nПрипев..."`
+	Title    string          `json:"title" example:"Поздравление"`
+	Variants []LyricsVariant `json:"variants"`
 }
 
 // GenerateLyrics godoc
@@ -537,6 +526,12 @@ func (h *GenerationHandler) GenerateLyrics(c *gin.Context) {
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, apiError("invalid_param", "prompt required"))
 		return
+	}
+	if req.Count <= 0 {
+		req.Count = 1
+	}
+	if req.Count > 3 {
+		req.Count = 3
 	}
 
 	userID := middleware.GetUserID(c)
@@ -565,17 +560,49 @@ func (h *GenerationHandler) GenerateLyrics(c *gin.Context) {
 		}
 	}
 
-	text, title, err := lg.GenerateLyrics(c.Request.Context(), req.Prompt)
-	if err != nil {
+	variants := make([]LyricsVariant, 0, req.Count)
+	for i := 0; i < req.Count; i++ {
+		text, title, err := lg.GenerateLyrics(c.Request.Context(), lyricsVariantPrompt(req.Prompt, i, req.Count))
+		if err != nil {
+			if cost > 0 {
+				_ = h.billing.Refund(c.Request.Context(), userID, cost, uuid.New())
+			}
+			slog.Error("lyrics generation failed", "err", err, "variant", i)
+			c.JSON(http.StatusInternalServerError, apiError("generation_failed", err.Error()))
+			return
+		}
+		variants = append(variants, LyricsVariant{Text: text, Title: title})
+	}
+
+	if len(variants) == 0 {
 		if cost > 0 {
 			_ = h.billing.Refund(c.Request.Context(), userID, cost, uuid.New())
 		}
-		slog.Error("lyrics generation failed", "err", err)
-		c.JSON(http.StatusInternalServerError, apiError("generation_failed", err.Error()))
+		c.JSON(http.StatusInternalServerError, apiError("generation_failed", "No lyrics variants generated"))
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"text": text, "title": title})
+	c.JSON(http.StatusOK, LyricsResponse{
+		Text:     variants[0].Text,
+		Title:    variants[0].Title,
+		Variants: variants,
+	})
+}
+
+func lyricsVariantPrompt(prompt string, index, total int) string {
+	base := strings.TrimSpace(prompt)
+	if total <= 1 {
+		return base
+	}
+
+	switch index {
+	case 0:
+		return base + "\n\nСделай основной вариант текста песни: теплый, цельный и готовый к использованию."
+	case 1:
+		return base + "\n\nСделай заметно другой вариант: другие образы, другой ритм и другая подача, но та же тема."
+	default:
+		return base + "\n\nСделай третий вариант: контрастный по настроению и формулировкам, но все еще уместный для той же идеи."
+	}
 }
 
 func (h *GenerationHandler) resolveKeys(ctx context.Context, keys []string) []string {
@@ -588,22 +615,4 @@ func (h *GenerationHandler) resolveKeys(ctx context.Context, keys []string) []st
 		}
 	}
 	return urls
-}
-
-func firstOrEmpty(items []string) string {
-	if len(items) == 0 {
-		return ""
-	}
-	return items[0]
-}
-
-func audioContentType(ext string) string {
-	switch ext {
-	case ".wav":
-		return "audio/wav"
-	case ".m4a":
-		return "audio/mp4"
-	default:
-		return "audio/mpeg"
-	}
 }

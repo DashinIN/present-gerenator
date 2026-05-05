@@ -22,5 +22,6 @@ RUN apk add --no-cache ca-certificates tzdata ffmpeg
 WORKDIR /app
 COPY --from=backend /server ./server
 COPY --from=backend /app/migrations ./migrations
+COPY --from=backend /app/web/dist ./web/dist
 EXPOSE 8080
 CMD ["./server"]

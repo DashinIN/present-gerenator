@@ -11,7 +11,7 @@ import (
 func TestDevLoginDisabledOutsideDevelopment(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 
-	handler := NewAuthHandler(nil, nil, nil, false)
+	handler := NewAuthHandler(nil, nil, nil, nil, nil, false)
 	router := gin.New()
 	router.GET("/api/auth/dev/login", handler.DevLogin)
 

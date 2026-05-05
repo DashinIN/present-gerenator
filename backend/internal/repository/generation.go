@@ -26,6 +26,7 @@ type CreateGenerationParams struct {
 	SessionID      *uuid.UUID
 	ParentID       *uuid.UUID
 	ImagePrompt    string
+	ImageModel     string
 	SongPrompt     string
 	SongLyrics     string
 	SongStyle      string
@@ -39,19 +40,26 @@ type CreateGenerationParams struct {
 }
 
 func (r *GenerationRepository) Create(ctx context.Context, p CreateGenerationParams) (*models.GenerationRequest, error) {
+	if p.InputPhotos == nil {
+		p.InputPhotos = []string{}
+	}
+	if p.InputAudioKeys == nil {
+		p.InputAudioKeys = []string{}
+	}
+
 	var g models.GenerationRequest
 	err := r.db.QueryRowContext(ctx,
 		`INSERT INTO generation_requests
-		 (id, user_id, session_id, parent_id, image_prompt,
+		 (id, user_id, session_id, parent_id, image_prompt, image_model,
 		  song_prompt, song_lyrics, song_style, image_count, song_count, input_photos, input_audio_key, input_audio_keys,
 		  credits_spent, tariff_id)
-		 VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15)
+		 VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16)
 		 RETURNING id, user_id, session_id, parent_id, status,
-		           image_prompt, song_prompt, song_lyrics, song_style, image_count, song_count,
+		           image_prompt, image_model, song_prompt, song_lyrics, song_style, image_count, song_count,
 		           input_photos, input_audio_key, input_audio_keys, result_images, result_audios,
 		           error_message, credits_spent, tariff_id, created_at, completed_at`,
 		p.ID, p.UserID, p.SessionID, p.ParentID,
-		p.ImagePrompt, p.SongPrompt, p.SongLyrics, p.SongStyle,
+		p.ImagePrompt, p.ImageModel, p.SongPrompt, p.SongLyrics, p.SongStyle,
 		p.ImageCount, p.SongCount, pq.Array(p.InputPhotos), p.InputAudioKey, pq.Array(p.InputAudioKeys),
 		p.CreditsSpent, p.TariffID,
 	).Scan(scanGeneration(&g)...)
@@ -61,11 +69,16 @@ func (r *GenerationRepository) Create(ctx context.Context, p CreateGenerationPar
 	return &g, nil
 }
 
+func (r *GenerationRepository) Delete(ctx context.Context, id uuid.UUID) error {
+	_, err := r.db.ExecContext(ctx, `DELETE FROM generation_requests WHERE id = $1`, id)
+	return err
+}
+
 func (r *GenerationRepository) GetByID(ctx context.Context, id uuid.UUID) (*models.GenerationRequest, error) {
 	var g models.GenerationRequest
 	err := r.db.QueryRowContext(ctx,
 		`SELECT id, user_id, session_id, parent_id, status,
-		        image_prompt, song_prompt, song_lyrics, song_style, image_count, song_count,
+		        image_prompt, image_model, song_prompt, song_lyrics, song_style, image_count, song_count,
 		        input_photos, input_audio_key, input_audio_keys, result_images, result_audios,
 		        error_message, credits_spent, tariff_id, created_at, completed_at
 		 FROM generation_requests WHERE id = $1`, id,
@@ -82,7 +95,7 @@ func (r *GenerationRepository) GetByID(ctx context.Context, id uuid.UUID) (*mode
 func (r *GenerationRepository) ListBySession(ctx context.Context, sessionID uuid.UUID) ([]models.GenerationRequest, error) {
 	rows, err := r.db.QueryContext(ctx,
 		`SELECT id, user_id, session_id, parent_id, status,
-		        image_prompt, song_prompt, song_lyrics, song_style, image_count, song_count,
+		        image_prompt, image_model, song_prompt, song_lyrics, song_style, image_count, song_count,
 		        input_photos, input_audio_key, input_audio_keys, result_images, result_audios,
 		        error_message, credits_spent, tariff_id, created_at, completed_at
 		 FROM generation_requests WHERE session_id = $1
@@ -108,7 +121,7 @@ func (r *GenerationRepository) ListBySession(ctx context.Context, sessionID uuid
 func (r *GenerationRepository) ListByUser(ctx context.Context, userID int64, limit, offset int) ([]models.GenerationRequest, error) {
 	rows, err := r.db.QueryContext(ctx,
 		`SELECT id, user_id, session_id, parent_id, status,
-		        image_prompt, song_prompt, song_lyrics, song_style, image_count, song_count,
+		        image_prompt, image_model, song_prompt, song_lyrics, song_style, image_count, song_count,
 		        input_photos, input_audio_key, input_audio_keys, result_images, result_audios,
 		        error_message, credits_spent, tariff_id, created_at, completed_at
 		 FROM generation_requests WHERE user_id = $1
@@ -185,7 +198,7 @@ func (r *GenerationRepository) IncrementRetry(ctx context.Context, id uuid.UUID)
 func scanGeneration(g *models.GenerationRequest) []any {
 	return []any{
 		&g.ID, &g.UserID, &g.SessionID, &g.ParentID, &g.Status,
-		&g.ImagePrompt, &g.SongPrompt, &g.SongLyrics, &g.SongStyle,
+		&g.ImagePrompt, &g.ImageModel, &g.SongPrompt, &g.SongLyrics, &g.SongStyle,
 		&g.ImageCount, &g.SongCount,
 		pq.Array(&g.InputPhotos), &g.InputAudioKey, pq.Array(&g.InputAudioKeys),
 		pq.Array(&g.ResultImages), pq.Array(&g.ResultAudios),

@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react'
-import { ImageIcon, Music, CheckCircle2, XCircle, Download } from 'lucide-react'
+import { CheckCircle2, XCircle, Download } from 'lucide-react'
 import type { GenerationRequest } from '@/lib/types'
 import { formatDate } from '@/lib/utils'
 
@@ -104,74 +104,31 @@ function GenerationMessage({ gen, isNew }: { gen: GenerationRequest; isNew?: boo
 }
 
 function UserPrompt({ gen }: { gen: GenerationRequest }) {
+  const text = gen.image_prompt || gen.song_lyrics || gen.song_prompt
+  const previewImage = gen.result_images?.[0] || gen.input_photos?.[0]
+
   return (
     <div style={{ fontSize: 14, color: '#fff' }}>
-      {/* Промт изображений */}
-      {gen.image_prompt && (
-        <div style={{ marginBottom: gen.song_lyrics || gen.song_prompt ? 8 : 0 }}>
-          {gen.image_prompt}
+      {text && (
+        <div style={{ whiteSpace: 'pre-wrap', lineHeight: 1.5 }}>
+          {text}
         </div>
       )}
-
-      {/* Текст / промт песни */}
-      {(gen.song_lyrics || gen.song_prompt) && (
-        <div style={{
-          background: 'rgba(255,255,255,0.12)',
-          borderRadius: 8,
-          padding: '8px 10px',
-          marginBottom: 4,
-        }}>
-          <div style={{ fontSize: 10, opacity: 0.7, marginBottom: 4, display: 'flex', alignItems: 'center', gap: 4 }}>
-            <Music size={10} />
-            {gen.song_lyrics ? 'Текст песни' : 'Промт для генерации текста'}
-            {gen.song_style && <span style={{ marginLeft: 6, fontStyle: 'italic' }}>{gen.song_style}</span>}
-          </div>
-          <div style={{ fontSize: 13, whiteSpace: 'pre-wrap', lineHeight: 1.5 }}>
-            {gen.song_lyrics || gen.song_prompt}
-          </div>
-        </div>
-      )}
-
-      <div style={{ display: 'flex', gap: 12, marginTop: 8, fontSize: 12, opacity: 0.8 }}>
-        {gen.image_count > 0 && (
-          <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-            <ImageIcon size={12} /> {gen.image_count} {plural(gen.image_count, 'картинка', 'картинки', 'картинок')}
-          </span>
-        )}
-        {gen.song_count > 0 && (
-          <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-            <Music size={12} /> {gen.song_count} {plural(gen.song_count, 'песня', 'песни', 'песен')}
-          </span>
-        )}
-        <span style={{ marginLeft: 'auto' }}>−{gen.credits_spent} кр.</span>
-      </div>
-
-      {gen.input_photos?.length > 0 && (
-        <div style={{ display: 'flex', gap: 6, marginTop: 8, flexWrap: 'wrap' }}>
-          {gen.input_photos.map((url, i) => (
-            <img key={i} src={url} alt="" style={{ width: 48, height: 48, borderRadius: 6, objectFit: 'cover', opacity: 0.9 }} />
-          ))}
-        </div>
-      )}
-
-      {gen.input_audio_keys?.length > 0 && (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginTop: 8 }}>
-          {gen.input_audio_keys.map((url, i) => (
-            <div
-              key={i}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: 8,
-                background: 'rgba(255,255,255,0.12)',
-                borderRadius: 8,
-                padding: '8px 10px',
-              }}
-            >
-              <Music size={12} />
-              <audio controls src={url} style={{ flex: 1, height: 32 }} />
-            </div>
-          ))}
+      {previewImage && (
+        <div style={{ marginTop: 8 }}>
+          <img
+            src={previewImage}
+            alt=""
+            style={{
+              width: 56,
+              height: 56,
+              borderRadius: 8,
+              objectFit: 'cover',
+              display: 'block',
+              opacity: 0.95,
+              border: '1px solid rgba(255,255,255,0.18)',
+            }}
+          />
         </div>
       )}
     </div>
@@ -338,10 +295,4 @@ function CompletedState({ gen }: { gen: GenerationRequest }) {
       )}
     </div>
   )
-}
-
-function plural(n: number, one: string, few: string, many: string) {
-  if (n % 10 === 1 && n % 100 !== 11) return one
-  if (n % 10 >= 2 && n % 10 <= 4 && (n % 100 < 10 || n % 100 >= 20)) return few
-  return many
 }

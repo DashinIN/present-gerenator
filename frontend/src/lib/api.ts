@@ -79,6 +79,11 @@ export class ApiError extends Error {
   }
 }
 
+export interface LyricsVariant {
+  title: string
+  text: string
+}
+
 // Auth
 export const api = {
   auth: {
@@ -118,10 +123,10 @@ export const api = {
           if (!res.ok) throw new ApiError(res.status, await readJson(res))
           return res.json() as Promise<{ id: string; session_id: string; status: string }>
         }),
-    lyrics: (prompt: string) =>
-      apiRequest<{ text: string; title: string }>('/generations/lyrics', {
+    lyrics: (prompt: string, count = 1) =>
+      apiRequest<{ text: string; title: string; variants: LyricsVariant[] }>('/generations/lyrics', {
         method: 'POST',
-        body: JSON.stringify({ prompt }),
+        body: JSON.stringify({ prompt, count }),
       }),
     status: (id: string) =>
       apiRequest<{

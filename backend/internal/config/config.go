@@ -17,6 +17,10 @@ type Config struct {
 
 	JWTSecret string
 
+	GoogleClientID     string
+	GoogleClientSecret string
+	GoogleRedirectURI  string
+
 	BaseURL string // публичный URL сервера (для file ссылок в prod)
 
 	StorageMode     string // "local" | "r2"
@@ -37,21 +41,24 @@ func Load() (*Config, error) {
 	_ = godotenv.Load()
 
 	cfg := &Config{
-		AppEnv:          getEnv("APP_ENV", "development"),
-		AppPort:         getEnv("APP_PORT", "8080"),
-		BaseURL:         getEnv("BASE_URL", ""),
-		DatabaseURL:     getEnv("DATABASE_URL", ""),
-		RedisURL:        getEnv("REDIS_URL", "redis://localhost:6379"),
-		JWTSecret:       getEnv("JWT_SECRET", ""),
-		StorageMode:     getEnv("STORAGE_MODE", "local"),
-		StorageLocalDir: getEnv("STORAGE_LOCAL_DIR", "./data/uploads"),
-		R2AccountID:     getEnv("R2_ACCOUNT_ID", ""),
-		R2AccessKey:     getEnv("R2_ACCESS_KEY", ""),
-		R2SecretKey:     getEnv("R2_SECRET_KEY", ""),
-		R2Bucket:        getEnv("R2_BUCKET", "fungreet"),
-		WorkerCount:     getEnvInt("WORKER_COUNT", 2),
-		KieAPIKey:       getEnv("KIE_API_KEY", ""),
-		FFmpegPath:      getEnv("FFMPEG_PATH", "ffmpeg"),
+		AppEnv:             getEnv("APP_ENV", "development"),
+		AppPort:            getEnv("APP_PORT", "8080"),
+		BaseURL:            getEnv("BASE_URL", ""),
+		DatabaseURL:        getEnv("DATABASE_URL", ""),
+		RedisURL:           getEnv("REDIS_URL", "redis://localhost:6379"),
+		JWTSecret:          getEnv("JWT_SECRET", ""),
+		GoogleClientID:     getEnv("GOOGLE_CLIENT_ID", ""),
+		GoogleClientSecret: getEnv("GOOGLE_CLIENT_SECRET", ""),
+		GoogleRedirectURI:  getEnv("GOOGLE_REDIRECT_URI", ""),
+		StorageMode:        getEnv("STORAGE_MODE", "local"),
+		StorageLocalDir:    getEnv("STORAGE_LOCAL_DIR", "./data/uploads"),
+		R2AccountID:        getEnv("R2_ACCOUNT_ID", ""),
+		R2AccessKey:        getEnv("R2_ACCESS_KEY", ""),
+		R2SecretKey:        getEnv("R2_SECRET_KEY", ""),
+		R2Bucket:           getEnv("R2_BUCKET", "fungreet"),
+		WorkerCount:        getEnvInt("WORKER_COUNT", 2),
+		KieAPIKey:          getEnv("KIE_API_KEY", ""),
+		FFmpegPath:         getEnv("FFMPEG_PATH", "ffmpeg"),
 	}
 
 	if cfg.DatabaseURL == "" {

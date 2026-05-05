@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"fmt"
 
 	"github.com/google/uuid"
 	"github.com/you/fungreet/internal/models"
@@ -77,4 +78,19 @@ func (r *SessionRepository) UpdateTitle(ctx context.Context, id uuid.UUID, title
 		`UPDATE generation_sessions SET title = $1 WHERE id = $2`, title, id,
 	)
 	return err
+}
+
+func (r *SessionRepository) DeleteIfEmpty(ctx context.Context, id uuid.UUID, userID int64) error {
+	_, err := r.db.ExecContext(ctx,
+		`DELETE FROM generation_sessions
+		 WHERE id = $1 AND user_id = $2
+		   AND NOT EXISTS (
+		     SELECT 1 FROM generation_requests gr WHERE gr.session_id = generation_sessions.id
+		   )`,
+		id, userID,
+	)
+	if err != nil {
+		return fmt.Errorf("delete empty session: %w", err)
+	}
+	return nil
 }

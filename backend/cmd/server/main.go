@@ -96,6 +96,8 @@ func main() {
 
 	jwtSvc := services.NewJWTService(cfg.JWTSecret)
 	billingSvc := services.NewBillingService(billingRepo)
+	googleOAuthSvc := services.NewGoogleOAuthService(cfg.GoogleClientID, cfg.GoogleClientSecret, cfg.GoogleRedirectURI)
+	oauthStateSvc := services.NewOAuthStateService(cfg.JWTSecret)
 
 	var imageGen services.ImageGenerator
 	if cfg.KieAPIKey != "" {
@@ -125,7 +127,7 @@ func main() {
 		slog.Info("worker mode: polling (set BASE_URL for webhook mode)")
 	}
 
-	authH := handlers.NewAuthHandler(userRepo, jwtSvc, billingSvc, cfg.IsDev())
+	authH := handlers.NewAuthHandler(userRepo, jwtSvc, billingSvc, googleOAuthSvc, oauthStateSvc, cfg.IsDev())
 	billingH := handlers.NewBillingHandler(billingSvc)
 	genH := handlers.NewGenerationHandler(genRepo, sessionRepo, billingSvc, storage, queue, songGen)
 	sessionH := handlers.NewSessionHandler(sessionRepo, genRepo, storage)
@@ -152,6 +154,8 @@ func main() {
 		if cfg.IsDev() {
 			auth.GET("/dev/login", authH.DevLogin)
 		}
+		auth.GET("/google/login", authH.GoogleLogin)
+		auth.GET("/google/callback", authH.GoogleCallback)
 		auth.POST("/refresh", authH.Refresh)
 		auth.POST("/logout", authH.Logout)
 	}

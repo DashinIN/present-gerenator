@@ -43,7 +43,6 @@ export function LoginPage() {
         </p>
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-          {/* Реальные OAuth кнопки будут здесь */}
           <Button
             onClick={() => window.location.href = '/api/auth/google/login'}
             variant="ghost"
@@ -51,13 +50,6 @@ export function LoginPage() {
           >
             <img src="https://www.google.com/favicon.ico" width={16} height={16} alt="" />
             Войти через Google
-          </Button>
-          <Button
-            onClick={() => window.location.href = '/api/auth/vk/login'}
-            variant="ghost"
-            style={{ width: '100%', justifyContent: 'center', border: '1px solid var(--border)' }}
-          >
-            Войти через VK
           </Button>
         </div>
 
