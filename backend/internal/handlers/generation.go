@@ -188,15 +188,13 @@ func (h *GenerationHandler) Create(c *gin.Context) {
 
 	// Если сессии нет — создаём новую, используя prompt как заголовок
 	if sessionID == nil {
-		title := c.PostForm("image_prompt")
-		if len(title) > 60 {
-			title = title[:60]
-		}
+		title := generationTitle(c.PostForm("image_prompt"), c.PostForm("song_prompt"), c.PostForm("song_lyrics"))
 		if title == "" {
 			title = "Новая генерация"
 		}
 		sess, err := h.sessionRepo.Create(c.Request.Context(), userID, title)
 		if err != nil {
+			slog.Error("create session failed", "err", err, "user_id", userID, "title", title)
 			c.JSON(http.StatusInternalServerError, apiError("internal_error", "Failed to create session"))
 			return
 		}
@@ -207,6 +205,7 @@ func (h *GenerationHandler) Create(c *gin.Context) {
 	// Загрузка фото
 	form, err := c.MultipartForm()
 	if err != nil {
+		slog.Warn("invalid multipart form", "err", err, "user_id", userID)
 		c.JSON(http.StatusBadRequest, apiError("invalid_form", "Invalid multipart form"))
 		return
 	}
@@ -235,6 +234,7 @@ func (h *GenerationHandler) Create(c *gin.Context) {
 			defer f.Close()
 			key := fmt.Sprintf("uploads/%d/%s%s", userID, uuid.New().String(), ext)
 			if err := h.storage.Upload(c.Request.Context(), key, f, "image/jpeg"); err != nil {
+				slog.Error("upload photo failed", "err", err, "user_id", userID, "key", key)
 				c.JSON(http.StatusInternalServerError, apiError("internal_error", "Failed to upload photo"))
 				return
 			}
@@ -603,6 +603,42 @@ func lyricsVariantPrompt(prompt string, index, total int) string {
 	default:
 		return base + "\n\nСделай третий вариант: контрастный по настроению и формулировкам, но все еще уместный для той же идеи."
 	}
+}
+
+func generationTitle(imagePrompt, songPrompt, songLyrics string) string {
+	for _, value := range []string{displayGenerationPrompt(imagePrompt), songPrompt, songLyrics} {
+		if title := truncateRunes(strings.TrimSpace(value), 60); title != "" {
+			return title
+		}
+	}
+	return ""
+}
+
+func displayGenerationPrompt(prompt string) string {
+	normalized := strings.ReplaceAll(strings.ReplaceAll(prompt, "\r\n", "\n"), "\r", "\n")
+	const marker = "Main user request:"
+	if idx := strings.Index(normalized, marker); idx >= 0 {
+		value := normalized[idx+len(marker):]
+		if avoidIdx := strings.Index(value, "\nAvoid:"); avoidIdx >= 0 {
+			value = value[:avoidIdx]
+		}
+		return strings.TrimSpace(value)
+	}
+	if avoidIdx := strings.Index(normalized, "\nAvoid:"); avoidIdx >= 0 {
+		normalized = normalized[:avoidIdx]
+	}
+	return strings.TrimSpace(normalized)
+}
+
+func truncateRunes(value string, max int) string {
+	if max <= 0 {
+		return ""
+	}
+	runes := []rune(value)
+	if len(runes) <= max {
+		return value
+	}
+	return string(runes[:max])
 }
 
 func (h *GenerationHandler) resolveKeys(ctx context.Context, keys []string) []string {

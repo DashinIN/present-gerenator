@@ -88,7 +88,6 @@ export interface LyricsVariant {
 export const api = {
   auth: {
     me: () => apiRequest<User>('/user/me'),
-    devLogin: () => authRequest<{ user_id: number }>('/dev/login'),
     logout: () => authRequest<void>('/logout', { method: 'POST' }),
   },
 

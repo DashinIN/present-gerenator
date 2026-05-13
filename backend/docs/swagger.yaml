@@ -100,6 +100,24 @@ definitions:
         example: true
         type: boolean
     type: object
+  handlers.LyricsRequest:
+    properties:
+      prompt:
+        type: string
+    required:
+    - prompt
+    type: object
+  handlers.LyricsResponse:
+    properties:
+      text:
+        example: |-
+          Куплет 1...
+          Припев...
+        type: string
+      title:
+        example: Поздравление
+        type: string
+    type: object
   handlers.OkResponse:
     properties:
       ok:
@@ -191,10 +209,16 @@ definitions:
         type: string
       image_count:
         type: integer
+      image_model:
+        type: string
       image_prompt:
         type: string
       input_audio_key:
         type: string
+      input_audio_keys:
+        items:
+          type: string
+        type: array
       input_photos:
         items:
           type: string
@@ -214,6 +238,8 @@ definitions:
       song_count:
         type: integer
       song_lyrics:
+        type: string
+      song_prompt:
         type: string
       song_style:
         type: string
@@ -262,6 +288,8 @@ definitions:
       name:
         type: string
       price_per_image:
+        type: integer
+      price_per_lyrics:
         type: integer
       price_per_song:
         type: integer
@@ -530,7 +558,16 @@ paths:
         in: formData
         name: image_prompt
         type: string
-      - description: Текст песни
+      - default: gpt-image-2
+        description: 'Модель генерации изображений: gpt-image-2, flux-2-flex, seedream-5-lite'
+        in: formData
+        name: image_model
+        type: string
+      - description: Промт для генерации текста песни (если song_lyrics не задан)
+        in: formData
+        name: song_prompt
+        type: string
+      - description: Текст песни (если задан — song_prompt игнорируется)
         in: formData
         name: song_lyrics
         type: string
@@ -541,10 +578,6 @@ paths:
       - description: Фото пользователя JPG/PNG до 10MB (макс. 3)
         in: formData
         name: photos[]
-        type: file
-      - description: Аудио MP3/WAV/M4A до 25MB
-        in: formData
-        name: audio
         type: file
       produces:
       - application/json
@@ -663,6 +696,43 @@ paths:
       security:
       - CookieAuth: []
       summary: Статус генерации (polling)
+      tags:
+      - generations
+  /generations/lyrics:
+    post:
+      consumes:
+      - application/json
+      description: Генерирует текст и заголовок песни по промту через kie.ai. Требует
+        KIE_API_KEY.
+      parameters:
+      - description: Промт
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.LyricsRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handlers.LyricsResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "503":
+          description: Генератор текста недоступен
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      security:
+      - CookieAuth: []
+      summary: Сгенерировать текст песни
       tags:
       - generations
   /sessions:
@@ -794,9 +864,8 @@ paths:
     post:
       consumes:
       - multipart/form-data
-      description: 'Загружает файл (фото или аудио) в хранилище. Возвращает key для
-        последующего использования при создании генерации. Поддерживаемые форматы:
-        JPG, PNG, MP3, WAV, M4A. Макс. размер: 25MB.'
+      description: 'Загружает фото в хранилище. Возвращает key для последующего использования
+        при создании генерации. Поддерживаемые форматы: JPG, PNG. Макс. размер: 25MB.'
       parameters:
       - description: Файл для загрузки
         in: formData

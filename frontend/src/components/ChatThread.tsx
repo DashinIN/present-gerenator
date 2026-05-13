@@ -2,6 +2,7 @@ import { useEffect, useRef } from 'react'
 import { CheckCircle2, XCircle, Download } from 'lucide-react'
 import type { GenerationRequest } from '@/lib/types'
 import { formatDate } from '@/lib/utils'
+import { getDisplayImagePrompt } from '@/lib/imagePresets'
 
 interface ChatThreadProps {
   generations: GenerationRequest[]
@@ -104,8 +105,8 @@ function GenerationMessage({ gen, isNew }: { gen: GenerationRequest; isNew?: boo
 }
 
 function UserPrompt({ gen }: { gen: GenerationRequest }) {
-  const text = gen.image_prompt || gen.song_lyrics || gen.song_prompt
-  const previewImage = gen.result_images?.[0] || gen.input_photos?.[0]
+  const text = gen.image_prompt ? getDisplayImagePrompt(gen.image_prompt) : gen.song_lyrics || gen.song_prompt
+  const previewImage = gen.input_photos?.[0]
 
   return (
     <div style={{ fontSize: 14, color: '#fff' }}>

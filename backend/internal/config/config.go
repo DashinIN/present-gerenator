@@ -23,13 +23,16 @@ type Config struct {
 
 	BaseURL string // публичный URL сервера (для file ссылок в prod)
 
-	StorageMode     string // "local" | "r2"
+	StorageMode     string // "local" | "s3"
 	StorageLocalDir string
 
-	R2AccountID string
-	R2AccessKey string
-	R2SecretKey string
-	R2Bucket    string
+	S3Endpoint       string
+	S3PublicEndpoint string
+	S3Region         string
+	S3AccessKey      string
+	S3SecretKey      string
+	S3Bucket         string
+	S3UsePathStyle   bool
 
 	WorkerCount int
 
@@ -52,10 +55,13 @@ func Load() (*Config, error) {
 		GoogleRedirectURI:  getEnv("GOOGLE_REDIRECT_URI", ""),
 		StorageMode:        getEnv("STORAGE_MODE", "local"),
 		StorageLocalDir:    getEnv("STORAGE_LOCAL_DIR", "./data/uploads"),
-		R2AccountID:        getEnv("R2_ACCOUNT_ID", ""),
-		R2AccessKey:        getEnv("R2_ACCESS_KEY", ""),
-		R2SecretKey:        getEnv("R2_SECRET_KEY", ""),
-		R2Bucket:           getEnv("R2_BUCKET", "fungreet"),
+		S3Endpoint:         getEnvAny([]string{"S3_ENDPOINT"}, ""),
+		S3PublicEndpoint:   getEnvAny([]string{"S3_PUBLIC_ENDPOINT"}, ""),
+		S3Region:           getEnvAny([]string{"S3_REGION"}, "us-east-1"),
+		S3AccessKey:        getEnvAny([]string{"S3_ACCESS_KEY", "R2_ACCESS_KEY"}, ""),
+		S3SecretKey:        getEnvAny([]string{"S3_SECRET_KEY", "R2_SECRET_KEY"}, ""),
+		S3Bucket:           getEnvAny([]string{"S3_BUCKET", "R2_BUCKET"}, "fungreet"),
+		S3UsePathStyle:     getEnvBool("S3_USE_PATH_STYLE", false),
 		WorkerCount:        getEnvInt("WORKER_COUNT", 2),
 		KieAPIKey:          getEnv("KIE_API_KEY", ""),
 		FFmpegPath:         getEnv("FFMPEG_PATH", "ffmpeg"),
@@ -82,10 +88,28 @@ func getEnv(key, fallback string) string {
 	return fallback
 }
 
+func getEnvAny(keys []string, fallback string) string {
+	for _, key := range keys {
+		if v := os.Getenv(key); v != "" {
+			return v
+		}
+	}
+	return fallback
+}
+
 func getEnvInt(key string, fallback int) int {
 	if v := os.Getenv(key); v != "" {
 		if n, err := strconv.Atoi(v); err == nil {
 			return n
+		}
+	}
+	return fallback
+}
+
+func getEnvBool(key string, fallback bool) bool {
+	if v := os.Getenv(key); v != "" {
+		if b, err := strconv.ParseBool(v); err == nil {
+			return b
 		}
 	}
 	return fallback

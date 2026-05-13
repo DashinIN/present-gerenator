@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"log/slog"
@@ -18,6 +19,9 @@ const (
 	kieUploadURL       = "https://kieai.redpandaai.co/api/file-stream-upload"
 	kiePollingInterval = 5 * time.Second
 	kieTimeout         = 5 * time.Minute
+	ImageModelBest     = "gpt-image-2"
+	ImageModelMedium   = "flux-2-flex"
+	ImageModelFast     = "seedream-5-lite"
 )
 
 type KieImageGenerator struct {
@@ -35,21 +39,34 @@ func NewKieImageGenerator(apiKey string, storage StorageService) *KieImageGenera
 }
 
 // Submit реализует AsyncImageGenerator.
-func (g *KieImageGenerator) Submit(ctx context.Context, prompt string, refImages []string, callbackURL string) (string, error) {
+func NormalizeImageModel(model string) string {
+	switch model {
+	case "", ImageModelBest:
+		return ImageModelBest
+	case ImageModelMedium:
+		return ImageModelMedium
+	case ImageModelFast:
+		return ImageModelFast
+	default:
+		return ""
+	}
+}
+
+func (g *KieImageGenerator) Submit(ctx context.Context, prompt string, model string, refImages []string, callbackURL string) (string, error) {
 	publicURLs, err := g.ensurePublicURLs(ctx, refImages)
 	if err != nil {
 		return "", err
 	}
-	return g.submit(ctx, prompt, publicURLs, callbackURL)
+	return g.submit(ctx, prompt, model, publicURLs, callbackURL)
 }
 
-func (g *KieImageGenerator) Generate(ctx context.Context, prompt string, refImages []string, count int) ([][]byte, error) {
+func (g *KieImageGenerator) Generate(ctx context.Context, prompt string, model string, refImages []string, count int) ([][]byte, error) {
 	publicURLs, err := g.ensurePublicURLs(ctx, refImages)
 	if err != nil {
 		return nil, err
 	}
 
-	taskID, err := g.submit(ctx, prompt, publicURLs, "")
+	taskID, err := g.submit(ctx, prompt, model, publicURLs, "")
 	if err != nil {
 		return nil, err
 	}
@@ -144,19 +161,55 @@ func (g *KieImageGenerator) uploadToKie(ctx context.Context, filename string, da
 	return result.Data.DownloadURL, nil
 }
 
-func (g *KieImageGenerator) submit(ctx context.Context, prompt string, refImages []string, callbackURL string) (string, error) {
-	model := "gpt-image-2-text-to-image"
-	input := map[string]any{
-		"prompt":       prompt,
-		"aspect_ratio": "1:1",
+func resolveKieImageModel(model string, hasRefs bool) (string, map[string]any, error) {
+	switch NormalizeImageModel(model) {
+	case ImageModelBest:
+		input := map[string]any{"aspect_ratio": "1:1"}
+		if hasRefs {
+			return "gpt-image-2-image-to-image", input, nil
+		}
+		return "gpt-image-2-text-to-image", input, nil
+	case ImageModelMedium:
+		input := map[string]any{
+			"aspect_ratio": "1:1",
+			"resolution":   "1K",
+			"nsfw_checker": false,
+		}
+		if hasRefs {
+			return "flux-2/flex-image-to-image", input, nil
+		}
+		return "flux-2/flex-text-to-image", input, nil
+	case ImageModelFast:
+		input := map[string]any{
+			"aspect_ratio": "1:1",
+			"quality":      "basic",
+			"nsfw_checker": false,
+		}
+		if hasRefs {
+			return "seedream/5-lite-image-to-image", input, nil
+		}
+		return "seedream/5-lite-text-to-image", input, nil
+	default:
+		return "", nil, errors.New("unsupported image model")
 	}
+}
+
+func (g *KieImageGenerator) submit(ctx context.Context, prompt string, model string, refImages []string, callbackURL string) (string, error) {
+	modelName, input, err := resolveKieImageModel(model, len(refImages) > 0)
+	if err != nil {
+		return "", err
+	}
+	input["prompt"] = prompt
 	if len(refImages) > 0 {
-		model = "gpt-image-2-image-to-image"
-		input["input_urls"] = refImages
+		if NormalizeImageModel(model) == ImageModelFast {
+			input["image_urls"] = refImages
+		} else {
+			input["input_urls"] = refImages
+		}
 	}
 
 	payload := map[string]any{
-		"model": model,
+		"model": modelName,
 		"input": input,
 	}
 	if callbackURL != "" {
@@ -167,7 +220,7 @@ func (g *KieImageGenerator) submit(ctx context.Context, prompt string, refImages
 		return "", fmt.Errorf("marshal kie request: %w", err)
 	}
 
-	slog.Info("kie image submit", "model", model, "refs", len(refImages), "hasCallback", callbackURL != "")
+	slog.Info("kie image submit", "model", modelName, "refs", len(refImages), "hasCallback", callbackURL != "")
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost, kieBaseURL+"/jobs/createTask", bytes.NewReader(body))
 	if err != nil {

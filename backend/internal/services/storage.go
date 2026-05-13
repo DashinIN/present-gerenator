@@ -123,3 +123,11 @@ func (s *LocalStorage) Delete(_ context.Context, key string) error {
 	}
 	return os.Remove(target)
 }
+
+func StorageKeyURL(baseURL, key string) (string, error) {
+	clean, err := CleanStorageKey(key)
+	if err != nil {
+		return "", err
+	}
+	return fmt.Sprintf("%s/api/files/%s", strings.TrimRight(baseURL, "/"), clean), nil
+}

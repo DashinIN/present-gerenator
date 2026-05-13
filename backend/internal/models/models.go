@@ -84,6 +84,7 @@ type GenerationRequest struct {
 	ParentID       *uuid.UUID       `json:"parent_id,omitempty"`
 	Status         GenerationStatus `json:"status"`
 	ImagePrompt    string           `json:"image_prompt"`
+	ImageModel     string           `json:"image_model"`
 	SongPrompt     string           `json:"song_prompt"`
 	SongLyrics     string           `json:"song_lyrics"`
 	SongStyle      string           `json:"song_style"`

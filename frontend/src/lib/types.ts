@@ -39,14 +39,13 @@ export interface GenerationRequest {
   parent_id?: string
   status: GenerationStatus
   image_prompt: string
+  image_model: string
   song_prompt: string
   song_lyrics: string
   song_style: string
   image_count: number
   song_count: number
   input_photos: string[]
-  input_audio_key: string
-  input_audio_keys: string[]
   result_images: string[]
   result_audios: string[]
   error_message?: string

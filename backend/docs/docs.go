@@ -401,7 +401,20 @@ const docTemplate = `{
                     },
                     {
                         "type": "string",
-                        "description": "Текст песни",
+                        "default": "gpt-image-2",
+                        "description": "Модель генерации изображений: gpt-image-2, flux-2-flex, seedream-5-lite",
+                        "name": "image_model",
+                        "in": "formData"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Промт для генерации текста песни (если song_lyrics не задан)",
+                        "name": "song_prompt",
+                        "in": "formData"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Текст песни (если задан — song_prompt игнорируется)",
                         "name": "song_lyrics",
                         "in": "formData"
                     },
@@ -415,12 +428,6 @@ const docTemplate = `{
                         "type": "file",
                         "description": "Фото пользователя JPG/PNG до 10MB (макс. 3)",
                         "name": "photos[]",
-                        "in": "formData"
-                    },
-                    {
-                        "type": "file",
-                        "description": "Аудио MP3/WAV/M4A до 25MB",
-                        "name": "audio",
                         "in": "formData"
                     }
                 ],
@@ -463,6 +470,63 @@ const docTemplate = `{
                     },
                     "500": {
                         "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/generations/lyrics": {
+            "post": {
+                "security": [
+                    {
+                        "CookieAuth": []
+                    }
+                ],
+                "description": "Генерирует текст и заголовок песни по промту через kie.ai. Требует KIE_API_KEY.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "generations"
+                ],
+                "summary": "Сгенерировать текст песни",
+                "parameters": [
+                    {
+                        "description": "Промт",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/handlers.LyricsRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.LyricsResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.ErrorResponse"
+                        }
+                    },
+                    "503": {
+                        "description": "Генератор текста недоступен",
                         "schema": {
                             "$ref": "#/definitions/handlers.ErrorResponse"
                         }
@@ -796,7 +860,7 @@ const docTemplate = `{
                         "CookieAuth": []
                     }
                 ],
-                "description": "Загружает файл (фото или аудио) в хранилище. Возвращает key для последующего использования при создании генерации. Поддерживаемые форматы: JPG, PNG, MP3, WAV, M4A. Макс. размер: 25MB.",
+                "description": "Загружает фото в хранилище. Возвращает key для последующего использования при создании генерации. Поддерживаемые форматы: JPG, PNG. Макс. размер: 25MB.",
                 "consumes": [
                     "multipart/form-data"
                 ],
@@ -1029,6 +1093,30 @@ const docTemplate = `{
                 }
             }
         },
+        "handlers.LyricsRequest": {
+            "type": "object",
+            "required": [
+                "prompt"
+            ],
+            "properties": {
+                "prompt": {
+                    "type": "string"
+                }
+            }
+        },
+        "handlers.LyricsResponse": {
+            "type": "object",
+            "properties": {
+                "text": {
+                    "type": "string",
+                    "example": "Куплет 1...\nПрипев..."
+                },
+                "title": {
+                    "type": "string",
+                    "example": "Поздравление"
+                }
+            }
+        },
         "handlers.OkResponse": {
             "type": "object",
             "properties": {
@@ -1164,11 +1252,20 @@ const docTemplate = `{
                 "image_count": {
                     "type": "integer"
                 },
+                "image_model": {
+                    "type": "string"
+                },
                 "image_prompt": {
                     "type": "string"
                 },
                 "input_audio_key": {
                     "type": "string"
+                },
+                "input_audio_keys": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
                 },
                 "input_photos": {
                     "type": "array",
@@ -1198,6 +1295,9 @@ const docTemplate = `{
                     "type": "integer"
                 },
                 "song_lyrics": {
+                    "type": "string"
+                },
+                "song_prompt": {
                     "type": "string"
                 },
                 "song_style": {
@@ -1267,6 +1367,9 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "price_per_image": {
+                    "type": "integer"
+                },
+                "price_per_lyrics": {
                     "type": "integer"
                 },
                 "price_per_song": {

@@ -5,7 +5,8 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
-	"strings"
+	"net"
+	"net/url"
 	"sync"
 	"time"
 
@@ -109,7 +110,7 @@ func (w *Worker) process(ctx context.Context, task *Task) error {
 	}
 
 	// Async webhook режим оставляем только для image-only задач.
-	if w.webhookBase != "" && gen.SongCount == 0 {
+	if IsPublicWebhookBase(w.webhookBase) && gen.SongCount == 0 {
 		return w.processAsync(ctx, gen)
 	}
 
@@ -135,7 +136,7 @@ func (w *Worker) process(ctx context.Context, task *Task) error {
 	if gen.ImageCount > 0 {
 		_ = w.genRepo.UpdateStatus(ctx, gen.ID, models.StatusProcessingImages, "")
 		eg.Go(func() error {
-			images, err := w.imageGen.Generate(egCtx, gen.ImagePrompt, refImages, gen.ImageCount)
+			images, err := w.imageGen.Generate(egCtx, gen.ImagePrompt, gen.ImageModel, refImages, gen.ImageCount)
 			if err != nil {
 				return fmt.Errorf("image generation: %w", err)
 			}
@@ -159,11 +160,6 @@ func (w *Worker) process(ctx context.Context, task *Task) error {
 			_ = w.genRepo.UpdateStatus(ctx, gen.ID, models.StatusProcessingAudio, "")
 		}
 		eg.Go(func() error {
-			audioKeys := gen.InputAudioKeys
-			if len(audioKeys) == 0 && gen.InputAudioKey != "" {
-				audioKeys = []string{gen.InputAudioKey}
-			}
-
 			lyrics := gen.SongLyrics
 			if lyrics == "" && gen.SongPrompt != "" {
 				if lg, ok := w.songGen.(services.LyricsGenerator); ok {
@@ -187,59 +183,7 @@ func (w *Worker) process(ctx context.Context, task *Task) error {
 				return keys, nil
 			}
 
-			if len(audioKeys) > 0 {
-				req := services.MashupSongRequest{
-					InputAudioKeys: audioKeys,
-					Lyrics:         lyrics,
-					Style:          gen.SongStyle,
-					Prompt:         firstNonEmpty(gen.SongPrompt, gen.ImagePrompt),
-				}
-				if msg, ok := w.songGen.(services.MashupStreamingSongGenerator); ok {
-					var partialKeys []string
-					songs, err := msg.GenerateMashupStreaming(egCtx, req, func(partial [][]byte) {
-						keys, err := uploadSongs(partial, 0)
-						if err != nil {
-							slog.Warn("mashup partial upload failed", "err", err)
-							return
-						}
-						partialKeys = keys
-						if err := w.genRepo.AppendAudios(egCtx, gen.ID, keys); err != nil {
-							slog.Error("AppendAudios failed", "err", err, "generation_id", gen.ID)
-						} else {
-							slog.Info("mashup partial audio saved", "generation_id", gen.ID, "count", len(keys), "keys", keys)
-						}
-					})
-					if err != nil {
-						return fmt.Errorf("song mashup: %w", err)
-					}
-					newSongs := songs[len(partialKeys):]
-					var finalKeys []string
-					if len(newSongs) > 0 {
-						keys, err := uploadSongs(newSongs, len(partialKeys))
-						if err != nil {
-							return err
-						}
-						finalKeys = keys
-					}
-					mu.Lock()
-					resultAudios = append(partialKeys, finalKeys...)
-					mu.Unlock()
-				} else if mg, ok := w.songGen.(services.MashupSongGenerator); ok {
-					songs, err := mg.GenerateMashup(egCtx, req)
-					if err != nil {
-						return fmt.Errorf("song mashup: %w", err)
-					}
-					keys, err := uploadSongs(songs, 0)
-					if err != nil {
-						return err
-					}
-					mu.Lock()
-					resultAudios = keys
-					mu.Unlock()
-				} else {
-					return fmt.Errorf("song generator does not support mashup flow")
-				}
-			} else if sg, ok := w.songGen.(services.StreamingSongGenerator); ok {
+			if sg, ok := w.songGen.(services.StreamingSongGenerator); ok {
 				var partialKeys []string
 				songs, err := sg.GenerateStreaming(egCtx, lyrics, gen.SongStyle, gen.SongCount, func(partial [][]byte) {
 					keys, err := uploadSongs(partial, 0)
@@ -335,7 +279,7 @@ func (w *Worker) processAsync(ctx context.Context, gen *models.GenerationRequest
 			return fail("image generator does not support async mode")
 		}
 		cbURL := w.webhookBase + "/api/webhooks/kie"
-		taskID, err := ag.Submit(ctx, gen.ImagePrompt, refImages, cbURL)
+		taskID, err := ag.Submit(ctx, gen.ImagePrompt, gen.ImageModel, refImages, cbURL)
 		if err != nil {
 			return fail(fmt.Sprintf("image submit: %s", err))
 		}
@@ -389,11 +333,21 @@ func (w *Worker) processAsync(ctx context.Context, gen *models.GenerationRequest
 	return nil
 }
 
-func firstNonEmpty(values ...string) string {
-	for _, value := range values {
-		if strings.TrimSpace(value) != "" {
-			return value
-		}
+func IsPublicWebhookBase(raw string) bool {
+	if raw == "" {
+		return false
 	}
-	return ""
+	u, err := url.Parse(raw)
+	if err != nil || u.Scheme == "" || u.Hostname() == "" {
+		return false
+	}
+	host := u.Hostname()
+	if host == "localhost" || host == "host.docker.internal" {
+		return false
+	}
+	ip := net.ParseIP(host)
+	if ip == nil {
+		return true
+	}
+	return !ip.IsLoopback() && !ip.IsPrivate() && !ip.IsUnspecified()
 }

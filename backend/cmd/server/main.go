@@ -73,19 +73,35 @@ func main() {
 	slog.Info("redis connected")
 
 	var storage services.StorageService
+	baseURL := cfg.BaseURL
+	if baseURL == "" {
+		baseURL = fmt.Sprintf("http://localhost:%s", cfg.AppPort)
+	}
 	if cfg.StorageMode == "local" {
-		baseURL := cfg.BaseURL
-		if baseURL == "" {
-			baseURL = fmt.Sprintf("http://localhost:%s", cfg.AppPort)
-		}
 		storage, err = services.NewLocalStorage(cfg.StorageLocalDir, baseURL)
 		if err != nil {
 			slog.Error("storage error", "err", err)
 			os.Exit(1)
 		}
 		slog.Info("storage: local", "dir", cfg.StorageLocalDir)
+	} else if cfg.StorageMode == "s3" {
+		storage, err = services.NewS3Storage(context.Background(), services.S3StorageConfig{
+			BaseURL:        baseURL,
+			Endpoint:       cfg.S3Endpoint,
+			PublicEndpoint: cfg.S3PublicEndpoint,
+			Region:         cfg.S3Region,
+			AccessKey:      cfg.S3AccessKey,
+			SecretKey:      cfg.S3SecretKey,
+			Bucket:         cfg.S3Bucket,
+			UsePathStyle:   cfg.S3UsePathStyle,
+		})
+		if err != nil {
+			slog.Error("storage error", "err", err)
+			os.Exit(1)
+		}
+		slog.Info("storage: s3", "endpoint", cfg.S3Endpoint, "bucket", cfg.S3Bucket)
 	} else {
-		slog.Error("only local storage mode is supported in mock mode")
+		slog.Error("unsupported storage mode", "mode", cfg.StorageMode)
 		os.Exit(1)
 	}
 
@@ -121,8 +137,10 @@ func main() {
 
 	webhookBase := cfg.BaseURL
 	w := worker.New(queue, webhookStore, genRepo, sessionRepo, billingSvc, storage, imageGen, songGen, cfg.WorkerCount, webhookBase)
-	if webhookBase != "" {
+	if worker.IsPublicWebhookBase(webhookBase) {
 		slog.Info("worker mode: async webhook", "base_url", webhookBase)
+	} else if webhookBase != "" {
+		slog.Info("worker mode: polling, webhook base is not public", "base_url", webhookBase)
 	} else {
 		slog.Info("worker mode: polling (set BASE_URL for webhook mode)")
 	}
@@ -151,9 +169,6 @@ func main() {
 
 	auth := r.Group("/api/auth")
 	{
-		if cfg.IsDev() {
-			auth.GET("/dev/login", authH.DevLogin)
-		}
 		auth.GET("/google/login", authH.GoogleLogin)
 		auth.GET("/google/callback", authH.GoogleCallback)
 		auth.POST("/refresh", authH.Refresh)
@@ -183,24 +198,26 @@ func main() {
 		secured.POST("/uploads", genH.Upload)
 	}
 
-	r.GET("/api/files/*key", func(c *gin.Context) {
-		key := c.Param("key")[1:]
-		filePath, err := services.SafeLocalStoragePath(cfg.StorageLocalDir, key)
-		if err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": gin.H{"code": "invalid_file_key", "message": "Invalid file key"}})
-			return
-		}
-		f, err := os.Open(filePath)
-		if err != nil {
-			c.Status(http.StatusNotFound)
-			return
-		}
-		defer f.Close()
-		stat, _ := f.Stat()
-		filename := filepath.Base(filePath)
-		c.Writer.Header().Set("Content-Disposition", `attachment; filename="`+filename+`"`)
-		http.ServeContent(c.Writer, c.Request, filename, stat.ModTime(), f)
-	})
+	if cfg.StorageMode == "local" {
+		r.GET("/api/files/*key", func(c *gin.Context) {
+			key := c.Param("key")[1:]
+			filePath, err := services.SafeLocalStoragePath(cfg.StorageLocalDir, key)
+			if err != nil {
+				c.JSON(http.StatusBadRequest, gin.H{"error": gin.H{"code": "invalid_file_key", "message": "Invalid file key"}})
+				return
+			}
+			f, err := os.Open(filePath)
+			if err != nil {
+				c.Status(http.StatusNotFound)
+				return
+			}
+			defer f.Close()
+			stat, _ := f.Stat()
+			filename := filepath.Base(filePath)
+			c.Writer.Header().Set("Content-Disposition", `attachment; filename="`+filename+`"`)
+			http.ServeContent(c.Writer, c.Request, filename, stat.ModTime(), f)
+		})
+	}
 
 	// Раздаём собранный фронтенд в production (когда есть ./web/dist)
 	const webDist = "./web/dist"

@@ -16,29 +16,12 @@ var placeholderMP3 []byte
 
 // ImageGenerator генерирует картинки.
 type ImageGenerator interface {
-	Generate(ctx context.Context, prompt string, refImages []string, count int) ([][]byte, error)
+	Generate(ctx context.Context, prompt string, model string, refImages []string, count int) ([][]byte, error)
 }
 
 // SongGenerator генерирует песни.
 type SongGenerator interface {
 	Generate(ctx context.Context, lyrics, style string, count int) ([][]byte, error)
-}
-
-type MashupSongRequest struct {
-	InputAudioKeys []string
-	Lyrics         string
-	Style          string
-	Prompt         string
-}
-
-type MashupSongGenerator interface {
-	GenerateMashup(ctx context.Context, req MashupSongRequest) ([][]byte, error)
-}
-
-// MashupStreamingSongGenerator — опциональное расширение: для mashup вызывает onPartial,
-// когда первый вариант уже доступен, а затем возвращает полный финальный набор клипов.
-type MashupStreamingSongGenerator interface {
-	GenerateMashupStreaming(ctx context.Context, req MashupSongRequest, onPartial func([][]byte)) ([][]byte, error)
 }
 
 // LyricsGenerator — опциональное расширение SongGenerator: генерирует текст и заголовок песни по промту.
@@ -53,7 +36,7 @@ type StreamingSongGenerator interface {
 
 // AsyncImageGenerator — опциональное расширение: только submit задачи, результат придёт по webhook.
 type AsyncImageGenerator interface {
-	Submit(ctx context.Context, prompt string, refImages []string, callbackURL string) (taskID string, err error)
+	Submit(ctx context.Context, prompt string, model string, refImages []string, callbackURL string) (taskID string, err error)
 }
 
 // AsyncSongGenerator — опциональное расширение: только submit задачи, результат придёт по webhook.
@@ -64,7 +47,7 @@ type AsyncSongGenerator interface {
 // MockImageGenerator возвращает placeholder PNG.
 type MockImageGenerator struct{}
 
-func (g *MockImageGenerator) Generate(ctx context.Context, _ string, _ []string, count int) ([][]byte, error) {
+func (g *MockImageGenerator) Generate(ctx context.Context, _ string, _ string, _ []string, count int) ([][]byte, error) {
 	select {
 	case <-time.After(3 * time.Second):
 	case <-ctx.Done():

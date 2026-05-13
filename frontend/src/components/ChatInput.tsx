@@ -4,6 +4,12 @@ import { useTariff, useBalance } from '@/hooks/useAuth'
 import { Button } from '@/components/ui/Button'
 import { Textarea } from '@/components/ui/Textarea'
 import { api, ApiError, type LyricsVariant } from '@/lib/api'
+import {
+  composeImagePrompt,
+  imagePromptCategories,
+  imagePromptPresets,
+  noImagePresetId,
+} from '@/lib/imagePresets'
 import { useQueryClient } from '@tanstack/react-query'
 import type React from 'react'
 
@@ -48,6 +54,8 @@ export function ChatInput({ sessionId, parentId, onSent, onInsufficientCredits, 
   const [prompt, setPrompt] = useState('')
   const [imageModel, setImageModel] = useState<ImageModel>('gpt-image-2')
   const [imageModelOpen, setImageModelOpen] = useState(false)
+  const [presetCategory, setPresetCategory] = useState<string>(imagePromptCategories[0])
+  const [imagePresetId, setImagePresetId] = useState(noImagePresetId)
 
   const [songLyrics, setSongLyrics] = useState('')
   const [songStyle, setSongStyle] = useState('')
@@ -147,7 +155,7 @@ export function ChatInput({ sessionId, parentId, onSent, onInsufficientCredits, 
     const form = new FormData()
     if (sessionId) form.append('session_id', sessionId)
     if (parentId) form.append('parent_id', parentId)
-    form.append('image_prompt', prompt)
+    form.append('image_prompt', imageEnabled ? composeImagePrompt(prompt, imagePresetId) : '')
     form.append('image_model', imageModel)
     form.append('song_prompt', lyricsPrompt.trim() || prompt.trim())
     form.append('song_lyrics', songLyrics)
@@ -188,6 +196,8 @@ export function ChatInput({ sessionId, parentId, onSent, onInsufficientCredits, 
     name.length > max ? name.slice(0, max - 1) + '…' : name
 
   const imageFiles = files.filter(file => file.type === 'image')
+  const categoryPresets = imagePromptPresets.filter(preset => preset.category === presetCategory)
+  const selectedPreset = imagePromptPresets.find(preset => preset.id === imagePresetId)
   const songSummary = songLyrics.trim()
     ? songLyrics.trim().replace(/\s+/g, ' ').slice(0, 100)
     : 'Текст не выбран'
@@ -298,6 +308,32 @@ export function ChatInput({ sessionId, parentId, onSent, onInsufficientCredits, 
                 )}
               </div>
 
+              <select
+                value={presetCategory}
+                onChange={event => {
+                  setPresetCategory(event.target.value)
+                  setImagePresetId(noImagePresetId)
+                }}
+                title="Категория идеи"
+                style={{ ...selectStyle, minWidth: 145 }}
+              >
+                {imagePromptCategories.map(category => (
+                  <option key={category} value={category}>{category}</option>
+                ))}
+              </select>
+
+              <select
+                value={imagePresetId}
+                onChange={event => setImagePresetId(event.target.value)}
+                title="Идея для картинки"
+                style={{ ...selectStyle, minWidth: 170 }}
+              >
+                <option value={noImagePresetId}>Без идеи</option>
+                {categoryPresets.map(preset => (
+                  <option key={preset.id} value={preset.id}>{preset.label}</option>
+                ))}
+              </select>
+
               <input
                 ref={imageInputRef}
                 type="file"
@@ -320,6 +356,19 @@ export function ChatInput({ sessionId, parentId, onSent, onInsufficientCredits, 
               </button>
               <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>{imageFiles.length}/3</span>
             </div>
+
+            {selectedPreset && (
+              <div style={{
+                marginTop: 8,
+                fontSize: 12,
+                color: 'var(--text-muted)',
+                lineHeight: 1.45,
+              }}>
+                {selectedPreset.label}
+                {selectedPreset.aspectRatio ? ` · ${selectedPreset.aspectRatio}` : ''}
+                {selectedPreset.bestFor?.length ? ` · ${selectedPreset.bestFor.join(', ')}` : ''}
+              </div>
+            )}
 
             {imageFiles.length > 0 && (
               <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', marginTop: 10 }}>
@@ -642,6 +691,17 @@ const inputStyle: React.CSSProperties = {
   outline: 'none',
   fontSize: 13,
   width: '100%',
+}
+
+const selectStyle: React.CSSProperties = {
+  background: 'var(--surface)',
+  border: '1px solid var(--border)',
+  borderRadius: 8,
+  padding: '7px 28px 7px 10px',
+  color: 'var(--text)',
+  outline: 'none',
+  fontSize: 12,
+  height: 30,
 }
 
 const ghostBtnStyle: React.CSSProperties = {

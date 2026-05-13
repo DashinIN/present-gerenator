@@ -1,230 +1,243 @@
 # FunGreet — Текущее состояние разработки
 
-> Дата: 2026-04-24  
-> Ветка: `master`
+> Дата обновления: 2026-05-05  
+> Ветка: `master`  
+> Основной локальный URL: `http://localhost:8080/`
 
 ---
 
-## Статус проекта
+## Краткий итог
+
+FunGreet находится в рабочем состоянии как web MVP:
+
+- есть backend на Go/Gin с очередью, биллингом, сессиями и генерациями
+- frontend работает как единое SPA, раздается из backend Docker-контейнера
+- авторизация через Google OAuth уже внедрена и работает через httpOnly cookies
+- кредитная логика активна: стартовый бонус и ежедневное пополнение до лимита `50`
+- генерация изображений и песен подключена к `kie.ai`
+- UI ввода заметно упрощен: выбор модели изображения вынесен в popover, работа с текстом песни вынесена в модалку
+
+---
+
+## Статус компонентов
 
 | Компонент | Статус | Примечание |
 |-----------|--------|------------|
-| Backend (Go/Gin) | ✅ Работает | Полный REST API, воркеры |
-| Frontend (React/TS) | ✅ Работает | Чат-интерфейс, загрузка файлов |
-| PostgreSQL | ✅ Работает | Миграции применяются автоматически |
-| Redis | ✅ Работает | Очередь генераций |
-| Swagger UI | ✅ Работает | `/swagger/index.html` |
-| AI генерация изображений | ⚠️ Mock | `MockImageGenerator` — заглушка |
-| AI генерация песен | ⚠️ Mock | `MockSongGenerator` — заглушка |
-| OAuth (Google/VK) | ⚠️ Заготовка | Маршруты есть, хэндлеры не реализованы |
-| Cloudflare R2 | ⚠️ Не активен | `STORAGE_MODE=local` |
-| Оплата | ❌ Нет | Только кредитная логика без платёжного шлюза |
+| Backend (Go/Gin) | ✅ Работает | REST API, воркеры, Redis queue |
+| Frontend (React/Vite/TS) | ✅ Работает | SPA, чатовый интерфейс, сессии, polling |
+| PostgreSQL | ✅ Работает | Миграции применяются автоматически при старте |
+| Redis | ✅ Работает | Очередь задач и фоновые воркеры |
+| Docker local stack | ✅ Работает | `backend`, `postgres`, `redis` |
+| Swagger UI | ✅ Работает | `http://localhost:8080/swagger/index.html` |
+| Google OAuth | ✅ Работает | login + callback + cookie auth |
+| Dev login | ✅ Работает | Только в `APP_ENV=development` |
+| AI генерация изображений | ✅ Работает | `kie.ai`, модели `gpt-image-2`, `flux-2-flex`, `seedream-5-lite` |
+| AI генерация песен | ✅ Работает | `kie.ai` |
+| Генерация текста песни | ✅ Работает | До 3 вариантов за один запрос с выбором на фронте |
+| Кредитная система | ✅ Работает | charge / refund / initial grant / daily grant |
+| История сессий | ✅ Работает | session thread + rename |
+| Cloudflare R2 | ⚠️ Не включен | сейчас `STORAGE_MODE=local` |
+| Платежный шлюз | ❌ Нет | покупка кредитов еще не реализована |
 
 ---
 
-## Архитектура
+## Что сделано в последнем цикле работ
 
-```
+### 1. Авторизация
+
+- добавен реальный вход через Google OAuth
+- добавлены env-переменные:
+  - `GOOGLE_CLIENT_ID`
+  - `GOOGLE_CLIENT_SECRET`
+  - `GOOGLE_REDIRECT_URI`
+- устранена проблема `invalid_oauth_state`
+- устранена проблема смешения `localhost` и `127.0.0.1` после callback
+- cookies продолжают использовать текущую JWT-схему:
+  - `access_token`
+  - `refresh_token`
+
+### 2. Генерации и биллинг
+
+- исправлена ошибка вставки `generation_requests` при пустом `input_audio_keys`
+- восстановлен сценарий “только картинка без песни”
+- добавлен cleanup при неуспешном создании:
+  - refund при ошибке создания генерации
+  - удаление пустой новой сессии, если генерация не создалась
+  - удаление `generation` и refund, если задача не встала в очередь
+
+### 3. Frontend UX
+
+- упрощено облачко сообщения пользователя в треде:
+  - оставлен только текст и мини-превью картинки
+  - убраны повтор модели, повтор song prompt / lyrics и кредиты
+- переработан `ChatInput`
+  - выбор модели изображения вынесен в popover
+  - текст песни вынесен в модалку
+  - стиль песни вынесен рядом с кнопкой открытия модалки
+  - генерация текста песни теперь возвращает 3 варианта
+  - пользователь выбирает один вариант и может его доработать
+
+---
+
+## Актуальная архитектура
+
+```text
 ┌─────────────────────────────────────────────────────┐
-│                     Frontend (React)                 │
-│  LoginPage │ ChatPage │ Sidebar │ ChatThread         │
-│  Vite + Tailwind + React Query                       │
-│  Proxy: /api/* → :8080                              │
+│                 Frontend SPA (React)                │
+│  LoginPage │ ChatPage │ Sidebar │ ChatThread        │
+│  ChatInput (compact composer + lyrics modal)        │
 └─────────────────────┬───────────────────────────────┘
-                      │ HTTP (cookies)
+                      │ HTTP + cookies
 ┌─────────────────────▼───────────────────────────────┐
-│               Backend (Go + Gin)  :8080              │
-│                                                      │
-│  Handlers → Services → Repositories → PostgreSQL     │
-│                  ↓                                   │
-│            Worker Queue (Redis)                      │
-│                  ↓                                   │
-│         MockImageGen / MockSongGen                   │
-│                  ↓                                   │
+│              Backend (Go + Gin) :8080              │
+│                                                     │
+│  Handlers → Services → Repositories → PostgreSQL    │
+│                  ↓                                  │
+│               Redis Queue                           │
+│                  ↓                                  │
+│                Worker                               │
+│                  ↓                                  │
+│          kie.ai image/song generation               │
+│                  ↓                                  │
 │         LocalStorage (./data/uploads)               │
 └─────────────────────────────────────────────────────┘
 ```
 
 ---
 
-## Эндпоинты API
+## Актуальные API-маршруты
 
-Полная интерактивная документация: **`http://localhost:8080/swagger/index.html`**
+Полная интерактивная документация:
+
+- `http://localhost:8080/swagger/index.html`
 
 ### Auth
 
 | Метод | Путь | Auth | Описание |
 |-------|------|------|----------|
-| GET | `/api/auth/dev/login` | — | Dev-логин (только development) |
-| POST | `/api/auth/refresh` | cookie | Обновить access token |
-| POST | `/api/auth/logout` | cookie | Выйти, очистить cookies |
+| GET | `/api/auth/dev/login` | — | Dev login, только development |
+| GET | `/api/auth/google/login` | — | Начало Google OAuth |
+| GET | `/api/auth/google/callback` | — | Завершение Google OAuth |
+| POST | `/api/auth/refresh` | cookie | Обновление access token |
+| POST | `/api/auth/logout` | cookie | Выход |
 
-### User
+### User / Billing / Sessions / Generations
 
-| Метод | Путь | Auth | Описание |
-|-------|------|------|----------|
-| GET | `/api/user/me` | ✅ | Профиль текущего пользователя |
+Все прикладные эндпоинты живут под `/api/v1/*`.
 
-### Billing
+| Метод | Путь | Описание |
+|-------|------|----------|
+| GET | `/api/v1/user/me` | Профиль текущего пользователя |
+| GET | `/api/v1/billing/balance` | Баланс |
+| GET | `/api/v1/billing/tariff` | Активный тариф |
+| GET | `/api/v1/billing/estimate` | Предварительная стоимость |
+| GET | `/api/v1/billing/transactions` | История транзакций |
+| GET | `/api/v1/sessions` | Список сессий |
+| GET | `/api/v1/sessions/:id` | Сессия и все генерации |
+| PATCH | `/api/v1/sessions/:id` | Переименование сессии |
+| POST | `/api/v1/generations` | Создать генерацию |
+| POST | `/api/v1/generations/lyrics` | Сгенерировать варианты текста песни |
+| GET | `/api/v1/generations` | Список генераций |
+| GET | `/api/v1/generations/:id` | Детали генерации |
+| GET | `/api/v1/generations/:id/status` | Polling статуса |
+| POST | `/api/v1/uploads` | Загрузка файлов |
 
-| Метод | Путь | Auth | Описание |
-|-------|------|------|----------|
-| GET | `/api/billing/balance` | ✅ | Баланс кредитов |
-| GET | `/api/billing/tariff` | ✅ | Активный тариф |
-| GET | `/api/billing/estimate` | ✅ | Предварительная стоимость |
-| GET | `/api/billing/transactions` | ✅ | История транзакций |
+### Service
 
-### Sessions
-
-| Метод | Путь | Auth | Описание |
-|-------|------|------|----------|
-| GET | `/api/sessions` | ✅ | Список сессий (тредов) |
-| GET | `/api/sessions/:id` | ✅ | Сессия + все генерации |
-| PATCH | `/api/sessions/:id` | ✅ | Переименовать сессию |
-
-### Generations
-
-| Метод | Путь | Auth | Описание |
-|-------|------|------|----------|
-| POST | `/api/generations` | ✅ | Создать генерацию (multipart) |
-| GET | `/api/generations` | ✅ | Список генераций |
-| GET | `/api/generations/:id` | ✅ | Детали генерации |
-| GET | `/api/generations/:id/status` | ✅ | Статус для polling |
-
-### Uploads & Files
-
-| Метод | Путь | Auth | Описание |
-|-------|------|------|----------|
-| POST | `/api/uploads` | ✅ | Загрузить файл |
-| GET | `/api/files/*` | — | Скачать файл |
+| Метод | Путь | Описание |
+|-------|------|----------|
+| GET | `/api/health` | Health check |
+| GET | `/api/files/*key` | Раздача файлов |
 
 ---
 
-## Модели данных
+## Текущая логика кредитов
 
-### User
-```json
-{
-  "id": 42,
-  "email": "user@example.com",
-  "display_name": "Иван",
-  "avatar_url": "",
-  "created_at": "2026-04-24T10:00:00Z"
-}
-```
-
-### GenerationRequest (статусы: `pending → processing_images → processing_audio → completed | failed`)
-```json
-{
-  "id": "uuid",
-  "session_id": "uuid",
-  "status": "completed",
-  "recipient_name": "Мама",
-  "occasion": "День рождения",
-  "image_count": 3,
-  "song_count": 1,
-  "result_images": ["http://localhost:8080/api/files/..."],
-  "result_audios": ["http://localhost:8080/api/files/..."],
-  "credits_spent": 70,
-  "created_at": "2026-04-24T10:00:00Z"
-}
-```
-
-### CreditTransaction (types: `initial_grant`, `generation_charge`, `generation_refund`, `purchase`)
-```json
-{
-  "id": 1,
-  "user_id": 42,
-  "amount": -70,
-  "type": "generation_charge",
-  "description": "3 images, 1 songs",
-  "created_at": "2026-04-24T10:00:00Z"
-}
-```
+- новый пользователь получает `initial_grant`
+- при входе пользователя endpoint `GET /api/v1/user/me` пытается выдать `daily_grant`
+- ежедневное пополнение работает до лимита `50`
+- при ошибке создания генерации делается refund
+- покупка кредитов еще не реализована
 
 ---
 
-## Аутентификация
+## Актуальный UX ввода
 
-- **Access Token** — httpOnly cookie `access_token`, TTL 15 мин
-- **Refresh Token** — httpOnly cookie `refresh_token`, TTL 30 дней, path `/api/auth/refresh`
-- Автоматическое обновление на клиенте через interceptor в `lib/api.ts`
-- Cookie: `HttpOnly=true`, `Secure=false` (dev), `SameSite=Strict`
+### Картинка
+
+- основной prompt в основной форме
+- выбор модели изображения через compact popover
+- можно приложить до 3 фото
+
+### Песня
+
+- блок песни занимает мало места в основном composer
+- кнопка `Текст песни` открывает модалку
+- рядом в основном composer задается `Стиль песни`
+- в модалке:
+  - prompt для генерации текста
+  - генерация 3 вариантов
+  - выбор одного варианта
+  - ручное редактирование выбранного текста
 
 ---
 
-## Запуск локально
+## Локальный запуск
+
+### Рекомендуемый способ
 
 ```bash
-# 1. Инфраструктура (Postgres + Redis в Docker)
-npm run infra
-
-# 2. Backend + Frontend одновременно
-npm run dev
-
-# Отдельно:
-npm run back   # Go backend :8080
-npm run front  # Vite frontend :5173
+docker compose -f backend/docker-compose.yml up -d --build backend
 ```
 
-Swagger доступен на: `http://localhost:8080/swagger/index.html`
+После этого доступны:
+
+- приложение: `http://localhost:8080/`
+- swagger: `http://localhost:8080/swagger/index.html`
+
+### Дополнительно
+
+```bash
+cd backend && go test ./...
+cd frontend && npm run build
+```
 
 ---
 
-## Переменные окружения (backend/.env)
+## Ключевые переменные окружения backend
 
 ```env
 APP_ENV=development
 APP_PORT=8080
 DATABASE_URL=postgres://fungreet:fungreet@localhost:5433/fungreet?sslmode=disable
 REDIS_URL=redis://localhost:6379
-JWT_SECRET=dev-secret-key-min-32-characters-long!!
+JWT_SECRET=...
+GOOGLE_CLIENT_ID=...
+GOOGLE_CLIENT_SECRET=...
+GOOGLE_REDIRECT_URI=http://localhost:8080/api/auth/google/callback
 STORAGE_MODE=local
 STORAGE_LOCAL_DIR=./data/uploads
-```
-
-⚠️ **`backend/.env` не коммитится в git** (добавлен в `.gitignore`).  
-Шаблон: `backend/.env.example`.
-
----
-
-## Структура репозитория
-
-```
-present generator/
-├── backend/
-│   ├── cmd/server/main.go        # Точка входа
-│   ├── docs/                     # Сгенерированный Swagger (swag init)
-│   ├── internal/
-│   │   ├── config/               # Загрузка конфига из .env
-│   │   ├── handlers/             # HTTP хэндлеры
-│   │   ├── middleware/           # Auth, логгер, recovery
-│   │   ├── models/               # Структуры данных
-│   │   ├── repository/           # Слой работы с БД
-│   │   ├── services/             # Бизнес-логика + mock генераторы
-│   │   └── worker/               # Async воркер (Redis queue)
-│   ├── migrations/               # SQL миграции
-│   └── .env.example              # Шаблон переменных окружения
-├── frontend/
-│   ├── src/
-│   │   ├── components/           # UI компоненты
-│   │   ├── hooks/                # React Query хуки
-│   │   ├── lib/                  # API клиент, типы, утилиты
-│   │   └── pages/                # LoginPage, ChatPage
-│   └── vite.config.ts
-├── docs/                         # Проектная документация
-├── docker-compose.yml            # Production Docker
-├── Dockerfile                    # Multi-stage build
-└── .env.example                  # Шаблон для Docker Compose
+KIE_API_KEY=...
 ```
 
 ---
 
-## Что нужно сделать для production
+## Известные ограничения
 
-1. **Заменить mock-генераторы** — подключить реальные AI API (Stability AI, Suno и т.п.)
-2. **Реализовать OAuth** — Google/VK/Yandex хэндлеры
-3. **Подключить Cloudflare R2** — `STORAGE_MODE=r2` + credentials
-4. **Платёжный шлюз** — ЮKassa / Stripe для пополнения кредитов
-5. **HTTPS + secure cookies** — при деплое установить `Secure=true` в setCookie
-6. **Мониторинг** — логи в slog/json уже есть, добавить метрики (Prometheus)
+1. Нет покупки кредитов и платежного шлюза.
+2. Хранилище файлов только локальное, `R2` пока не включен.
+3. Cookie-настройки все еще dev-ориентированы.
+   Сейчас проект стабилен локально, но production-hardening по cookies и CSRF еще нужен.
+4. Документация в `docs/02_*` и `docs/03_*` частично описывает более широкий целевой план, чем реально реализовано в текущем MVP.
+5. Нет полноценного тестового покрытия frontend.
+
+---
+
+## Результаты работ на текущий момент
+
+- Google OAuth внедрен и работает end-to-end
+- приложение раздается единым контейнером через `localhost:8080`
+- generation flow стабилизирован для image-only сценариев
+- composer упрощен и стал компактнее
+- lyrics flow стал интерактивным: 3 варианта + выбор + редактирование
+- проект готов к следующему этапу: платежи, production-hardening auth/cookies, подключение cloud storage
