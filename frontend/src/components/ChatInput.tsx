@@ -12,6 +12,7 @@ import {
 } from '@/lib/imagePresets'
 import { useQueryClient } from '@tanstack/react-query'
 import type React from 'react'
+import { useI18n } from '@/lib/i18n'
 
 interface ChatInputProps {
   sessionId: string | null
@@ -30,10 +31,70 @@ interface AttachedFile {
 type ImageModel = 'gpt-image-2' | 'flux-2-flex' | 'seedream-5-lite'
 
 const imageModels: Array<{ value: ImageModel; label: string; hint: string }> = [
-  { value: 'gpt-image-2', label: 'Лучшая', hint: 'GPT Image 2' },
-  { value: 'flux-2-flex', label: 'Средняя', hint: 'Flux 2 Flex' },
-  { value: 'seedream-5-lite', label: 'Быстрая', hint: 'Seedream 5 Lite' },
+  { value: 'gpt-image-2', label: 'Best quality', hint: 'GPT Image 2' },
+  { value: 'flux-2-flex', label: 'Balanced', hint: 'Flux 2 Flex' },
+  { value: 'seedream-5-lite', label: 'Fast', hint: 'Seedream 5 Lite' },
 ]
+
+const categoryTranslationKeys: Record<string, string> = {
+  'For people': 'categoryPeople',
+  'For social media': 'categorySocial',
+  'For products': 'categoryProducts',
+  'For characters': 'categoryCharacters',
+  'For couples and events': 'categoryEvents',
+}
+
+const presetTranslationKeys: Record<string, string> = {
+  photoshoot: 'presetPhotoshoot',
+  avatar: 'presetAvatar',
+  business: 'presetBusiness',
+  magazine: 'presetMagazine',
+  'sports-broadcast': 'presetSportsBroadcast',
+  cinematic: 'presetCinematic',
+  street: 'presetStreet',
+  paparazzi: 'presetPaparazzi',
+  'red-carpet': 'presetRedCarpet',
+  meme: 'presetMeme',
+  streamer: 'presetStreamer',
+  esports: 'presetEsports',
+  'album-cover': 'presetAlbumCover',
+  'movie-poster': 'presetMoviePoster',
+  'product-photo': 'presetProductPhoto',
+  'lifestyle-product': 'presetLifestyleProduct',
+  'luxury-ad': 'presetLuxuryAd',
+  sticker: 'presetSticker',
+  'icon-3d': 'presetIcon3d',
+  'mascot-logo': 'presetMascotLogo',
+  anime: 'presetAnime',
+  cyberpunk: 'presetCyberpunk',
+  fantasy: 'presetFantasy',
+  superhero: 'presetSuperhero',
+  'game-character': 'presetGameCharacter',
+  'crime-game': 'presetCrimeGame',
+  'retro-90s': 'presetRetro90s',
+  polaroid: 'presetPolaroid',
+  y2k: 'presetY2k',
+  horror: 'presetHorror',
+  travel: 'presetTravel',
+  romantic: 'presetRomantic',
+  wedding: 'presetWedding',
+  toy: 'presetToy',
+  interior: 'presetInterior',
+}
+
+function translateLabel(t: (key: string) => string, key: string | undefined, fallback: string) {
+  if (!key) return fallback
+  const translated = t(key)
+  return translated === key ? fallback : translated
+}
+
+function categoryLabel(category: string, t: (key: string) => string) {
+  return translateLabel(t, categoryTranslationKeys[category], category)
+}
+
+function presetLabel(id: string, fallback: string, t: (key: string) => string) {
+  return translateLabel(t, presetTranslationKeys[id], fallback)
+}
 
 function imageModelLabel(model: ImageModel) {
   return imageModels.find(option => option.value === model)?.hint ?? 'GPT Image 2'
@@ -47,16 +108,16 @@ export function ChatInput({ sessionId, parentId, onSent, onInsufficientCredits, 
   const { data: tariff } = useTariff()
   const { data: balance } = useBalance()
   const qc = useQueryClient()
+  const { t } = useI18n()
 
   const [imageEnabled, setImageEnabled] = useState(true)
-  const [songEnabled, setSongEnabled] = useState(true)
-
+  const [songEnabled, setSongEnabled] = useState(false)
   const [prompt, setPrompt] = useState('')
   const [imageModel, setImageModel] = useState<ImageModel>('gpt-image-2')
   const [imageModelOpen, setImageModelOpen] = useState(false)
+  const [filterModalOpen, setFilterModalOpen] = useState(false)
   const [presetCategory, setPresetCategory] = useState<string>(imagePromptCategories[0])
   const [imagePresetId, setImagePresetId] = useState(noImagePresetId)
-
   const [songLyrics, setSongLyrics] = useState('')
   const [songStyle, setSongStyle] = useState('')
   const [lyricsPrompt, setLyricsPrompt] = useState('')
@@ -64,20 +125,14 @@ export function ChatInput({ sessionId, parentId, onSent, onInsufficientCredits, 
   const [selectedLyricsIndex, setSelectedLyricsIndex] = useState(0)
   const [lyricsModalOpen, setLyricsModalOpen] = useState(false)
   const [generatingLyrics, setGeneratingLyrics] = useState(false)
-
   const [files, setFiles] = useState<AttachedFile[]>([])
   const [sending, setSending] = useState(false)
   const [error, setError] = useState('')
 
   const imageInputRef = useRef<HTMLInputElement>(null)
-
   const imageCount = imageEnabled ? 1 : 0
   const songCount = songEnabled ? 1 : 0
-
-  const cost = tariff
-    ? tariff.price_per_image * imageCount + tariff.price_per_song * songCount
-    : 0
-
+  const cost = tariff ? tariff.price_per_image * imageCount + tariff.price_per_song * songCount : 0
   const canSend = !sending && !disabled
     && (imageEnabled ? prompt.trim() !== '' : true)
     && (songEnabled ? songLyrics.trim() !== '' : true)
@@ -99,6 +154,7 @@ export function ChatInput({ sessionId, parentId, onSent, onInsufficientCredits, 
     const next = [...files]
     let nextImageCount = next.filter(file => file.type === 'image').length
     let changed = false
+
     for (const file of Array.from(picked)) {
       if (!file.type.startsWith('image/')) continue
       const preview = URL.createObjectURL(file)
@@ -108,14 +164,15 @@ export function ChatInput({ sessionId, parentId, onSent, onInsufficientCredits, 
         changed = true
       } else {
         URL.revokeObjectURL(preview)
-        setError('Можно прикрепить максимум 3 фото')
+        setError(t('maxThreePhotos'))
       }
     }
+
     if (changed) {
       setError('')
       setFiles(next)
     }
-  }, [files])
+  }, [files, t])
 
   const removeFile = (index: number) => {
     setFiles(prev => {
@@ -136,12 +193,12 @@ export function ChatInput({ sessionId, parentId, onSent, onInsufficientCredits, 
       const data = await api.generations.lyrics(effectivePrompt, 3)
       const variants = data.variants?.length
         ? data.variants
-        : [{ title: data.title ?? 'Вариант 1', text: data.text ?? '' }]
+        : [{ title: data.title ?? `${t('variant')} 1`, text: data.text ?? '' }]
       setLyricsVariants(variants)
       setSelectedLyricsIndex(0)
       setSongLyrics(variants[0]?.text ?? '')
     } catch (e: unknown) {
-      setError(errorMessage(e, 'Ошибка генерации текста'))
+      setError(errorMessage(e, t('textGenerationError')))
     } finally {
       setGeneratingLyrics(false)
     }
@@ -163,9 +220,7 @@ export function ChatInput({ sessionId, parentId, onSent, onInsufficientCredits, 
     form.append('image_count', String(imageCount))
     form.append('song_count', String(songCount))
 
-    for (const file of files) {
-      form.append('photos', file.file)
-    }
+    for (const file of files) form.append('photos', file.file)
 
     try {
       const result = await api.generations.create(form)
@@ -177,6 +232,7 @@ export function ChatInput({ sessionId, parentId, onSent, onInsufficientCredits, 
       setSelectedLyricsIndex(0)
       setFiles([])
       setImageModelOpen(false)
+      setFilterModalOpen(false)
       setLyricsModalOpen(false)
       qc.invalidateQueries({ queryKey: ['sessions'] })
       qc.invalidateQueries({ queryKey: ['balance'] })
@@ -185,22 +241,23 @@ export function ChatInput({ sessionId, parentId, onSent, onInsufficientCredits, 
       if (e instanceof ApiError && e.code === 'insufficient_credits') {
         onInsufficientCredits?.()
       } else {
-        setError(errorMessage(e, 'Ошибка отправки'))
+        setError(errorMessage(e, t('sendError')))
       }
     } finally {
       setSending(false)
     }
   }
 
-  const truncateName = (name: string, max = 18) =>
-    name.length > max ? name.slice(0, max - 1) + '…' : name
+  const truncateName = (name: string, max = 18) => (
+    name.length > max ? `${name.slice(0, max - 1)}...` : name
+  )
 
   const imageFiles = files.filter(file => file.type === 'image')
   const categoryPresets = imagePromptPresets.filter(preset => preset.category === presetCategory)
   const selectedPreset = imagePromptPresets.find(preset => preset.id === imagePresetId)
   const songSummary = songLyrics.trim()
     ? songLyrics.trim().replace(/\s+/g, ' ').slice(0, 100)
-    : 'Текст не выбран'
+    : t('noSongTextSelected')
 
   const updateSelectedLyrics = (text: string) => {
     setSongLyrics(text)
@@ -220,6 +277,8 @@ export function ChatInput({ sessionId, parentId, onSent, onInsufficientCredits, 
     setSelectedLyricsIndex(0)
   }
 
+  const costLabel = t('creditsShort')
+
   return (
     <>
       <div style={{ padding: '14px 24px 20px', background: 'var(--surface)' }}>
@@ -232,7 +291,7 @@ export function ChatInput({ sessionId, parentId, onSent, onInsufficientCredits, 
 
           <SectionBlock
             icon={<ImageIcon size={14} />}
-            label="Картинка"
+            label={t('imageSection')}
             enabled={imageEnabled}
             onToggle={toggleImage}
             disableToggle={imageEnabled && !songEnabled}
@@ -246,19 +305,15 @@ export function ChatInput({ sessionId, parentId, onSent, onInsufficientCredits, 
                   send()
                 }
               }}
-              placeholder="Опишите, что нужно создать... (Enter — отправить)"
+              placeholder={t('promptPlaceholder')}
               rows={2}
               disabled={sending}
             />
 
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 10, flexWrap: 'wrap' }}>
-              <div style={{ position: 'relative' }}>
-                <button
-                  type="button"
-                  onClick={() => setImageModelOpen(value => !value)}
-                  style={ghostBtnStyle}
-                >
-                  <span style={{ fontSize: 12, color: 'var(--text)' }}>Модель: {imageModelLabel(imageModel)}</span>
+              <div style={{ position: 'relative', zIndex: imageModelOpen ? 120 : 1 }}>
+                <button type="button" onClick={() => setImageModelOpen(value => !value)} style={ghostBtnStyle}>
+                  <span style={{ fontSize: 12, color: 'var(--text)' }}>{t('model')}: {imageModelLabel(imageModel)}</span>
                   <ChevronDown size={14} style={{ color: 'var(--text-muted)' }} />
                 </button>
                 {imageModelOpen && (
@@ -266,13 +321,15 @@ export function ChatInput({ sessionId, parentId, onSent, onInsufficientCredits, 
                     position: 'absolute',
                     bottom: 'calc(100% + 8px)',
                     left: 0,
-                    zIndex: 20,
+                    zIndex: 120,
                     minWidth: 220,
                     background: 'var(--surface)',
                     border: '1px solid var(--border)',
-                    borderRadius: 12,
-                    boxShadow: '0 10px 30px rgba(0,0,0,0.12)',
-                    padding: 6,
+                    borderRadius: 10,
+                    boxShadow: '0 16px 40px rgba(0,0,0,0.26)',
+                    padding: 8,
+                    overflow: 'hidden',
+                    isolation: 'isolate',
                   }}>
                     {imageModels.map(option => (
                       <button
@@ -308,32 +365,6 @@ export function ChatInput({ sessionId, parentId, onSent, onInsufficientCredits, 
                 )}
               </div>
 
-              <select
-                value={presetCategory}
-                onChange={event => {
-                  setPresetCategory(event.target.value)
-                  setImagePresetId(noImagePresetId)
-                }}
-                title="Категория идеи"
-                style={{ ...selectStyle, minWidth: 145 }}
-              >
-                {imagePromptCategories.map(category => (
-                  <option key={category} value={category}>{category}</option>
-                ))}
-              </select>
-
-              <select
-                value={imagePresetId}
-                onChange={event => setImagePresetId(event.target.value)}
-                title="Идея для картинки"
-                style={{ ...selectStyle, minWidth: 170 }}
-              >
-                <option value={noImagePresetId}>Без идеи</option>
-                {categoryPresets.map(preset => (
-                  <option key={preset.id} value={preset.id}>{preset.label}</option>
-                ))}
-              </select>
-
               <input
                 ref={imageInputRef}
                 type="file"
@@ -345,30 +376,30 @@ export function ChatInput({ sessionId, parentId, onSent, onInsufficientCredits, 
                   event.currentTarget.value = ''
                 }}
               />
-              <button
-                type="button"
-                onClick={() => imageInputRef.current?.click()}
-                title="Прикрепить фото"
-                style={ghostBtnStyle}
-              >
+              <button type="button" onClick={() => imageInputRef.current?.click()} title={t('attachPhoto')} style={ghostBtnStyle}>
                 <Paperclip size={14} style={{ color: 'var(--text-muted)' }} />
-                <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>Фото</span>
+                <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>{t('photo')}</span>
               </button>
               <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>{imageFiles.length}/3</span>
+              <button
+                type="button"
+                onClick={() => setFilterModalOpen(true)}
+                style={{
+                  ...ghostBtnStyle,
+                  border: '1px solid var(--border)',
+                  background: imagePresetId === noImagePresetId ? 'var(--surface)' : 'rgba(var(--primary-rgb),0.08)',
+                  color: 'var(--text)',
+                  padding: '7px 10px',
+                }}
+              >
+                <Sparkles size={14} style={{ color: 'var(--primary)' }} />
+                <span style={{ fontSize: 12, color: 'var(--text)' }}>
+                  {imagePresetId === noImagePresetId
+                    ? `${t('filterLabel')}: ${t('noFilter')}`
+                    : `${t('filterLabel')}: ${presetLabel(selectedPreset?.id ?? '', selectedPreset?.label ?? '', t)}`}
+                </span>
+              </button>
             </div>
-
-            {selectedPreset && (
-              <div style={{
-                marginTop: 8,
-                fontSize: 12,
-                color: 'var(--text-muted)',
-                lineHeight: 1.45,
-              }}>
-                {selectedPreset.label}
-                {selectedPreset.aspectRatio ? ` · ${selectedPreset.aspectRatio}` : ''}
-                {selectedPreset.bestFor?.length ? ` · ${selectedPreset.bestFor.join(', ')}` : ''}
-              </div>
-            )}
 
             {imageFiles.length > 0 && (
               <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', marginTop: 10 }}>
@@ -376,9 +407,7 @@ export function ChatInput({ sessionId, parentId, onSent, onInsufficientCredits, 
                   const fileIndex = files.indexOf(file)
                   return (
                     <div key={`${file.file.name}-${fileIndex}`} style={{ position: 'relative', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, maxWidth: 72 }}>
-                      {file.preview ? (
-                        <img src={file.preview} alt="" style={{ width: 64, height: 64, borderRadius: 10, objectFit: 'cover' }} />
-                      ) : null}
+                      {file.preview ? <img src={file.preview} alt="" style={{ width: 64, height: 64, borderRadius: 10, objectFit: 'cover' }} /> : null}
                       <span style={{ fontSize: 10, color: 'var(--text-muted)', textAlign: 'center', maxWidth: 72, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                         {truncateName(file.file.name)}
                       </span>
@@ -398,7 +427,7 @@ export function ChatInput({ sessionId, parentId, onSent, onInsufficientCredits, 
 
           <SectionBlock
             icon={<Music size={14} />}
-            label="Песня"
+            label={t('songSection')}
             enabled={songEnabled}
             onToggle={toggleSong}
             disableToggle={songEnabled && !imageEnabled}
@@ -411,22 +440,18 @@ export function ChatInput({ sessionId, parentId, onSent, onInsufficientCredits, 
                 style={{ border: '1px solid var(--border)', color: 'var(--text)', background: 'var(--surface)' }}
               >
                 <Music size={14} />
-                Текст песни
+                {t('songText')}
               </Button>
               <input
                 value={songStyle}
                 onChange={event => setSongStyle(event.target.value)}
-                placeholder="Стиль: поп, джаз, рок..."
+                placeholder={t('songStylePlaceholder')}
                 style={{ ...inputStyle, minWidth: 220, flex: '1 1 240px' }}
               />
               {songLyrics.trim() && (
-                <button
-                  type="button"
-                  onClick={clearSongState}
-                  style={{ ...ghostBtnStyle, padding: '6px 8px' }}
-                >
+                <button type="button" onClick={clearSongState} style={{ ...ghostBtnStyle, padding: '6px 8px' }}>
                   <X size={14} style={{ color: 'var(--text-muted)' }} />
-                  <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>Очистить</span>
+                  <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>{t('clear')}</span>
                 </button>
               )}
             </div>
@@ -439,7 +464,7 @@ export function ChatInput({ sessionId, parentId, onSent, onInsufficientCredits, 
               border: '1px solid var(--border)',
             }}>
               <div style={{ fontSize: 12, color: 'var(--text-muted)', marginBottom: 4 }}>
-                {songLyrics.trim() ? 'Выбранный текст' : 'Текст песни пока не выбран'}
+                {songLyrics.trim() ? t('selectedSongText') : t('noSongTextSelected')}
               </div>
               <div style={{ fontSize: 13, color: songLyrics.trim() ? 'var(--text)' : 'var(--text-muted)', lineHeight: 1.5 }}>
                 {songSummary}
@@ -449,57 +474,121 @@ export function ChatInput({ sessionId, parentId, onSent, onInsufficientCredits, 
 
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 12 }}>
             <span style={{ fontSize: 12, color: notEnough ? 'var(--error)' : 'var(--text-muted)' }}>
-              {cost > 0 ? `${cost} кр.` : ''}
-              {notEnough ? ' — недостаточно' : ''}
+              {cost > 0 ? `${cost} ${costLabel}` : ''}
+              {notEnough ? ` - ${t('insufficient')}` : ''}
             </span>
-            <Button
-              onClick={send}
-              disabled={!canSend || notEnough}
-              loading={sending}
-              size="sm"
-              style={{ gap: 6 }}
-            >
+            <Button onClick={send} disabled={!canSend || notEnough} loading={sending} size="sm" style={{ gap: 6 }}>
               <Send size={14} />
-              Отправить
+              {t('send')}
             </Button>
           </div>
         </div>
       </div>
 
-      <SimpleModal open={lyricsModalOpen} onClose={() => setLyricsModalOpen(false)} title="Текст песни">
+      <SimpleModal open={filterModalOpen} onClose={() => setFilterModalOpen(false)} title={t('imageFilters')}>
+        <div className="image-filter-panel image-filter-panel--modal">
+          <div className="image-filter-panel__head">
+            <Sparkles size={14} />
+            <span>{t('imageFilterTheme')}</span>
+          </div>
+
+          <div className="image-filter-categories" role="tablist" aria-label="Image filter categories">
+            {imagePromptCategories.map(category => {
+              const active = presetCategory === category
+              return (
+                <button
+                  key={category}
+                  type="button"
+                  className={`image-filter-category${active ? ' image-filter-category--active' : ''}`}
+                  onClick={() => {
+                    setPresetCategory(category)
+                    setImagePresetId(noImagePresetId)
+                  }}
+                >
+                  {categoryLabel(category, t)}
+                </button>
+              )
+            })}
+          </div>
+
+          <div className="image-filter-grid">
+            <button
+              type="button"
+              className={`image-filter-card${imagePresetId === noImagePresetId ? ' image-filter-card--active' : ''}`}
+              onClick={() => setImagePresetId(noImagePresetId)}
+            >
+              <span className="image-filter-card__title">{t('noFilter')}</span>
+              <span className="image-filter-card__meta">{t('onlyPrompt')}</span>
+            </button>
+
+            {categoryPresets.map(preset => {
+              const active = imagePresetId === preset.id
+              return (
+                <button
+                  key={preset.id}
+                  type="button"
+                  className={`image-filter-card${active ? ' image-filter-card--active' : ''}`}
+                  onClick={() => setImagePresetId(preset.id)}
+                >
+                  <span className="image-filter-card__title">{presetLabel(preset.id, preset.label, t)}</span>
+                  <span className="image-filter-card__meta">
+                    {[preset.aspectRatio, ...(preset.bestFor ?? []).slice(0, 2)].filter(Boolean).join(' / ')}
+                  </span>
+                </button>
+              )
+            })}
+          </div>
+
+          {selectedPreset && (
+            <div className="image-filter-selected">
+              <Check size={13} />
+              <span>
+                {presetLabel(selectedPreset.id, selectedPreset.label, t)}
+                {selectedPreset.aspectRatio ? ` / ${selectedPreset.aspectRatio}` : ''}
+                {selectedPreset.bestFor?.length ? ` / ${selectedPreset.bestFor.join(', ')}` : ''}
+              </span>
+            </div>
+          )}
+        </div>
+
+        <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 14 }}>
+          <Button size="sm" onClick={() => setFilterModalOpen(false)}>{t('done')}</Button>
+        </div>
+      </SimpleModal>
+
+      <SimpleModal open={lyricsModalOpen} onClose={() => setLyricsModalOpen(false)} title={t('songText')}>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
           <div>
-            <div style={fieldLabelStyle}>Промт для текста</div>
+            <div style={fieldLabelStyle}>{t('lyricsPromptLabel')}</div>
             <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) auto', gap: 10, alignItems: 'start' }}>
               <Textarea
                 value={lyricsPrompt}
                 onChange={event => setLyricsPrompt(event.target.value)}
-                placeholder="Опишите, о чем должен быть текст песни. Если оставить пустым, возьмется основной промт."
-                rows={4}
+                placeholder={t('lyricsPromptPlaceholder')}
+                rows={3}
+                style={{ minHeight: 88 }}
                 disabled={generatingLyrics}
               />
               <Button
                 onClick={generateLyrics}
                 disabled={generatingLyrics || (!lyricsPrompt.trim() && !prompt.trim())}
                 size="sm"
-                style={{ gap: 6, minWidth: 190, alignSelf: 'stretch' }}
+                style={{ gap: 6, minWidth: 190, alignSelf: 'flex-start' }}
               >
                 {generatingLyrics ? <Loader2 size={14} style={{ animation: 'spin 1s linear infinite' }} /> : <Sparkles size={14} />}
-                {generatingLyrics ? 'Генерирую...' : 'Сгенерировать 3 варианта'}
+                {generatingLyrics ? t('generatingLyrics') : t('generateThreeVariants')}
               </Button>
             </div>
             <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 8 }}>
-              {tariff?.price_per_lyrics ? `Стоимость генерации: ${tariff.price_per_lyrics} кр.` : 'Сгенерирую 3 варианта текста'}
+              {tariff?.price_per_lyrics
+                ? `${t('lyricsGenerationCost')}: ${tariff.price_per_lyrics} ${costLabel}`
+                : t('generatingThreeVariants')}
             </div>
           </div>
 
           {lyricsVariants.length > 0 && (
             <>
-              <div style={{
-                display: 'grid',
-                gridTemplateColumns: 'repeat(3, minmax(0, 1fr))',
-                gap: 10,
-              }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', gap: 10 }}>
                 {lyricsVariants.map((variant, index) => (
                   <button
                     key={`${variant.title}-${index}`}
@@ -520,7 +609,7 @@ export function ChatInput({ sessionId, parentId, onSent, onInsufficientCredits, 
                     }}
                   >
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, marginBottom: 8 }}>
-                      <div style={{ fontSize: 13, fontWeight: 600 }}>{variant.title || `Вариант ${index + 1}`}</div>
+                      <div style={{ fontSize: 13, fontWeight: 600 }}>{variant.title || `${t('variant')} ${index + 1}`}</div>
                       {selectedLyricsIndex === index && <Check size={14} style={{ color: 'var(--primary)' }} />}
                     </div>
                     <div style={{ fontSize: 12, color: 'var(--text-muted)', lineHeight: 1.5, whiteSpace: 'pre-wrap' }}>
@@ -531,11 +620,11 @@ export function ChatInput({ sessionId, parentId, onSent, onInsufficientCredits, 
               </div>
 
               <div>
-                <div style={fieldLabelStyle}>Редактирование выбранного текста</div>
+                <div style={fieldLabelStyle}>{t('editSelectedLyrics')}</div>
                 <Textarea
                   value={songLyrics}
                   onChange={event => updateSelectedLyrics(event.target.value)}
-                  placeholder="Здесь можно доработать выбранный текст вручную"
+                  placeholder={t('editSelectedLyricsPlaceholder')}
                   rows={10}
                   style={{ minHeight: 260 }}
                 />
@@ -544,12 +633,8 @@ export function ChatInput({ sessionId, parentId, onSent, onInsufficientCredits, 
           )}
 
           <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
-            <Button variant="ghost" size="sm" onClick={() => setLyricsModalOpen(false)}>
-              Закрыть
-            </Button>
-            <Button size="sm" onClick={() => setLyricsModalOpen(false)} disabled={!songLyrics.trim()}>
-              Выбрать текст
-            </Button>
+            <Button variant="ghost" size="sm" onClick={() => setLyricsModalOpen(false)}>{t('close')}</Button>
+            <Button size="sm" onClick={() => setLyricsModalOpen(false)} disabled={!songLyrics.trim()}>{t('chooseLyrics')}</Button>
           </div>
         </div>
       </SimpleModal>
@@ -571,22 +656,32 @@ function SectionBlock({ icon, label, enabled, onToggle, disableToggle, children 
     <div style={{
       border: `1.5px solid ${enabled ? 'rgba(var(--primary-rgb),0.3)' : 'var(--border)'}`,
       borderRadius: 14,
-      overflow: 'hidden',
+      overflow: enabled ? 'visible' : 'hidden',
       transition: 'border-color 0.2s',
       background: 'var(--bg)',
+      position: 'relative',
     }}>
-      <div style={{
-        display: 'flex', alignItems: 'center', gap: 8,
-        padding: '10px 14px',
-        background: enabled ? 'rgba(var(--primary-rgb),0.04)' : 'var(--surface2)',
-        borderBottom: enabled ? '1px solid rgba(var(--primary-rgb),0.1)' : '1px solid transparent',
-      }}>
+      <div
+        style={{
+          display: 'flex', alignItems: 'center', gap: 8,
+          padding: '10px 14px',
+          background: enabled ? 'rgba(var(--primary-rgb),0.04)' : 'var(--surface2)',
+          borderBottom: enabled ? '1px solid rgba(var(--primary-rgb),0.1)' : '1px solid transparent',
+          cursor: disableToggle ? 'not-allowed' : 'pointer',
+        }}
+        onClick={() => {
+          if (!disableToggle) onToggle()
+        }}
+      >
         <span style={{ color: enabled ? 'var(--primary)' : 'var(--text-muted)', display: 'flex' }}>{icon}</span>
         <span style={{ fontSize: 13, fontWeight: 600, color: enabled ? 'var(--text)' : 'var(--text-muted)' }}>{label}</span>
         <div style={{ flex: 1 }} />
         <button
           type="button"
-          onClick={onToggle}
+          onClick={event => {
+            event.stopPropagation()
+            onToggle()
+          }}
           disabled={disableToggle}
           style={{
             position: 'relative', width: 36, height: 20, borderRadius: 10,
@@ -607,8 +702,8 @@ function SectionBlock({ icon, label, enabled, onToggle, disableToggle, children 
 
       <div style={{
         padding: enabled ? '12px 14px' : '0 14px',
-        maxHeight: enabled ? 500 : 0,
-        overflow: 'hidden',
+        maxHeight: enabled ? 920 : 0,
+        overflow: enabled ? 'visible' : 'hidden',
         transition: 'max-height 0.25s ease, padding 0.25s ease',
       }}>
         {children}
@@ -691,17 +786,6 @@ const inputStyle: React.CSSProperties = {
   outline: 'none',
   fontSize: 13,
   width: '100%',
-}
-
-const selectStyle: React.CSSProperties = {
-  background: 'var(--surface)',
-  border: '1px solid var(--border)',
-  borderRadius: 8,
-  padding: '7px 28px 7px 10px',
-  color: 'var(--text)',
-  outline: 'none',
-  fontSize: 12,
-  height: 30,
 }
 
 const ghostBtnStyle: React.CSSProperties = {

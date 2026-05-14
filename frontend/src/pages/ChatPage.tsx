@@ -7,12 +7,14 @@ import { useSession } from '@/hooks/useSessions'
 import { useBalance } from '@/hooks/useAuth'
 import { useQueryClient } from '@tanstack/react-query'
 import { Button } from '@/components/ui/Button'
+import { useI18n } from '@/lib/i18n'
 
 export function ChatPage() {
   const [activeSessionId, setActiveSessionId] = useState<string | null>(null)
   const [noCreditsAt, setNoCreditsAt] = useState<string | null>(null)
   const [sidebarOpen, setSidebarOpen] = useState(true)
   const qc = useQueryClient()
+  const { t, resolvedLanguage } = useI18n()
 
   const { data: balance } = useBalance()
   const prevBalanceRef = useRef<number | undefined>(undefined)
@@ -20,12 +22,11 @@ export function ChatPage() {
   useEffect(() => {
     if (balance === undefined) return
     const prev = prevBalanceRef.current
-    // Показываем уведомление если баланс стал 0 (или упал ниже) после того как был положительным
     if (balance <= 0 && (prev === undefined || prev > 0)) {
-      setNoCreditsAt(new Date().toLocaleTimeString('ru-RU'))
+      setNoCreditsAt(new Date().toLocaleTimeString(resolvedLanguage === 'ru' ? 'ru-RU' : 'en-US'))
     }
     prevBalanceRef.current = balance
-  }, [balance])
+  }, [balance, resolvedLanguage])
 
   const { data: thread } = useSession(activeSessionId)
 
@@ -48,7 +49,7 @@ export function ChatPage() {
   }
 
   const handleInsufficientCredits = () => {
-    setNoCreditsAt(new Date().toLocaleTimeString('ru-RU'))
+    setNoCreditsAt(new Date().toLocaleTimeString(resolvedLanguage === 'ru' ? 'ru-RU' : 'en-US'))
   }
 
   return (
@@ -61,7 +62,6 @@ export function ChatPage() {
       />
 
       <main style={{ flex: 1, display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden' }}>
-        {/* Хедер чата — высота совпадает с хедером сайдбара */}
         <div style={{
           height: 60, flexShrink: 0,
           padding: '0 20px',
@@ -72,7 +72,7 @@ export function ChatPage() {
             variant="ghost"
             size="icon"
             onClick={() => setSidebarOpen(v => !v)}
-            title={sidebarOpen ? 'Скрыть панель' : 'Показать панель'}
+            title={sidebarOpen ? t('hideSidebar') : t('showSidebar')}
             style={{ flexShrink: 0 }}
           >
             {sidebarOpen ? <PanelLeftClose size={18} /> : <PanelLeftOpen size={18} />}
@@ -82,14 +82,14 @@ export function ChatPage() {
             <div>
               <div style={{ fontWeight: 600, fontSize: 15 }}>{thread.session.title}</div>
               <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>
-                {generations.length} {generations.length === 1 ? 'поздравление' : 'поздравлений'}
-                {hasPending && ' · генерирую...'}
+                {generations.length} {generations.length === 1 ? t('greetingCount_one') : t('greetingCount_many')}
+                {hasPending && ` · ${t('generating')}`}
               </div>
             </div>
           ) : (
             <div>
-              <div style={{ fontWeight: 600, fontSize: 15 }}>Новое поздравление</div>
-              <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>Опишите что хотите создать</div>
+              <div style={{ fontWeight: 600, fontSize: 15 }}>{t('newGreeting')}</div>
+              <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>{t('describeGreeting')}</div>
             </div>
           )}
         </div>

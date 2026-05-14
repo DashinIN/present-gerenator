@@ -1,8 +1,10 @@
-import { useEffect, useRef } from 'react'
-import { CheckCircle2, XCircle, Download } from 'lucide-react'
+import { useEffect, useMemo, useRef, useState } from 'react'
+import { CheckCircle2, XCircle, Download, ImageIcon, Music2, WandSparkles } from 'lucide-react'
+import { AppLogo } from '@/components/AppLogo'
 import type { GenerationRequest } from '@/lib/types'
 import { formatDate } from '@/lib/utils'
 import { getDisplayImagePrompt } from '@/lib/imagePresets'
+import { useI18n } from '@/lib/i18n'
 
 interface ChatThreadProps {
   generations: GenerationRequest[]
@@ -10,6 +12,7 @@ interface ChatThreadProps {
 }
 
 export function ChatThread({ generations, noCreditsAt }: ChatThreadProps) {
+  const { t } = useI18n()
   const bottomRef = useRef<HTMLDivElement>(null)
   const lastStatus = generations[generations.length - 1]?.status
 
@@ -28,15 +31,15 @@ export function ChatThread({ generations, noCreditsAt }: ChatThreadProps) {
               borderRadius: '4px 16px 16px 16px', padding: '14px 16px',
               fontSize: 14, color: 'var(--error)',
             }}>
-              Кредиты закончились. Пополните баланс, чтобы продолжить.
+              {t('noCredits')}
               <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 6 }}>{noCreditsAt}</div>
             </div>
           </div>
         ) : (
           <>
-            <div style={{ fontSize: 40 }}>🎉</div>
-            <div style={{ fontSize: 15, fontWeight: 500 }}>Создайте первое поздравление</div>
-            <div style={{ fontSize: 13 }}>Добавьте промпт и нажмите отправить</div>
+            <AppLogo size={56} />
+            <div style={{ fontSize: 15, fontWeight: 500 }}>{t('createFirstGreeting')}</div>
+            <div style={{ fontSize: 13 }}>{t('addPromptAndSend')}</div>
           </>
         )}
       </div>
@@ -46,8 +49,8 @@ export function ChatThread({ generations, noCreditsAt }: ChatThreadProps) {
   return (
     <div style={{ flex: 1, overflowY: 'auto', padding: '24px 0' }}>
       <div style={{ maxWidth: 720, margin: '0 auto', padding: '0 24px', display: 'flex', flexDirection: 'column', gap: 32 }}>
-        {generations.map((gen, i) => (
-          <GenerationMessage key={gen.id} gen={gen} isNew={i === generations.length - 1} />
+        {generations.map((gen, index) => (
+          <GenerationMessage key={gen.id} gen={gen} isNew={index === generations.length - 1} />
         ))}
         {noCreditsAt && (
           <div className="msg-enter" style={{ display: 'flex', gap: 10 }}>
@@ -57,7 +60,7 @@ export function ChatThread({ generations, noCreditsAt }: ChatThreadProps) {
               borderRadius: '4px 16px 16px 16px', padding: '14px 16px',
               fontSize: 14, color: 'var(--error)',
             }}>
-              Кредиты закончились. Пополните баланс, чтобы продолжить.
+              {t('noCredits')}
               <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 6 }}>{noCreditsAt}</div>
             </div>
           </div>
@@ -73,9 +76,9 @@ function BotAvatar() {
     <div style={{
       width: 32, height: 32, borderRadius: '50%', flexShrink: 0,
       background: 'var(--surface2)', display: 'flex',
-      alignItems: 'center', justifyContent: 'center', fontSize: 16,
+      alignItems: 'center', justifyContent: 'center',
     }}>
-      🎁
+      <AppLogo size={20} />
     </div>
   )
 }
@@ -83,7 +86,6 @@ function BotAvatar() {
 function GenerationMessage({ gen, isNew }: { gen: GenerationRequest; isNew?: boolean }) {
   return (
     <div className={isNew ? 'msg-enter' : undefined} style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-      {/* Пузырь пользователя */}
       <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
         <div style={{
           maxWidth: '80%', background: 'var(--primary)',
@@ -93,7 +95,6 @@ function GenerationMessage({ gen, isNew }: { gen: GenerationRequest; isNew?: boo
         </div>
       </div>
 
-      {/* Ответ системы */}
       <div style={{ display: 'flex', gap: 10 }}>
         <BotAvatar />
         <div style={{ flex: 1 }}>
@@ -171,50 +172,92 @@ function GenerationResult({ gen }: { gen: GenerationRequest }) {
 }
 
 function SkeletonState({ gen }: { gen: GenerationRequest }) {
+  const { t } = useI18n()
   const labels: Partial<Record<GenerationRequest['status'], string>> = {
-    pending: 'В очереди...',
-    processing_images: 'Генерирую картинки...',
-    processing_audio: 'Генерирую музыку...',
+    pending: t('loaderPending'),
+    processing_images: t('loaderProcessingImages'),
+    processing_audio: t('loaderProcessingAudio'),
   }
-  const label = labels[gen.status] ?? 'Обрабатываю...'
+  const stage = gen.status === 'processing_images' || gen.status === 'processing_audio' ? gen.status : 'pending'
+  const label = labels[gen.status] ?? t('loaderProcessingFallback')
+  const [copyIndex, setCopyIndex] = useState(0)
+  const [now, setNow] = useState(() => Date.now())
+  const phrasesByStage: Record<typeof stage, string[]> = {
+    pending: [t('loadingPending1'), t('loadingPending2'), t('loadingPending3'), t('loadingPending4')],
+    processing_images: [t('loadingImages1'), t('loadingImages2'), t('loadingImages3'), t('loadingImages4')],
+    processing_audio: [t('loadingAudio1'), t('loadingAudio2'), t('loadingAudio3'), t('loadingAudio4')],
+  }
+  const phrases = phrasesByStage[stage]
 
   const readyAudios = gen.result_audios ?? []
-  // Suno всегда отдаёт 2 клипа за задачу — показываем минимум 2 слота
   const totalAudioSlots = Math.max(gen.song_count, readyAudios.length, gen.song_count > 0 ? 2 : 0)
   const pendingSlots = totalAudioSlots - readyAudios.length
+  const progress = useMemo(() => {
+    const createdAt = new Date(gen.created_at).getTime()
+    const elapsedSeconds = Number.isFinite(createdAt) ? Math.max(0, (now - createdAt) / 1000) : 0
+    const stageFloor = stage === 'pending' ? 6 : stage === 'processing_images' ? 28 : 62
+    const stageCap = stage === 'pending' ? 24 : stage === 'processing_images' ? 68 : 92
+    const readyBonus = totalAudioSlots > 0 ? (readyAudios.length / totalAudioSlots) * 18 : 0
+
+    return Math.min(stageCap, Math.round(stageFloor + elapsedSeconds * 0.45 + readyBonus))
+  }, [gen.created_at, now, readyAudios.length, stage, totalAudioSlots])
+
+  useEffect(() => {
+    const interval = window.setInterval(() => {
+      setCopyIndex(index => (index + 1) % phrases.length)
+    }, 3600)
+
+    return () => window.clearInterval(interval)
+  }, [phrases.length])
+
+  useEffect(() => {
+    const interval = window.setInterval(() => setNow(Date.now()), 1200)
+
+    return () => window.clearInterval(interval)
+  }, [])
 
   return (
-    <div style={{ padding: '16px 16px 8px' }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16 }}>
-        <span style={{ width: 8, height: 8, borderRadius: '50%', background: 'var(--primary)', display: 'inline-block', animation: 'pulse 1.4s ease-in-out infinite' }} />
-        <span style={{ fontSize: 13, color: 'var(--text-muted)' }}>{label}</span>
+    <div className="generation-loader">
+      <div className="generation-loader__header">
+        <div className="generation-loader__orb" aria-hidden="true">
+          <WandSparkles size={18} />
+        </div>
+        <div className="generation-loader__copy">
+          <div className="generation-loader__title">{label}</div>
+          <div className="generation-loader__phrase" key={`${stage}-${copyIndex}`}>
+            {phrases[copyIndex]}
+          </div>
+        </div>
+        <div className="generation-loader__percent">{progress}%</div>
       </div>
 
-      {/* Скелетоны картинок */}
+      <div className="generation-loader__progress" aria-label={t('generationProgressAria').replace('{progress}', String(progress))}>
+        <div className="generation-loader__progress-fill" style={{ width: `${progress}%` }} />
+      </div>
+
       {gen.image_count > 0 && (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: gen.song_count > 0 ? 16 : 0 }}>
-          {Array.from({ length: gen.image_count }).map((_, i) => (
-            <div key={i} className="skeleton" style={{ width: '100%', aspectRatio: '16/9', borderRadius: 12 }} />
+        <div className="generation-loader__stack" style={{ marginBottom: gen.song_count > 0 ? 16 : 0 }}>
+          {Array.from({ length: gen.image_count }).map((_, index) => (
+            <VisualImageSlot key={index} index={index} />
           ))}
         </div>
       )}
 
-      {/* Аудио: готовые плееры + скелетоны для остальных */}
       {gen.song_count > 0 && (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-          {readyAudios.map((url, i) => (
-            <div key={`ready-${i}`} style={{
+        <div className="generation-loader__stack">
+          {readyAudios.map((url, index) => (
+            <div key={`ready-${index}`} style={{
               display: 'flex', alignItems: 'center', gap: 10,
               background: 'var(--surface2)', borderRadius: 10, padding: '10px 14px',
             }}>
               <audio controls src={url} style={{ flex: 1, height: 36 }} />
-              <a href={url} download style={{ color: 'var(--text-muted)', display: 'flex', flexShrink: 0 }} title="Скачать">
+              <a href={url} download style={{ color: 'var(--text-muted)', display: 'flex', flexShrink: 0 }} title="Download">
                 <Download size={15} />
               </a>
             </div>
           ))}
-          {Array.from({ length: pendingSlots }).map((_, i) => (
-            <div key={`skeleton-${i}`} className="skeleton" style={{ width: '100%', height: 56, borderRadius: 10 }} />
+          {Array.from({ length: pendingSlots }).map((_, index) => (
+            <VisualAudioSlot key={`audio-loader-${index}`} index={index} />
           ))}
         </div>
       )}
@@ -222,12 +265,53 @@ function SkeletonState({ gen }: { gen: GenerationRequest }) {
   )
 }
 
+function VisualImageSlot({ index }: { index: number }) {
+  const { t } = useI18n()
+
+  return (
+    <div className="image-loader-slot">
+      <div className="image-loader-slot__sky" />
+      <div className="image-loader-slot__sun" />
+      <div className="image-loader-slot__mountain image-loader-slot__mountain--back" />
+      <div className="image-loader-slot__mountain image-loader-slot__mountain--front" />
+      <div className="image-loader-slot__scan" />
+      <div className="image-loader-slot__label">
+        <ImageIcon size={14} />
+        {t('imageSlotLabel').replace('{index}', String(index + 1))}
+      </div>
+    </div>
+  )
+}
+
+function VisualAudioSlot({ index }: { index: number }) {
+  const { t } = useI18n()
+  const bars = [22, 34, 18, 42, 28, 48, 24, 38, 20, 32, 44, 26]
+
+  return (
+    <div className="audio-loader-slot">
+      <div className="audio-loader-slot__icon">
+        <Music2 size={16} />
+      </div>
+      <div className="audio-loader-slot__content">
+        <div className="audio-loader-slot__label">{t('audioSlotLabel').replace('{index}', String(index + 1))}</div>
+        <div className="audio-loader-slot__wave" aria-hidden="true">
+          {bars.map((height, barIndex) => (
+            <span key={barIndex} style={{ height, animationDelay: `${barIndex * 90}ms` }} />
+          ))}
+        </div>
+      </div>
+    </div>
+  )
+}
+
 function FailedState({ message }: { message?: string }) {
+  const { t } = useI18n()
+
   return (
     <div style={{ padding: '16px 16px 8px', display: 'flex', alignItems: 'flex-start', gap: 8 }}>
       <XCircle size={16} style={{ color: 'var(--error)', flexShrink: 0, marginTop: 2 }} />
       <div>
-        <div style={{ fontSize: 14, color: 'var(--error)' }}>Ошибка генерации</div>
+        <div style={{ fontSize: 14, color: 'var(--error)' }}>{t('generationError')}</div>
         {message && <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 4 }}>{message}</div>}
       </div>
     </div>
@@ -235,16 +319,17 @@ function FailedState({ message }: { message?: string }) {
 }
 
 function CompletedState({ gen }: { gen: GenerationRequest }) {
+  const { t } = useI18n()
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column' }}>
-      {/* Картинки — на всю ширину */}
       {gen.result_images?.length > 0 && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
-          {gen.result_images.map((url, i) => (
-            <div key={i} style={{ position: 'relative' }}>
+          {gen.result_images.map((url, index) => (
+            <div key={index} style={{ position: 'relative' }}>
               <img
                 src={url}
-                alt={`result ${i + 1}`}
+                alt={`result ${index + 1}`}
                 style={{
                   width: '70%', display: 'block',
                   borderRadius: '4px 16px 16px 16px',
@@ -261,26 +346,25 @@ function CompletedState({ gen }: { gen: GenerationRequest }) {
                   color: '#fff', fontSize: 12, textDecoration: 'none',
                 }}
               >
-                <Download size={13} /> Скачать
+                <Download size={13} /> {t('download')}
               </a>
             </div>
           ))}
         </div>
       )}
 
-      {/* Аудио */}
       {gen.result_audios?.length > 0 && (
         <div style={{ padding: '14px 16px 8px', display: 'flex', flexDirection: 'column', gap: 8 }}>
           <div style={{ fontSize: 12, color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: 5, marginBottom: 4 }}>
             <CheckCircle2 size={13} style={{ color: 'var(--success)' }} />
           </div>
-          {gen.result_audios.map((url, i) => (
-            <div key={i} style={{
+          {gen.result_audios.map((url, index) => (
+            <div key={index} style={{
               display: 'flex', alignItems: 'center', gap: 10,
               background: 'var(--surface2)', borderRadius: 10, padding: '10px 14px',
             }}>
               <audio controls src={url} style={{ flex: 1, height: 36 }} />
-              <a href={url} download style={{ color: 'var(--text-muted)', display: 'flex', flexShrink: 0 }} title="Скачать">
+              <a href={url} download style={{ color: 'var(--text-muted)', display: 'flex', flexShrink: 0 }} title={t('download')}>
                 <Download size={15} />
               </a>
             </div>
@@ -288,7 +372,6 @@ function CompletedState({ gen }: { gen: GenerationRequest }) {
         </div>
       )}
 
-      {/* Если только картинки — показываем статус внизу */}
       {gen.result_images?.length > 0 && !gen.result_audios?.length && (
         <div style={{ padding: '10px 16px 8px', display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: 'var(--success)' }}>
           <CheckCircle2 size={13} />

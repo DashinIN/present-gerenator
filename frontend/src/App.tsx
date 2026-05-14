@@ -4,6 +4,7 @@ import { LoginPage } from '@/pages/LoginPage'
 import { ChatPage } from '@/pages/ChatPage'
 import { ApiError } from '@/lib/api'
 import { ThemeProvider } from '@/lib/theme'
+import { I18nProvider } from '@/lib/i18n'
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -35,9 +36,11 @@ function AppRouter() {
 export default function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <ThemeProvider>
-        <AppRouter />
-      </ThemeProvider>
+      <I18nProvider>
+        <ThemeProvider>
+          <AppRouter />
+        </ThemeProvider>
+      </I18nProvider>
     </QueryClientProvider>
   )
 }

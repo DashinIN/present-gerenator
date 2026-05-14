@@ -14,12 +14,12 @@ interface ThemeCtx {
 const Ctx = createContext<ThemeCtx>({} as ThemeCtx)
 
 export const ACCENT_PRESETS = [
-  { name: 'Фиолетовый', value: '#7c5cfc' },
-  { name: 'Синий',      value: '#3b82f6' },
-  { name: 'Циан',       value: '#06b6d4' },
-  { name: 'Изумруд',    value: '#10b981' },
-  { name: 'Оранжевый',  value: '#f97316' },
-  { name: 'Розовый',    value: '#ec4899' },
+  { name: 'Violet',  value: '#7c5cfc' },
+  { name: 'Blue',    value: '#3b82f6' },
+  { name: 'Cyan',    value: '#06b6d4' },
+  { name: 'Emerald', value: '#10b981' },
+  { name: 'Orange',  value: '#f97316' },
+  { name: 'Pink',    value: '#ec4899' },
 ]
 
 function hexToRgb(hex: string): [number, number, number] | null {

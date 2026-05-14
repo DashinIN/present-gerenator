@@ -223,6 +223,7 @@ func main() {
 	const webDist = "./web/dist"
 	if _, statErr := os.Stat(webDist); statErr == nil {
 		r.Static("/assets", webDist+"/assets")
+		r.Static("/locales", webDist+"/locales")
 		r.NoRoute(func(c *gin.Context) {
 			if strings.HasPrefix(c.Request.URL.Path, "/api") {
 				c.JSON(http.StatusNotFound, gin.H{"error": gin.H{"code": "not_found", "message": "Not found"}})
