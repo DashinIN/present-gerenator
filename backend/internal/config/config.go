@@ -60,7 +60,7 @@ func Load() (*Config, error) {
 		S3Region:           getEnvAny([]string{"S3_REGION"}, "us-east-1"),
 		S3AccessKey:        getEnvAny([]string{"S3_ACCESS_KEY", "R2_ACCESS_KEY"}, ""),
 		S3SecretKey:        getEnvAny([]string{"S3_SECRET_KEY", "R2_SECRET_KEY"}, ""),
-		S3Bucket:           getEnvAny([]string{"S3_BUCKET", "R2_BUCKET"}, "fungreet"),
+		S3Bucket:           getEnvAny([]string{"S3_BUCKET", "R2_BUCKET"}, "funbaza"),
 		S3UsePathStyle:     getEnvBool("S3_USE_PATH_STYLE", false),
 		WorkerCount:        getEnvInt("WORKER_COUNT", 2),
 		KieAPIKey:          getEnv("KIE_API_KEY", ""),

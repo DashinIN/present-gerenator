@@ -9,7 +9,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/lib/pq"
-	"github.com/you/fungreet/internal/models"
+	"github.com/you/funbaza/internal/models"
 )
 
 type GenerationRepository struct {

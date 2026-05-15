@@ -31,6 +31,7 @@ export function Sidebar({ open, activeSessionId, onSelectSession, onNewSession }
   const [txPanelOpen, setTxPanelOpen] = useState(false)
   const popupRef = useRef<HTMLDivElement>(null)
   const settingsButtonRef = useRef<HTMLButtonElement>(null)
+  const selectedLanguage = LANGUAGES.find(option => option.code === language) ?? LANGUAGES[0]
 
   useEffect(() => {
     if (!settingsOpen) return
@@ -87,7 +88,7 @@ export function Sidebar({ open, activeSessionId, onSelectSession, onNewSession }
 
           {open && (
             <>
-              <span style={{ fontWeight: 700, fontSize: 15, whiteSpace: 'nowrap', flex: 1 }}>FunGreet</span>
+              <span style={{ fontWeight: 700, fontSize: 15, whiteSpace: 'nowrap', flex: 1 }}>FunBaza</span>
 
               <div style={{ position: 'relative' }}>
                 <button
@@ -203,41 +204,47 @@ export function Sidebar({ open, activeSessionId, onSelectSession, onNewSession }
                       {t('language')}
                     </div>
 
-                    <div style={{ position: 'relative' }}>
-                      <Languages
-                        size={14}
-                        style={{
-                          position: 'absolute',
-                          left: 12,
-                          top: '50%',
-                          transform: 'translateY(-50%)',
-                          color: 'var(--text-muted)',
-                          pointerEvents: 'none',
-                        }}
-                      />
-                      <ChevronDown
-                        size={14}
-                        style={{
-                          position: 'absolute',
-                          right: 12,
-                          top: '50%',
-                          transform: 'translateY(-50%)',
-                          color: 'var(--text-muted)',
-                          pointerEvents: 'none',
-                        }}
-                      />
-                      <select
-                        value={language}
-                        onChange={event => setLanguage(event.target.value as typeof language)}
-                        className="settings-select"
-                        aria-label={t('language')}
-                      >
-                        {LANGUAGES.map(option => (
-                          <option key={option.code} value={option.code}>
-                            {option.code === 'auto' ? t('auto') : option.nativeName}
-                          </option>
-                        ))}
-                      </select>
+                    <div className="language-picker" aria-label={t('language')}>
+                      <div className="language-picker__current">
+                        <div className="language-picker__current-icon">
+                          <Languages size={14} />
+                        </div>
+                        <div className="language-picker__current-copy">
+                          <div className="language-picker__current-name">
+                            {selectedLanguage.code === 'auto' ? t('auto') : selectedLanguage.nativeName}
+                          </div>
+                          <div className="language-picker__current-meta">
+                            {selectedLanguage.code === 'auto' ? t('languageHint') : selectedLanguage.label}
+                          </div>
+                        </div>
+                        <ChevronDown size={14} className="language-picker__current-chevron" />
+                      </div>
+
+                      <div className="language-picker__list" role="listbox" aria-label={t('language')}>
+                        {LANGUAGES.map(option => {
+                          const active = option.code === language
+                          return (
+                            <button
+                              key={option.code}
+                              type="button"
+                              role="option"
+                              aria-selected={active}
+                              className={`language-option${active ? ' language-option--active' : ''}`}
+                              onClick={() => setLanguage(option.code)}
+                            >
+                              <span className="language-option__copy">
+                                <span className="language-option__name">
+                                  {option.code === 'auto' ? t('auto') : option.nativeName}
+                                </span>
+                                <span className="language-option__meta">
+                                  {option.code === 'auto' ? t('languageHint') : option.label}
+                                </span>
+                              </span>
+                              {active && <Check size={14} className="language-option__check" />}
+                            </button>
+                          )
+                        })}
+                      </div>
                     </div>
                   </div>
                 )}

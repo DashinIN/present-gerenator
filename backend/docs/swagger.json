@@ -2,9 +2,9 @@
     "swagger": "2.0",
     "info": {
         "description": "API для генерации персонализированных поздравлений: AI-изображения + песни. Аутентификация через httpOnly cookie (access_token).",
-        "title": "FunGreet API",
+        "title": "FunBaza API",
         "contact": {
-            "name": "FunGreet Team"
+            "name": "FunBaza Team"
         },
         "license": {
             "name": "MIT"

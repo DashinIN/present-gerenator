@@ -2,7 +2,7 @@
 
 ## Project Structure & Module Organization
 
-This repository contains a Go backend and a React/Vite frontend for FunGreet.
+This repository contains a Go backend and a React/Vite frontend for FunBaza.
 
 - `backend/` contains the API server, repositories, services, middleware, migrations, and generated Swagger docs.
 - `backend/cmd/server/` is the main server entry point; `backend/cmd/sunotest/` is a small integration test utility.

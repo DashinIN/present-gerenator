@@ -7,7 +7,7 @@ import (
 	"fmt"
 
 	"github.com/google/uuid"
-	"github.com/you/fungreet/internal/models"
+	"github.com/you/funbaza/internal/models"
 )
 
 type SessionRepository struct {

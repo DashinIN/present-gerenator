@@ -10,7 +10,7 @@ const docTemplate = `{
         "description": "{{escape .Description}}",
         "title": "{{.Title}}",
         "contact": {
-            "name": "FunGreet Team"
+            "name": "FunBaza Team"
         },
         "license": {
             "name": "MIT"
@@ -1413,7 +1413,7 @@ var SwaggerInfo = &swag.Spec{
 	Host:             "",
 	BasePath:         "/api",
 	Schemes:          []string{},
-	Title:            "FunGreet API",
+	Title:            "FunBaza API",
 	Description:      "API для генерации персонализированных поздравлений: AI-изображения + песни. Аутентификация через httpOnly cookie (access_token).",
 	InfoInstanceName: "swagger",
 	SwaggerTemplate:  docTemplate,

@@ -1,4 +1,4 @@
-module github.com/you/fungreet
+module github.com/you/funbaza
 
 go 1.25.0
 

@@ -1,4 +1,4 @@
-# FunGreet — Авторизация через httpOnly cookies
+# FunBaza — Авторизация через httpOnly cookies
 
 ## 1. Базовая идея
 
@@ -15,7 +15,7 @@ HttpOnly      — JS не может прочитать (защита от XSS)
 Secure        — только HTTPS
 SameSite=None — работает в кросс-сайт контексте (для Telegram Mini App)
 Partitioned   — изоляция по embedder origin (CHIPS, для будущей совместимости)
-Domain=.fungreet.app
+Domain=.funbaza.app
 Path=/
 ```
 
@@ -25,7 +25,7 @@ Path=/
 
 ### 2.1. Зачем SameSite=None
 
-Telegram Mini App загружается внутри WebView, который браузер видит как **кросс-сайт** контекст (embedder = web.telegram.org, а твой сайт = fungreet.app). Cookies с `SameSite=Strict` или `SameSite=Lax` в этой ситуации **не будут отправлены**.
+Telegram Mini App загружается внутри WebView, который браузер видит как **кросс-сайт** контекст (embedder = web.telegram.org, а твой сайт = funbaza.app). Cookies с `SameSite=Strict` или `SameSite=Lax` в этой ситуации **не будут отправлены**.
 
 `SameSite=None` разрешает отправку cookies в любых запросах — включая те, что инициированы из Mini App. Но важно: `SameSite=None` требует `Secure` (только HTTPS).
 
@@ -54,7 +54,7 @@ Set-Cookie: refresh_token=...; HttpOnly; Secure; SameSite=None; Partitioned; Pat
 ```go
 r.Use(cors.New(cors.Config{
     AllowOrigins: []string{
-        "https://fungreet.app",
+        "https://funbaza.app",
         "https://web.telegram.org",  // для TG Web-клиента
     },
     AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"},
@@ -164,7 +164,7 @@ func (h *AuthHandler) issueCookies(c *gin.Context, userID int64) {
         "access_token", access,
         int((15 * time.Minute).Seconds()),
         "/",
-        ".fungreet.app",
+        ".funbaza.app",
         true,  // secure
         true,  // httpOnly
     )
@@ -175,7 +175,7 @@ func (h *AuthHandler) issueCookies(c *gin.Context, userID int64) {
         "refresh_token", refresh,
         int((30 * 24 * time.Hour).Seconds()),
         "/api/auth/refresh",
-        ".fungreet.app",
+        ".funbaza.app",
         true,
         true,
     )
@@ -257,8 +257,8 @@ func (h *AuthHandler) Logout(c *gin.Context) {
 
     // Стираем cookies: выставляем с Max-Age=-1
     c.SetSameSite(http.SameSiteNoneMode)
-    c.SetCookie("access_token",  "", -1, "/",                    ".fungreet.app", true, true)
-    c.SetCookie("refresh_token", "", -1, "/api/auth/refresh",    ".fungreet.app", true, true)
+    c.SetCookie("access_token",  "", -1, "/",                    ".funbaza.app", true, true)
+    c.SetCookie("refresh_token", "", -1, "/api/auth/refresh",    ".funbaza.app", true, true)
 
     c.JSON(200, gin.H{"ok": true})
 }
@@ -357,7 +357,7 @@ Cookies с `HttpOnly; Secure; SameSite=None; Partitioned` сложно отла�
 - [ ] CORS: `AllowCredentials: true`, точный список origin (не `*`)
 - [ ] Все cookies: `HttpOnly; Secure; SameSite=None; Partitioned`
 - [ ] Разные `Path` для access и refresh
-- [ ] Domain с точкой впереди: `.fungreet.app` (для поддоменов)
+- [ ] Domain с точкой впереди: `.funbaza.app` (для поддоменов)
 - [ ] CSRF middleware для state-changing запросов
 - [ ] Refresh token rotation + blacklist в Redis
 - [ ] Access token TTL 15 мин, refresh 30 дней

@@ -1,4 +1,4 @@
-# FunGreet — Техническая документация (часть 2)
+# FunBaza — Техническая документация (часть 2)
 
 Продолжение: структура кода, инфраструктура, тестирование, план разработки.
 
@@ -126,9 +126,9 @@ import (
     "syscall"
     "time"
     
-    "github.com/you/fungreet/internal/config"
-    "github.com/you/fungreet/internal/server"
-    "github.com/you/fungreet/internal/worker"
+    "github.com/you/funbaza/internal/config"
+    "github.com/you/funbaza/internal/server"
+    "github.com/you/funbaza/internal/worker"
 )
 
 func main() {
@@ -172,7 +172,7 @@ func main() {
         }
     }()
     
-    logger.Info("fungreet started", "version", cfg.Version)
+    logger.Info("funbaza started", "version", cfg.Version)
     
     // 7. Ждём сигнал завершения
     sigCh := make(chan os.Signal, 1)
@@ -193,7 +193,7 @@ func main() {
         os.Exit(1)
     }
     
-    logger.Info("fungreet stopped")
+    logger.Info("funbaza stopped")
 }
 ```
 
@@ -422,7 +422,7 @@ import (
     "net/http"
     
     "github.com/gin-gonic/gin"
-    "github.com/you/fungreet/internal/service/auth"
+    "github.com/you/funbaza/internal/service/auth"
 )
 
 type AuthHandler struct {
@@ -1009,25 +1009,25 @@ services:
 
   # === Frontend (static nginx) ===
   frontend:
-    image: ghcr.io/you/fungreet-frontend:latest
+    image: ghcr.io/you/funbaza-frontend:latest
     labels:
       - traefik.enable=true
-      - traefik.http.routers.frontend.rule=Host(`fungreet.app`)
+      - traefik.http.routers.frontend.rule=Host(`funbaza.app`)
       - traefik.http.routers.frontend.tls.certresolver=le
       - traefik.http.services.frontend.loadbalancer.server.port=80
     restart: unless-stopped
 
   # === Backend ===
   backend:
-    image: ghcr.io/you/fungreet-backend:latest
+    image: ghcr.io/you/funbaza-backend:latest
     env_file: .env.production
     environment:
-      - DATABASE_URL=postgres://fungreet:${DB_PASSWORD}@postgres:5432/fungreet?sslmode=disable
+      - DATABASE_URL=postgres://funbaza:${DB_PASSWORD}@postgres:5432/funbaza?sslmode=disable
       - REDIS_URL=redis://redis:6379
       - SUNO_API_URL=http://suno-api:3000
     labels:
       - traefik.enable=true
-      - traefik.http.routers.backend.rule=Host(`api.fungreet.app`)
+      - traefik.http.routers.backend.rule=Host(`api.funbaza.app`)
       - traefik.http.routers.backend.tls.certresolver=le
       - traefik.http.services.backend.loadbalancer.server.port=8080
     depends_on:
@@ -1050,8 +1050,8 @@ services:
   postgres:
     image: postgres:16-alpine
     environment:
-      - POSTGRES_DB=fungreet
-      - POSTGRES_USER=fungreet
+      - POSTGRES_DB=funbaza
+      - POSTGRES_USER=funbaza
       - POSTGRES_PASSWORD=${DB_PASSWORD}
     volumes:
       - pg-data:/var/lib/postgresql/data
@@ -1070,8 +1070,8 @@ services:
     image: prodrigestivill/postgres-backup-local
     environment:
       - POSTGRES_HOST=postgres
-      - POSTGRES_DB=fungreet
-      - POSTGRES_USER=fungreet
+      - POSTGRES_DB=funbaza
+      - POSTGRES_USER=funbaza
       - POSTGRES_PASSWORD=${DB_PASSWORD}
       - SCHEDULE=0 3 * * *   # каждый день в 3 ночи
       - BACKUP_KEEP_DAYS=7
@@ -1119,14 +1119,14 @@ jobs:
         with:
           context: ./backend
           push: true
-          tags: ghcr.io/${{ github.repository_owner }}/fungreet-backend:latest
+          tags: ghcr.io/${{ github.repository_owner }}/funbaza-backend:latest
 
       - name: Build and push frontend
         uses: docker/build-push-action@v5
         with:
           context: ./frontend
           push: true
-          tags: ghcr.io/${{ github.repository_owner }}/fungreet-frontend:latest
+          tags: ghcr.io/${{ github.repository_owner }}/funbaza-frontend:latest
 
       - name: Deploy to VPS
         uses: appleboy/ssh-action@v1.0.0
@@ -1135,7 +1135,7 @@ jobs:
           username: ${{ secrets.VPS_USER }}
           key: ${{ secrets.VPS_SSH_KEY }}
           script: |
-            cd /home/fungreet
+            cd /home/funbaza
             docker-compose pull
             docker-compose up -d
             docker image prune -f
@@ -1149,11 +1149,11 @@ VERSION=1.0.0
 
 # Server
 PORT=8080
-FRONTEND_URL=https://fungreet.app
-COOKIE_DOMAIN=.fungreet.app
+FRONTEND_URL=https://funbaza.app
+COOKIE_DOMAIN=.funbaza.app
 
 # Database
-DATABASE_URL=postgres://fungreet:SECRET@postgres:5432/fungreet?sslmode=disable
+DATABASE_URL=postgres://funbaza:SECRET@postgres:5432/funbaza?sslmode=disable
 
 # Redis
 REDIS_URL=redis://redis:6379
@@ -1166,15 +1166,15 @@ JWT_REFRESH_TTL=720h
 # OAuth
 GOOGLE_CLIENT_ID=...
 GOOGLE_CLIENT_SECRET=...
-GOOGLE_REDIRECT_URL=https://api.fungreet.app/api/auth/google/callback
+GOOGLE_REDIRECT_URL=https://api.funbaza.app/api/auth/google/callback
 
 VK_CLIENT_ID=...
 VK_CLIENT_SECRET=...
-VK_REDIRECT_URL=https://api.fungreet.app/api/auth/vk/callback
+VK_REDIRECT_URL=https://api.funbaza.app/api/auth/vk/callback
 
 YANDEX_CLIENT_ID=...
 YANDEX_CLIENT_SECRET=...
-YANDEX_REDIRECT_URL=https://api.fungreet.app/api/auth/yandex/callback
+YANDEX_REDIRECT_URL=https://api.funbaza.app/api/auth/yandex/callback
 
 # Telegram (для будущей итерации)
 TG_BOT_TOKEN=...
@@ -1188,7 +1188,7 @@ SUNO_API_URL=http://suno-api:3000
 R2_ACCOUNT_ID=...
 R2_ACCESS_KEY_ID=...
 R2_SECRET_ACCESS_KEY=...
-R2_BUCKET=fungreet-storage
+R2_BUCKET=funbaza-storage
 R2_PUBLIC_URL=https://pub-xxx.r2.dev
 
 # Suno
@@ -1341,9 +1341,9 @@ test-coverage:
 | 9 | Frontend форма создания | 4-шаговая форма работает |
 | 10 | Frontend результаты | Полный user flow через UI |
 | 11 | Полировка | Rate limiting, ошибки, Sentry, ToS |
-| 12 | Деплой и запуск | Live на fungreet.app, 20 beta users |
+| 12 | Деплой и запуск | Live на funbaza.app, 20 beta users |
 
-Подробная разбивка по дням — в документе `FunGreet_Web_MVP_Plan.md`.
+Подробная разбивка по дням — в документе `FunBaza_Web_MVP_Plan.md`.
 
 ### 13.2. Приоритизация задач
 
@@ -1402,8 +1402,8 @@ brew install go@1.23 node pnpm postgresql@16 redis ffmpeg mkcert
 mkcert -install
 
 # 2. Клонируем репозиторий
-git clone https://github.com/you/fungreet
-cd fungreet
+git clone https://github.com/you/funbaza
+cd funbaza
 
 # 3. Создаём локальные SSL-сертификаты
 cd backend

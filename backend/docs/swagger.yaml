@@ -309,12 +309,12 @@ definitions:
     type: object
 info:
   contact:
-    name: FunGreet Team
+    name: FunBaza Team
   description: 'API для генерации персонализированных поздравлений: AI-изображения
     + песни. Аутентификация через httpOnly cookie (access_token).'
   license:
     name: MIT
-  title: FunGreet API
+  title: FunBaza API
   version: "1.0"
 paths:
   /auth/dev/login:

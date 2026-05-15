@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
-	"github.com/you/fungreet/internal/services"
+	"github.com/you/funbaza/internal/services"
 )
 
 func Logger() gin.HandlerFunc {

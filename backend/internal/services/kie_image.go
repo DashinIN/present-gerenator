@@ -114,7 +114,7 @@ func (g *KieImageGenerator) ensurePublicURLs(ctx context.Context, keys []string)
 func (g *KieImageGenerator) uploadToKie(ctx context.Context, filename string, data []byte) (string, error) {
 	var buf bytes.Buffer
 	mw := multipart.NewWriter(&buf)
-	_ = mw.WriteField("uploadPath", "fungreet/ref-images")
+	_ = mw.WriteField("uploadPath", "funbaza/ref-images")
 	_ = mw.WriteField("fileName", filename)
 	fw, err := mw.CreateFormFile("file", filename)
 	if err != nil {

@@ -10,9 +10,9 @@ import (
 	"sync"
 	"time"
 
-	"github.com/you/fungreet/internal/models"
-	"github.com/you/fungreet/internal/repository"
-	"github.com/you/fungreet/internal/services"
+	"github.com/you/funbaza/internal/models"
+	"github.com/you/funbaza/internal/repository"
+	"github.com/you/funbaza/internal/services"
 	"golang.org/x/sync/errgroup"
 )
 

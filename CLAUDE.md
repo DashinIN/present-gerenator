@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-**FunGreet** — AI-сервис генерации персонализированных поздравлений (изображения + песни). Монолит на Go с React TS фронтендом. Каналы: Web (MVP), Telegram Mini App (следующий этап).
+**FunBaza** — AI-сервис генерации персонализированных поздравлений (изображения + песни). Монолит на Go с React TS фронтендом. Каналы: Web (MVP), Telegram Mini App (следующий этап).
 
 ## Architecture
 
@@ -154,7 +154,7 @@ docker compose up -d
 go build -o bin/server.exe ./cmd/server && ./bin/server.exe
 
 # Применить миграции напрямую через psql (golang-migrate driver конфликтует с lib/pq):
-cat migrations/000004_add_song_prompt.up.sql | psql "postgres://fungreet:fungreet@localhost:5433/fungreet?sslmode=disable"
+cat migrations/000004_add_song_prompt.up.sql | psql "postgres://funbaza:funbaza@localhost:5433/funbaza?sslmode=disable"
 # После применения вручную обновить schema_migrations:
 echo "INSERT INTO schema_migrations (version, dirty) VALUES (4, false) ON CONFLICT DO NOTHING;" | psql "..."
 

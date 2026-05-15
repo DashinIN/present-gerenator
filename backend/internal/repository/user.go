@@ -6,7 +6,7 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/you/fungreet/internal/models"
+	"github.com/you/funbaza/internal/models"
 )
 
 var ErrNotFound = errors.New("not found")

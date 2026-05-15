@@ -24,7 +24,7 @@ export function LoginPage() {
             <AppLogo size={34} />
           </div>
         </div>
-        <h1 style={{ fontSize: 22, fontWeight: 700, marginBottom: 8 }}>FunGreet</h1>
+        <h1 style={{ fontSize: 22, fontWeight: 700, marginBottom: 8 }}>FunBaza</h1>
         <p style={{ color: 'var(--text-muted)', fontSize: 14, marginBottom: 32 }}>
           {t('loginSubtitle')}
         </p>

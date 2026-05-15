@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback } from 'react'
+import { useState, useRef, useCallback, useEffect } from 'react'
 import { Paperclip, Send, X, Music, ImageIcon, Sparkles, Loader2, ChevronDown, Check } from 'lucide-react'
 import { useTariff, useBalance } from '@/hooks/useAuth'
 import { Button } from '@/components/ui/Button'
@@ -20,6 +20,8 @@ interface ChatInputProps {
   onSent: (genId: string, sessionId: string) => void
   onInsufficientCredits?: () => void
   disabled?: boolean
+  initialMode?: 'image' | 'song'
+  initialModeVersion?: number
 }
 
 interface AttachedFile {
@@ -104,7 +106,15 @@ function errorMessage(error: unknown, fallback: string) {
   return error instanceof Error ? error.message : fallback
 }
 
-export function ChatInput({ sessionId, parentId, onSent, onInsufficientCredits, disabled }: ChatInputProps) {
+export function ChatInput({
+  sessionId,
+  parentId,
+  onSent,
+  onInsufficientCredits,
+  disabled,
+  initialMode = 'image',
+  initialModeVersion = 0,
+}: ChatInputProps) {
   const { data: tariff } = useTariff()
   const { data: balance } = useBalance()
   const qc = useQueryClient()
@@ -128,6 +138,17 @@ export function ChatInput({ sessionId, parentId, onSent, onInsufficientCredits, 
   const [files, setFiles] = useState<AttachedFile[]>([])
   const [sending, setSending] = useState(false)
   const [error, setError] = useState('')
+
+  useEffect(() => {
+    if (initialMode === 'song') {
+      setImageEnabled(false)
+      setSongEnabled(true)
+      return
+    }
+
+    setImageEnabled(true)
+    setSongEnabled(false)
+  }, [initialMode, initialModeVersion])
 
   const imageInputRef = useRef<HTMLInputElement>(null)
   const imageCount = imageEnabled ? 1 : 0

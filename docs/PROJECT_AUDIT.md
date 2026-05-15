@@ -1,4 +1,4 @@
-# FunGreet Project Audit
+# FunBaza Project Audit
 
 Дата аудита: 2026-04-29
 
@@ -191,10 +191,10 @@ Context7 по Gin подтвердил:
 | Critical | Dev login доступен в production route table | `backend/cmd/server/main.go:152`, `backend/internal/handlers/auth.go:60-87` | Комментарий говорит "только development", но route не gated по `APP_ENV`. В production это может дать любой учетке вход без OAuth. |
 | Critical | Path traversal в local file serving/storage | `backend/cmd/server/main.go:180-182`, `backend/internal/services/storage.go:33`, `:51`, `:55` | `filepath.Join(base, userKey)` без проверки containment позволяет запросами вида `../` попытаться читать файлы вне storage root. |
 | High | OAuth-кнопки ведут на несуществующие backend routes | `frontend/src/pages/LoginPage.tsx:48`, `:56`; routes только `backend/cmd/server/main.go:152-154` | UI обещает Google/VK login, но backend регистрирует только dev login, refresh, logout. |
-| High | Cookie security не соответствует собственной документации | `backend/internal/handlers/auth.go:163-170`; docs `docs/FunGreet_Auth_Cookies.md:42-43` | Cookies выставляются `Secure=false`, без `SameSite=None`, без `Partitioned`, без CSRF. Для Telegram Mini App и production это не готово. |
+| High | Cookie security не соответствует собственной документации | `backend/internal/handlers/auth.go:163-170`; docs `docs/FunBaza_Auth_Cookies.md:42-43` | Cookies выставляются `Secure=false`, без `SameSite=None`, без `Partitioned`, без CSRF. Для Telegram Mini App и production это не готово. |
 | High | Race condition в списании кредитов | `backend/internal/repository/billing.go:52-78` | Баланс считается `SUM(amount)` внутри транзакции без row/advisory lock или ledger balance row. Параллельные списания могут уйти в минус. |
 | High | `package.json` и `package-lock.json` рассинхронизированы | `frontend/package.json:12-20`, `frontend/package-lock.json:10-18`, `Dockerfile:4-5` | Lock содержит `react-router-dom`, manifest нет. `npm ci` в Dockerfile чувствителен к расхождению manifest/lock и может ломать production build. |
-| Medium | Docs по API устарели относительно `/api/v1` | `docs/04_FunGreet_DevStatus.md:66-92`, routes `backend/cmd/server/main.go:157-177` | Документация описывает `/api/user/me`, `/api/billing/*`, `/api/generations/*`, а фактический backend использует `/api/v1/*`. |
+| Medium | Docs по API устарели относительно `/api/v1` | `docs/04_FunBaza_DevStatus.md:66-92`, routes `backend/cmd/server/main.go:157-177` | Документация описывает `/api/user/me`, `/api/billing/*`, `/api/generations/*`, а фактический backend использует `/api/v1/*`. |
 | Medium | Lyrics endpoint на фронте без `/api/v1` | `frontend/src/components/ChatInput.tsx:95`, backend `backend/cmd/server/main.go:171` | Генерация текста песни обращается к `/api/generations/lyrics`, но route зарегистрирован как `/api/v1/generations/lyrics`. |
 | Medium | Polling может перегружать API | `frontend/src/hooks/useSessions.ts:17-24` | Фоновый refetch каждые `500ms` для audio плохо масштабируется. |
 | Medium | Нет автоматических тестов | поиск `*_test.go`, `*.test.*`, `*.spec.*` не дал результатов | Высокий риск регрессий в auth, billing, worker и API client. |

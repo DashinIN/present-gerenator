@@ -1,4 +1,4 @@
-# FunGreet — Техническая документация
+# FunBaza — Техническая документация
 
 Версия 1.0 · Апрель 2026
 
@@ -31,7 +31,7 @@
 ```
 ┌──────────────────────────────────────────────────────────────┐
 │                    FRONTEND (React + TS)                      │
-│                     fungreet.app                              │
+│                     funbaza.app                              │
 │  Pages: /, /login, /create, /history, /results/:id           │
 │  State: TanStack Query, React Context для auth               │
 │  Styling: shadcn/ui + Tailwind CSS                           │
@@ -41,7 +41,7 @@
                    ▼
 ┌──────────────────────────────────────────────────────────────┐
 │                  BACKEND (Go + Gin)                           │
-│                     api.fungreet.app                          │
+│                     api.funbaza.app                          │
 │  ┌────────────┐ ┌────────────┐ ┌──────────────┐             │
 │  │  Handlers  │ │ Middleware │ │  Services    │             │
 │  │  (REST)    │ │  (Auth,    │ │  (Auth,      │             │
@@ -363,7 +363,7 @@ HAVING u.free_credits + u.paid_credits != COALESCE(SUM(ct.amount), 0);
 
 ### 4.1. Конвенции
 
-- Base URL: `https://api.fungreet.app`
+- Base URL: `https://api.funbaza.app`
 - Все эндпоинты возвращают JSON
 - Ошибки: стандартный формат `{ "error": { "code": "...", "message": "..." } }`
 - Авторизация: httpOnly cookies (автоматически отправляются браузером)
@@ -607,7 +607,7 @@ BROWSER_HEADLESS=true
 R2_ACCOUNT_ID=...
 R2_ACCESS_KEY_ID=...
 R2_SECRET_ACCESS_KEY=...
-R2_BUCKET=fungreet-storage
+R2_BUCKET=funbaza-storage
 R2_PUBLIC_URL=https://pub-xxx.r2.dev  # или custom domain
 ```
 
@@ -665,15 +665,15 @@ R2_PUBLIC_URL=https://pub-xxx.r2.dev  # или custom domain
 ```
 Set-Cookie: access_token=eyJ...;
             HttpOnly; Secure; SameSite=None; Partitioned;
-            Path=/; Domain=.fungreet.app; Max-Age=900
+            Path=/; Domain=.funbaza.app; Max-Age=900
 
 Set-Cookie: refresh_token=eyJ...;
             HttpOnly; Secure; SameSite=None; Partitioned;
-            Path=/api/auth/refresh; Domain=.fungreet.app; Max-Age=2592000
+            Path=/api/auth/refresh; Domain=.funbaza.app; Max-Age=2592000
 
 Set-Cookie: csrf_token=abc123...;
             Secure; SameSite=None; Partitioned;
-            Path=/; Domain=.fungreet.app; Max-Age=900
+            Path=/; Domain=.funbaza.app; Max-Age=900
 ```
 
 ### 6.4. CORS конфигурация
@@ -681,8 +681,8 @@ Set-Cookie: csrf_token=abc123...;
 ```go
 cors.Config{
     AllowOrigins: []string{
-        "https://fungreet.app",
-        "https://www.fungreet.app",
+        "https://funbaza.app",
+        "https://www.funbaza.app",
         "https://web.telegram.org",
     },
     AllowMethods: []string{"GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"},

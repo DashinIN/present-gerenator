@@ -128,7 +128,7 @@ func (g *KieSongGenerator) submitGenerate(ctx context.Context, lyrics, style, ca
 		"instrumental": false,
 		"prompt":       lyrics,
 		"style":        style,
-		"title":        "FunGreet",
+		"title":        "FunBaza",
 		"model":        kieMusicModel,
 		"callBackUrl":  callbackURL,
 	}

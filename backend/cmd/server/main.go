@@ -1,7 +1,7 @@
-// @title           FunGreet API
+// @title           FunBaza API
 // @version         1.0
 // @description     API для генерации персонализированных поздравлений: AI-изображения + песни. Аутентификация через httpOnly cookie (access_token).
-// @contact.name    FunGreet Team
+// @contact.name    FunBaza Team
 // @license.name    MIT
 // @BasePath        /api
 // @securityDefinitions.apikey CookieAuth
@@ -25,13 +25,13 @@ import (
 	"github.com/redis/go-redis/v9"
 	swaggerFiles "github.com/swaggo/files"
 	ginSwagger "github.com/swaggo/gin-swagger"
-	_ "github.com/you/fungreet/docs"
-	"github.com/you/fungreet/internal/config"
-	"github.com/you/fungreet/internal/handlers"
-	"github.com/you/fungreet/internal/middleware"
-	"github.com/you/fungreet/internal/repository"
-	"github.com/you/fungreet/internal/services"
-	"github.com/you/fungreet/internal/worker"
+	_ "github.com/you/funbaza/docs"
+	"github.com/you/funbaza/internal/config"
+	"github.com/you/funbaza/internal/handlers"
+	"github.com/you/funbaza/internal/middleware"
+	"github.com/you/funbaza/internal/repository"
+	"github.com/you/funbaza/internal/services"
+	"github.com/you/funbaza/internal/worker"
 )
 
 func main() {
@@ -229,6 +229,10 @@ func main() {
 				c.JSON(http.StatusNotFound, gin.H{"error": gin.H{"code": "not_found", "message": "Not found"}})
 				return
 			}
+			// Always revalidate the HTML shell so new frontend asset hashes are picked up after deploys.
+			c.Header("Cache-Control", "no-store, no-cache, must-revalidate")
+			c.Header("Pragma", "no-cache")
+			c.Header("Expires", "0")
 			c.File(webDist + "/index.html")
 		})
 		slog.Info("serving frontend", "path", webDist)

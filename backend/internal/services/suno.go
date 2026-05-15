@@ -272,7 +272,7 @@ func (g *SunoAPIGenerator) submitGenerate(ctx context.Context, lyrics, style, ca
 		Instrumental: false,
 		Prompt:       lyrics,
 		Style:        style,
-		Title:        "FunGreet",
+		Title:        "FunBaza",
 		Model:        sunoModel,
 		CallBackURL:  callbackURL,
 	})
@@ -306,7 +306,7 @@ func (g *SunoAPIGenerator) submitExtend(ctx context.Context, audioID, lyrics, st
 	if lyrics != "" {
 		req.Prompt = lyrics
 		req.Style = style
-		req.Title = "FunGreet"
+		req.Title = "FunBaza"
 	}
 
 	body, err := json.Marshal(req)

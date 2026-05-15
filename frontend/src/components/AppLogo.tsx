@@ -7,7 +7,7 @@ interface AppLogoProps {
   style?: CSSProperties
 }
 
-export function AppLogo({ size = 24, alt = 'FunGreet logo', style }: AppLogoProps) {
+export function AppLogo({ size = 24, alt = 'FunBaza logo', style }: AppLogoProps) {
   return (
     <img
       src={logoUrl}

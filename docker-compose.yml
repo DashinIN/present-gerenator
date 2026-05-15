@@ -38,7 +38,7 @@ services:
       S3_REGION: ${S3_REGION:-us-east-1}
       S3_ACCESS_KEY: ${S3_ACCESS_KEY:-minioadmin}
       S3_SECRET_KEY: ${S3_SECRET_KEY:-minioadmin}
-      S3_BUCKET: ${S3_BUCKET:-fungreet}
+      S3_BUCKET: ${S3_BUCKET:-funbaza}
       S3_USE_PATH_STYLE: ${S3_USE_PATH_STYLE:-true}
       WORKER_COUNT: ${WORKER_COUNT:-4}
     volumes:

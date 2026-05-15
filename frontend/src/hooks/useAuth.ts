@@ -9,6 +9,7 @@ export function useCurrentUser() {
       if (err instanceof ApiError && err.status === 401) return false
       return count < 2
     },
+    refetchOnWindowFocus: false,
     staleTime: 5 * 60_000,
   })
 }

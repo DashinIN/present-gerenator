@@ -1,4 +1,4 @@
-# FunGreet — Текущее состояние разработки
+# FunBaza — Текущее состояние разработки
 
 > Дата обновления: 2026-05-05  
 > Ветка: `master`  
@@ -8,7 +8,7 @@
 
 ## Краткий итог
 
-FunGreet находится в рабочем состоянии как web MVP:
+FunBaza находится в рабочем состоянии как web MVP:
 
 - есть backend на Go/Gin с очередью, биллингом, сессиями и генерациями
 - frontend работает как единое SPA, раздается из backend Docker-контейнера
@@ -209,7 +209,7 @@ cd frontend && npm run build
 ```env
 APP_ENV=development
 APP_PORT=8080
-DATABASE_URL=postgres://fungreet:fungreet@localhost:5433/fungreet?sslmode=disable
+DATABASE_URL=postgres://funbaza:funbaza@localhost:5433/funbaza?sslmode=disable
 REDIS_URL=redis://localhost:6379
 JWT_SECRET=...
 GOOGLE_CLIENT_ID=...

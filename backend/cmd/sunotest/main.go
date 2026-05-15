@@ -6,7 +6,7 @@ import (
 	"os"
 
 	"github.com/joho/godotenv"
-	"github.com/you/fungreet/internal/services"
+	"github.com/you/funbaza/internal/services"
 )
 
 func main() {

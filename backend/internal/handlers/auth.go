@@ -10,10 +10,10 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
-	"github.com/you/fungreet/internal/middleware"
-	"github.com/you/fungreet/internal/models"
-	"github.com/you/fungreet/internal/repository"
-	"github.com/you/fungreet/internal/services"
+	"github.com/you/funbaza/internal/middleware"
+	"github.com/you/funbaza/internal/models"
+	"github.com/you/funbaza/internal/repository"
+	"github.com/you/funbaza/internal/services"
 )
 
 // DevLoginResponse — ответ на dev login

@@ -9,7 +9,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/you/fungreet/internal/models"
+	"github.com/you/funbaza/internal/models"
 )
 
 const (

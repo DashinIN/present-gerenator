@@ -9,6 +9,7 @@ import { I18nProvider } from '@/lib/i18n'
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
+      refetchOnWindowFocus: false,
       retry: (count, err) => {
         if (err instanceof ApiError && (err.status === 401 || err.status === 403)) return false
         return count < 2

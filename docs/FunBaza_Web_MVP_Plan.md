@@ -1,4 +1,4 @@
-# FunGreet Web MVP — План разработки
+# FunBaza Web MVP — План разработки
 
 ## Параметры планирования
 
@@ -35,7 +35,7 @@
 
 ### День 1–2: Структура проекта
 
-- Инициализация Go модуля: `go mod init github.com/you/fungreet`
+- Инициализация Go модуля: `go mod init github.com/you/funbaza`
 - Базовая структура:
   ```
   backend/
@@ -613,7 +613,7 @@ func (c *SunoClient) GetLimit(ctx context.Context) (*QuotaInfo, error)
 - Сбор feedback
 - Документирование найденных багов в issues
 
-**Артефакт финала:** работающий сервис на `https://fungreet.app`, первые 20 реальных пользователей, обратная связь собрана.
+**Артефакт финала:** работающий сервис на `https://funbaza.app`, первые 20 реальных пользователей, обратная связь собрана.
 
 ---
 

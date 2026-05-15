@@ -5,8 +5,8 @@ import (
 	"fmt"
 
 	"github.com/google/uuid"
-	"github.com/you/fungreet/internal/models"
-	"github.com/you/fungreet/internal/repository"
+	"github.com/you/funbaza/internal/models"
+	"github.com/you/funbaza/internal/repository"
 )
 
 type BillingService struct {

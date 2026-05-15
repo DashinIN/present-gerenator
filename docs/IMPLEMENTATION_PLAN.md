@@ -1,4 +1,4 @@
-# FunGreet Implementation Plan
+# FunBaza Implementation Plan
 
 Дата: 2026-04-29
 
@@ -344,7 +344,7 @@ Frontend:
 
 1. Обновить Swagger annotations.
 2. Перегенерировать `backend/docs`.
-3. Обновить `docs/04_FunGreet_DevStatus.md` под `/api/v1`.
+3. Обновить `docs/04_FunBaza_DevStatus.md` под `/api/v1`.
 4. Добавить contract tests для ключевых endpoint paths.
 
 ### Этап 4: Refactoring
