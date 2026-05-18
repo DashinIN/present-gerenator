@@ -12,7 +12,13 @@ node_modules/
 package-lock.json
 
 # backend
-backend/server.log
+backend/*.log
+backend/*.exe
 backend/data/
 backend/bin/
 backend/.gocache/
+
+# local runtime/debug artifacts
+cookies_*.txt
+frontend/dist/
+startup-template/

@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { CheckCircle2, XCircle, Download, ImageIcon, Music2, WandSparkles } from 'lucide-react'
 import { AppLogo } from '@/components/AppLogo'
+import { AudioPlayer } from '@/components/ui/AudioPlayer'
 import type { GenerationRequest } from '@/lib/types'
 import { formatDate } from '@/lib/utils'
 import { getDisplayImagePrompt } from '@/lib/imagePresets'
@@ -246,15 +247,11 @@ function SkeletonState({ gen }: { gen: GenerationRequest }) {
       {gen.song_count > 0 && (
         <div className="generation-loader__stack">
           {readyAudios.map((url, index) => (
-            <div key={`ready-${index}`} style={{
-              display: 'flex', alignItems: 'center', gap: 10,
-              background: 'var(--surface2)', borderRadius: 10, padding: '10px 14px',
-            }}>
-              <audio controls src={url} style={{ flex: 1, height: 36 }} />
-              <a href={url} download style={{ color: 'var(--text-muted)', display: 'flex', flexShrink: 0 }} title="Download">
-                <Download size={15} />
-              </a>
-            </div>
+            <AudioPlayer
+              key={`ready-${index}`}
+              src={url}
+              label={t('audioSlotLabel').replace('{index}', String(index + 1))}
+            />
           ))}
           {Array.from({ length: pendingSlots }).map((_, index) => (
             <VisualAudioSlot key={`audio-loader-${index}`} index={index} />
@@ -359,15 +356,11 @@ function CompletedState({ gen }: { gen: GenerationRequest }) {
             <CheckCircle2 size={13} style={{ color: 'var(--success)' }} />
           </div>
           {gen.result_audios.map((url, index) => (
-            <div key={index} style={{
-              display: 'flex', alignItems: 'center', gap: 10,
-              background: 'var(--surface2)', borderRadius: 10, padding: '10px 14px',
-            }}>
-              <audio controls src={url} style={{ flex: 1, height: 36 }} />
-              <a href={url} download style={{ color: 'var(--text-muted)', display: 'flex', flexShrink: 0 }} title={t('download')}>
-                <Download size={15} />
-              </a>
-            </div>
+            <AudioPlayer
+              key={index}
+              src={url}
+              label={t('audioSlotLabel').replace('{index}', String(index + 1))}
+            />
           ))}
         </div>
       )}

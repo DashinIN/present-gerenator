@@ -205,8 +205,8 @@ func (h *AuthHandler) Refresh(c *gin.Context) {
 // @Success      200  {object}  LogoutResponse
 // @Router       /auth/logout [post]
 func (h *AuthHandler) Logout(c *gin.Context) {
-	clearCookie(c, "access_token", "/")
-	clearCookie(c, "refresh_token", "/api/auth/refresh")
+	h.clearCookie(c, "access_token", "/")
+	h.clearCookie(c, "refresh_token", "/api/auth/refresh")
 	c.JSON(http.StatusOK, gin.H{"ok": true})
 }
 
@@ -254,17 +254,33 @@ func (h *AuthHandler) setAuthCookies(c *gin.Context, userID int64) error {
 		return err
 	}
 
-	setCookie(c, "access_token", access, "/", 15*60)
-	setCookie(c, "refresh_token", refresh, "/api/auth/refresh", 30*24*60*60)
+	h.setCookie(c, "access_token", access, "/", 15*60)
+	h.setCookie(c, "refresh_token", refresh, "/api/auth/refresh", 30*24*60*60)
 	return nil
 }
 
-func setCookie(c *gin.Context, name, value, path string, maxAge int) {
-	c.SetCookie(name, value, maxAge, path, "", false, true)
+func (h *AuthHandler) setCookie(c *gin.Context, name, value, path string, maxAge int) {
+	http.SetCookie(c.Writer, &http.Cookie{
+		Name:     name,
+		Value:    value,
+		Path:     path,
+		MaxAge:   maxAge,
+		HttpOnly: true,
+		Secure:   !h.allowDevLogin,
+		SameSite: http.SameSiteLaxMode,
+	})
 }
 
-func clearCookie(c *gin.Context, name, path string) {
-	c.SetCookie(name, "", -1, path, "", false, true)
+func (h *AuthHandler) clearCookie(c *gin.Context, name, path string) {
+	http.SetCookie(c.Writer, &http.Cookie{
+		Name:     name,
+		Value:    "",
+		Path:     path,
+		MaxAge:   -1,
+		HttpOnly: true,
+		Secure:   !h.allowDevLogin,
+		SameSite: http.SameSiteLaxMode,
+	})
 }
 
 func apiError(code, msg string) gin.H {

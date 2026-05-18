@@ -107,6 +107,7 @@ export function ChatPage() {
         <ChatThread generations={generations} noCreditsAt={noCreditsAt} />
 
         <ChatInput
+          key={creationModeVersion}
           sessionId={activeSessionId}
           parentId={parentId}
           onSent={handleSent}

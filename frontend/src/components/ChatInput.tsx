@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback, useEffect } from 'react'
+import { useState, useRef, useCallback } from 'react'
 import { Paperclip, Send, X, Music, ImageIcon, Sparkles, Loader2, ChevronDown, Check } from 'lucide-react'
 import { useTariff, useBalance } from '@/hooks/useAuth'
 import { Button } from '@/components/ui/Button'
@@ -113,15 +113,14 @@ export function ChatInput({
   onInsufficientCredits,
   disabled,
   initialMode = 'image',
-  initialModeVersion = 0,
 }: ChatInputProps) {
   const { data: tariff } = useTariff()
   const { data: balance } = useBalance()
   const qc = useQueryClient()
   const { t } = useI18n()
 
-  const [imageEnabled, setImageEnabled] = useState(true)
-  const [songEnabled, setSongEnabled] = useState(false)
+  const [imageEnabled, setImageEnabled] = useState(() => initialMode !== 'song')
+  const [songEnabled, setSongEnabled] = useState(() => initialMode === 'song')
   const [prompt, setPrompt] = useState('')
   const [imageModel, setImageModel] = useState<ImageModel>('gpt-image-2')
   const [imageModelOpen, setImageModelOpen] = useState(false)
@@ -138,17 +137,6 @@ export function ChatInput({
   const [files, setFiles] = useState<AttachedFile[]>([])
   const [sending, setSending] = useState(false)
   const [error, setError] = useState('')
-
-  useEffect(() => {
-    if (initialMode === 'song') {
-      setImageEnabled(false)
-      setSongEnabled(true)
-      return
-    }
-
-    setImageEnabled(true)
-    setSongEnabled(false)
-  }, [initialMode, initialModeVersion])
 
   const imageInputRef = useRef<HTMLInputElement>(null)
   const imageCount = imageEnabled ? 1 : 0

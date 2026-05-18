@@ -1,243 +1,113 @@
-# FunBaza — Текущее состояние разработки
+# FunBaza - текущее состояние разработки
 
-> Дата обновления: 2026-05-05  
-> Ветка: `master`  
-> Основной локальный URL: `http://localhost:8080/`
-
----
+> Обновлено: 2026-05-18  
+> Цель релиза: публичный web MVP до подключения оплаты  
+> Локальный URL приложения: `http://localhost:8080/`
 
 ## Краткий итог
 
-FunBaza находится в рабочем состоянии как web MVP:
+FunBaza готов к первому продакшен-релизу как web MVP для генерации AI-изображений и музыки. Основной пользовательский сценарий реализован end-to-end: вход через Google, баланс кредитов, история сессий, генерация изображений, генерация музыки, генерация текста, загрузка файлов, фоновая обработка и выдача готовых ассетов.
 
-- есть backend на Go/Gin с очередью, биллингом, сессиями и генерациями
-- frontend работает как единое SPA, раздается из backend Docker-контейнера
-- авторизация через Google OAuth уже внедрена и работает через httpOnly cookies
-- кредитная логика активна: стартовый бонус и ежедневное пополнение до лимита `50`
-- генерация изображений и песен подключена к `kie.ai`
-- UI ввода заметно упрощен: выбор модели изображения вынесен в popover, работа с текстом песни вынесена в модалку
-
----
+Оплата намеренно не входит в этот релиз. Пользователи получают кредиты через текущую логику начислений; платное пополнение - следующий крупный этап после продакшен-деплоя.
 
 ## Статус компонентов
 
 | Компонент | Статус | Примечание |
-|-----------|--------|------------|
-| Backend (Go/Gin) | ✅ Работает | REST API, воркеры, Redis queue |
-| Frontend (React/Vite/TS) | ✅ Работает | SPA, чатовый интерфейс, сессии, polling |
-| PostgreSQL | ✅ Работает | Миграции применяются автоматически при старте |
-| Redis | ✅ Работает | Очередь задач и фоновые воркеры |
-| Docker local stack | ✅ Работает | `backend`, `postgres`, `redis` |
-| Swagger UI | ✅ Работает | `http://localhost:8080/swagger/index.html` |
-| Google OAuth | ✅ Работает | login + callback + cookie auth |
-| Dev login | ✅ Работает | Только в `APP_ENV=development` |
-| AI генерация изображений | ✅ Работает | `kie.ai`, модели `gpt-image-2`, `flux-2-flex`, `seedream-5-lite` |
-| AI генерация песен | ✅ Работает | `kie.ai` |
-| Генерация текста песни | ✅ Работает | До 3 вариантов за один запрос с выбором на фронте |
-| Кредитная система | ✅ Работает | charge / refund / initial grant / daily grant |
-| История сессий | ✅ Работает | session thread + rename |
-| Cloudflare R2 | ⚠️ Не включен | сейчас `STORAGE_MODE=local` |
-| Платежный шлюз | ❌ Нет | покупка кредитов еще не реализована |
+| --- | --- | --- |
+| Backend | Готов | Go/Gin API, repositories, services, workers, migrations |
+| Frontend | Готов | React/Vite SPA, в продакшене раздается Go-контейнером |
+| PostgreSQL | Готов | Миграции применяются автоматически при старте сервера |
+| Redis | Готов | Очередь задач и хранение webhook state |
+| Object storage | Готов к prod | Продакшен compose использует S3-compatible MinIO |
+| Google OAuth | Готов | Login, callback, refresh и logout через httpOnly cookies |
+| Cookie auth | Базово готов к релизу | В продакшене cookie ставятся как `Secure`, `HttpOnly`, `SameSite=Lax` |
+| Генерация изображений | Готова | Интеграция с `kie.ai`, mock fallback при пустом ключе |
+| Генерация музыки | Готова | Интеграция с `kie.ai`, mock fallback при пустом ключе |
+| Генерация текста | Готова | Три варианта, выбор и ручное редактирование в UI |
+| Кредиты и биллинг | Готово для MVP | Initial/daily grants, charge, refund, transaction history |
+| Оплата | Не реализована | Покупка кредитов - следующий этап |
+| Swagger | Готов | Доступен по `/swagger/index.html` |
+| Production Docker | Готов | Есть `docker-compose.prod.yml` и SSL-вариант |
 
----
+## Пользовательские изменения с прошлого статуса
 
-## Что сделано в последнем цикле работ
-
-### 1. Авторизация
-
-- добавен реальный вход через Google OAuth
-- добавлены env-переменные:
-  - `GOOGLE_CLIENT_ID`
-  - `GOOGLE_CLIENT_SECRET`
-  - `GOOGLE_REDIRECT_URI`
-- устранена проблема `invalid_oauth_state`
-- устранена проблема смешения `localhost` и `127.0.0.1` после callback
-- cookies продолжают использовать текущую JWT-схему:
-  - `access_token`
-  - `refresh_token`
-
-### 2. Генерации и биллинг
-
-- исправлена ошибка вставки `generation_requests` при пустом `input_audio_keys`
-- восстановлен сценарий “только картинка без песни”
-- добавлен cleanup при неуспешном создании:
-  - refund при ошибке создания генерации
-  - удаление пустой новой сессии, если генерация не создалась
-  - удаление `generation` и refund, если задача не встала в очередь
-
-### 3. Frontend UX
-
-- упрощено облачко сообщения пользователя в треде:
-  - оставлен только текст и мини-превью картинки
-  - убраны повтор модели, повтор song prompt / lyrics и кредиты
-- переработан `ChatInput`
-  - выбор модели изображения вынесен в popover
-  - текст песни вынесен в модалку
-  - стиль песни вынесен рядом с кнопкой открытия модалки
-  - генерация текста песни теперь возвращает 3 варианта
-  - пользователь выбирает один вариант и может его доработать
-
----
+- Сценарий создания начинается с выбора режима: изображение или музыка.
+- Composer поддерживает image presets, выбор модели, загрузку фото, стиль музыки, генерацию текста и редактирование текста.
+- В thread добавлены более выразительные loading states для изображений и аудио.
+- Сгенерированное аудио использует кастомный тематический плеер с play/pause, seek, duration, download и анимированной волной.
+- Тексты музыкального UI сделаны нейтральными, чтобы продукт не ограничивался только поздравительными сценариями.
+- Продакшен-cookie теперь ставятся с `Secure` вне development-режима.
 
 ## Актуальная архитектура
 
 ```text
-┌─────────────────────────────────────────────────────┐
-│                 Frontend SPA (React)                │
-│  LoginPage │ ChatPage │ Sidebar │ ChatThread        │
-│  ChatInput (compact composer + lyrics modal)        │
-└─────────────────────┬───────────────────────────────┘
-                      │ HTTP + cookies
-┌─────────────────────▼───────────────────────────────┐
-│              Backend (Go + Gin) :8080              │
-│                                                     │
-│  Handlers → Services → Repositories → PostgreSQL    │
-│                  ↓                                  │
-│               Redis Queue                           │
-│                  ↓                                  │
-│                Worker                               │
-│                  ↓                                  │
-│          kie.ai image/song generation               │
-│                  ↓                                  │
-│         LocalStorage (./data/uploads)               │
-└─────────────────────────────────────────────────────┘
+Browser
+  |
+  | HTTPS
+  v
+Nginx
+  |
+  +--> Go app :8080
+  |      |
+  |      +--> PostgreSQL
+  |      +--> Redis queue
+  |      +--> MinIO / S3-compatible storage
+  |      +--> kie.ai image and music APIs
+  |
+  +--> MinIO public storage endpoint
 ```
 
----
+В продакшене фронтенд собирается root `Dockerfile` и копируется в `backend/web/dist`. Go server раздает SPA и API из одного app-контейнера.
 
-## Актуальные API-маршруты
-
-Полная интерактивная документация:
-
-- `http://localhost:8080/swagger/index.html`
-
-### Auth
-
-| Метод | Путь | Auth | Описание |
-|-------|------|------|----------|
-| GET | `/api/auth/dev/login` | — | Dev login, только development |
-| GET | `/api/auth/google/login` | — | Начало Google OAuth |
-| GET | `/api/auth/google/callback` | — | Завершение Google OAuth |
-| POST | `/api/auth/refresh` | cookie | Обновление access token |
-| POST | `/api/auth/logout` | cookie | Выход |
-
-### User / Billing / Sessions / Generations
-
-Все прикладные эндпоинты живут под `/api/v1/*`.
-
-| Метод | Путь | Описание |
-|-------|------|----------|
-| GET | `/api/v1/user/me` | Профиль текущего пользователя |
-| GET | `/api/v1/billing/balance` | Баланс |
-| GET | `/api/v1/billing/tariff` | Активный тариф |
-| GET | `/api/v1/billing/estimate` | Предварительная стоимость |
-| GET | `/api/v1/billing/transactions` | История транзакций |
-| GET | `/api/v1/sessions` | Список сессий |
-| GET | `/api/v1/sessions/:id` | Сессия и все генерации |
-| PATCH | `/api/v1/sessions/:id` | Переименование сессии |
-| POST | `/api/v1/generations` | Создать генерацию |
-| POST | `/api/v1/generations/lyrics` | Сгенерировать варианты текста песни |
-| GET | `/api/v1/generations` | Список генераций |
-| GET | `/api/v1/generations/:id` | Детали генерации |
-| GET | `/api/v1/generations/:id/status` | Polling статуса |
-| POST | `/api/v1/uploads` | Загрузка файлов |
-
-### Service
-
-| Метод | Путь | Описание |
-|-------|------|----------|
-| GET | `/api/health` | Health check |
-| GET | `/api/files/*key` | Раздача файлов |
-
----
-
-## Текущая логика кредитов
-
-- новый пользователь получает `initial_grant`
-- при входе пользователя endpoint `GET /api/v1/user/me` пытается выдать `daily_grant`
-- ежедневное пополнение работает до лимита `50`
-- при ошибке создания генерации делается refund
-- покупка кредитов еще не реализована
-
----
-
-## Актуальный UX ввода
-
-### Картинка
-
-- основной prompt в основной форме
-- выбор модели изображения через compact popover
-- можно приложить до 3 фото
-
-### Песня
-
-- блок песни занимает мало места в основном composer
-- кнопка `Текст песни` открывает модалку
-- рядом в основном composer задается `Стиль песни`
-- в модалке:
-  - prompt для генерации текста
-  - генерация 3 вариантов
-  - выбор одного варианта
-  - ручное редактирование выбранного текста
-
----
-
-## Локальный запуск
-
-### Рекомендуемый способ
-
-```bash
-docker compose -f backend/docker-compose.yml up -d --build backend
-```
-
-После этого доступны:
-
-- приложение: `http://localhost:8080/`
-- swagger: `http://localhost:8080/swagger/index.html`
-
-### Дополнительно
-
-```bash
-cd backend && go test ./...
-cd frontend && npm run build
-```
-
----
-
-## Ключевые переменные окружения backend
+## Важные переменные окружения
 
 ```env
-APP_ENV=development
-APP_PORT=8080
-DATABASE_URL=postgres://funbaza:funbaza@localhost:5433/funbaza?sslmode=disable
-REDIS_URL=redis://localhost:6379
+APP_ENV=production
+BASE_URL=https://api.yourdomain.com
+POSTGRES_PASSWORD=...
 JWT_SECRET=...
+KIE_API_KEY=...
+
 GOOGLE_CLIENT_ID=...
 GOOGLE_CLIENT_SECRET=...
-GOOGLE_REDIRECT_URI=http://localhost:8080/api/auth/google/callback
-STORAGE_MODE=local
-STORAGE_LOCAL_DIR=./data/uploads
-KIE_API_KEY=...
+GOOGLE_REDIRECT_URI=https://api.yourdomain.com/api/auth/google/callback
+
+S3_ENDPOINT=http://minio:9000
+S3_PUBLIC_ENDPOINT=https://storage.yourdomain.com
+S3_REGION=us-east-1
+S3_ACCESS_KEY=...
+S3_SECRET_KEY=...
+S3_BUCKET=funbaza
+S3_USE_PATH_STYLE=true
+WORKER_COUNT=4
 ```
 
----
+## Статус проверок
 
-## Известные ограничения
+Последние локальные проверки от 2026-05-18:
 
-1. Нет покупки кредитов и платежного шлюза.
-2. Хранилище файлов только локальное, `R2` пока не включен.
-3. Cookie-настройки все еще dev-ориентированы.
-   Сейчас проект стабилен локально, но production-hardening по cookies и CSRF еще нужен.
-4. Документация в `docs/02_*` и `docs/03_*` частично описывает более широкий целевой план, чем реально реализовано в текущем MVP.
-5. Нет полноценного тестового покрытия frontend.
+- `cd frontend && npm run lint` - прошло.
+- `cd frontend && npm run build` - прошло.
+- `cd backend && go test ./...` - прошло.
+- `docker compose --env-file .env.prod.example -f docker-compose.prod.yml config --quiet` - прошло.
+- `docker compose --env-file .env.prod.example -f docker-compose.prod.ssl.yml config --quiet` - прошло.
 
----
+## Известные ограничения релиза
 
-## Результаты работ на текущий момент
+1. Нет платежного шлюза и покупки кредитов.
+2. Нет админки для ручной корректировки балансов, пользователей и неуспешных генераций.
+3. Продакшен-хранилище по умолчанию использует bundled MinIO; переход на Cloudflare R2 или другой внешний S3-провайдер остается опциональным.
+4. CI/CD pipeline не закоммичен; деплой выполняется вручную через Docker Compose.
+5. Frontend проверяется build/lint, но отдельного component test suite пока нет.
+6. Мониторинг ограничен Docker logs и health checks, если не подключать внешний мониторинг на VPS.
 
-- Google OAuth внедрен и работает end-to-end
-- приложение раздается единым контейнером через `localhost:8080`
-- generation flow стабилизирован для image-only сценариев
-- composer упрощен и стал компактнее
-- lyrics flow стал интерактивным: 3 варианта + выбор + редактирование
-- проект готов к следующему этапу: платежи, production-hardening auth/cookies, подключение cloud storage
+## Решение по релизу
+
+Проект подходит для контролируемого публичного MVP-релиза после того, как:
+
+- настроены продакшен-домены и DNS;
+- OAuth redirect URI обновлен в Google Cloud Console;
+- продакшен `.env` заполнен реальными секретами;
+- выпущены SSL-сертификаты;
+- backend tests и frontend checks проходят на релизном коммите;
+- контрольная проверка подтверждает login, генерацию, выдачу ассетов и историю транзакций на продакшен URL.
