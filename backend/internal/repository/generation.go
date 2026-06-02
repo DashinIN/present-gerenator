@@ -157,13 +157,31 @@ func (r *GenerationRepository) UpdateStatus(ctx context.Context, id uuid.UUID, s
 	return err
 }
 
+func (r *GenerationRepository) MarkFailedIfActive(ctx context.Context, id uuid.UUID, errMsg string) (bool, error) {
+	t := time.Now()
+	res, err := r.db.ExecContext(ctx,
+		`UPDATE generation_requests
+		 SET status=$1, error_message=$2, completed_at=$3
+		 WHERE id=$4 AND status NOT IN ($5, $6)`,
+		models.StatusFailed, errMsg, t, id, models.StatusCompleted, models.StatusFailed,
+	)
+	if err != nil {
+		return false, err
+	}
+	rows, err := res.RowsAffected()
+	if err != nil {
+		return false, err
+	}
+	return rows > 0, nil
+}
+
 func (r *GenerationRepository) UpdateResults(ctx context.Context, id uuid.UUID, images, audios []string) error {
 	t := time.Now()
 	_, err := r.db.ExecContext(ctx,
 		`UPDATE generation_requests
 		 SET result_images=$1, result_audios=$2, status=$3, completed_at=$4
-		 WHERE id=$5`,
-		pq.Array(images), pq.Array(audios), models.StatusCompleted, t, id,
+		 WHERE id=$5 AND status != $6`,
+		pq.Array(images), pq.Array(audios), models.StatusCompleted, t, id, models.StatusFailed,
 	)
 	return err
 }

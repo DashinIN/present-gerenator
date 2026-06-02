@@ -1,0 +1,1 @@
+DROP INDEX IF EXISTS credit_transactions_type_reference_id_unique;

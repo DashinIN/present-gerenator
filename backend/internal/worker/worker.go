@@ -104,8 +104,11 @@ func (w *Worker) process(ctx context.Context, task *Task) error {
 	}
 
 	fail := func(reason string) error {
-		_ = w.genRepo.UpdateStatus(ctx, gen.ID, models.StatusFailed, reason)
-		_ = w.billing.Refund(ctx, gen.UserID, gen.CreditsSpent, gen.ID)
+		if marked, err := w.genRepo.MarkFailedIfActive(ctx, gen.ID, reason); err != nil {
+			slog.Error("mark generation failed", "generation_id", gen.ID, "err", err)
+		} else if marked {
+			_ = w.billing.Refund(ctx, gen.UserID, gen.CreditsSpent, gen.ID)
+		}
 		return fmt.Errorf("%s", reason)
 	}
 
@@ -258,8 +261,11 @@ func (w *Worker) process(ctx context.Context, task *Task) error {
 
 func (w *Worker) processAsync(ctx context.Context, gen *models.GenerationRequest) error {
 	fail := func(reason string) error {
-		_ = w.genRepo.UpdateStatus(ctx, gen.ID, models.StatusFailed, reason)
-		_ = w.billing.Refund(ctx, gen.UserID, gen.CreditsSpent, gen.ID)
+		if marked, err := w.genRepo.MarkFailedIfActive(ctx, gen.ID, reason); err != nil {
+			slog.Error("mark generation failed", "generation_id", gen.ID, "err", err)
+		} else if marked {
+			_ = w.billing.Refund(ctx, gen.UserID, gen.CreditsSpent, gen.ID)
+		}
 		return fmt.Errorf("%s", reason)
 	}
 

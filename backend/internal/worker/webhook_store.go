@@ -60,10 +60,12 @@ func (s *WebhookStore) InitPending(ctx context.Context, genID string, types []st
 }
 
 // CompletePending убирает тип из множества. Возвращает оставшееся количество.
-func (s *WebhookStore) CompletePending(ctx context.Context, genID, taskType string) (int64, error) {
+func (s *WebhookStore) CompletePending(ctx context.Context, genID, taskType string) (bool, int64, error) {
 	key := "wh:gen:" + genID + ":pending"
-	if err := s.rdb.SRem(ctx, key, taskType).Err(); err != nil {
-		return 0, err
+	removed, err := s.rdb.SRem(ctx, key, taskType).Result()
+	if err != nil {
+		return false, 0, err
 	}
-	return s.rdb.SCard(ctx, key).Result()
+	remaining, err := s.rdb.SCard(ctx, key).Result()
+	return removed > 0, remaining, err
 }

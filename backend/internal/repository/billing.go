@@ -55,6 +55,10 @@ func (r *BillingRepository) Charge(ctx context.Context, userID int64, amount int
 	}
 	defer tx.Rollback()
 
+	if err := lockUserLedger(ctx, tx, userID); err != nil {
+		return err
+	}
+
 	var balance sql.NullInt64
 	err = tx.QueryRowContext(ctx,
 		`SELECT COALESCE(SUM(amount), 0) FROM credit_transactions WHERE user_id = $1`,
@@ -79,12 +83,42 @@ func (r *BillingRepository) Charge(ctx context.Context, userID int64, amount int
 }
 
 func (r *BillingRepository) Refund(ctx context.Context, userID int64, amount int, refID *uuid.UUID) error {
-	_, err := r.db.ExecContext(ctx,
+	tx, err := r.db.BeginTx(ctx, nil)
+	if err != nil {
+		return fmt.Errorf("begin tx: %w", err)
+	}
+	defer tx.Rollback()
+
+	if err := lockUserLedger(ctx, tx, userID); err != nil {
+		return err
+	}
+
+	if refID != nil {
+		var exists bool
+		if err := tx.QueryRowContext(ctx,
+			`SELECT EXISTS (
+				SELECT 1 FROM credit_transactions
+				WHERE type = $1 AND reference_id = $2
+			)`,
+			models.TxTypeGenerationRefund, refID,
+		).Scan(&exists); err != nil {
+			return fmt.Errorf("check refund: %w", err)
+		}
+		if exists {
+			return tx.Commit()
+		}
+	}
+
+	_, err = tx.ExecContext(ctx,
 		`INSERT INTO credit_transactions (user_id, amount, type, reference_id, description)
-		 VALUES ($1, $2, $3, $4, 'Refund for failed generation')`,
+		 VALUES ($1, $2, $3, $4, 'Refund for failed generation')
+		 ON CONFLICT (type, reference_id) WHERE reference_id IS NOT NULL DO NOTHING`,
 		userID, amount, models.TxTypeGenerationRefund, refID,
 	)
-	return err
+	if err != nil {
+		return fmt.Errorf("insert refund: %w", err)
+	}
+	return tx.Commit()
 }
 
 // TryDailyGrant атомарно пополняет баланс до cap, если сегодня ещё не пополнялось.
@@ -95,6 +129,10 @@ func (r *BillingRepository) TryDailyGrant(ctx context.Context, userID int64, cap
 		return false, fmt.Errorf("begin tx: %w", err)
 	}
 	defer tx.Rollback()
+
+	if err := lockUserLedger(ctx, tx, userID); err != nil {
+		return false, err
+	}
 
 	// Если сегодня уже пополняли — выходим.
 	var count int
@@ -131,6 +169,13 @@ func (r *BillingRepository) TryDailyGrant(ctx context.Context, userID int64, cap
 		return false, fmt.Errorf("insert daily grant: %w", err)
 	}
 	return true, tx.Commit()
+}
+
+func lockUserLedger(ctx context.Context, tx *sql.Tx, userID int64) error {
+	if _, err := tx.ExecContext(ctx, `SELECT pg_advisory_xact_lock($1)`, userID); err != nil {
+		return fmt.Errorf("lock user ledger: %w", err)
+	}
+	return nil
 }
 
 func (r *BillingRepository) GetTransactions(ctx context.Context, userID int64, limit, offset int) ([]models.CreditTransaction, error) {

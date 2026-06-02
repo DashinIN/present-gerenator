@@ -12,7 +12,6 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
-	"github.com/you/funbaza/internal/models"
 	"github.com/you/funbaza/internal/repository"
 	"github.com/you/funbaza/internal/services"
 	"github.com/you/funbaza/internal/worker"
@@ -300,9 +299,13 @@ func (h *WebhookHandler) processSunoCallback(body []byte) {
 }
 
 func (h *WebhookHandler) tryComplete(ctx context.Context, genID uuid.UUID, taskType string) {
-	remaining, err := h.webhookStore.CompletePending(ctx, genID.String(), taskType)
+	removed, remaining, err := h.webhookStore.CompletePending(ctx, genID.String(), taskType)
 	if err != nil {
 		slog.Error("webhook: CompletePending failed", "err", err)
+		return
+	}
+	if !removed {
+		slog.Info("webhook: duplicate or stale callback ignored", "generation_id", genID, "task_type", taskType)
 		return
 	}
 	if remaining > 0 {
@@ -330,10 +333,19 @@ func (h *WebhookHandler) tryComplete(ctx context.Context, genID uuid.UUID, taskT
 }
 
 func (h *WebhookHandler) failGeneration(ctx context.Context, genID uuid.UUID, userID int64, reason string) {
-	_ = h.genRepo.UpdateStatus(ctx, genID, models.StatusFailed, reason)
-	gen, err := h.genRepo.GetByID(ctx, genID)
-	if err == nil {
-		_ = h.billing.Refund(ctx, userID, gen.CreditsSpent, genID)
+	marked, err := h.genRepo.MarkFailedIfActive(ctx, genID, reason)
+	if err != nil {
+		slog.Error("webhook: MarkFailedIfActive failed", "generation_id", genID, "err", err)
+		return
+	}
+	if !marked {
+		slog.Info("webhook: failure ignored for terminal generation", "generation_id", genID)
+		return
+	}
+	if gen, err := h.genRepo.GetByID(ctx, genID); err == nil {
+		if err := h.billing.Refund(ctx, userID, gen.CreditsSpent, genID); err != nil {
+			slog.Error("webhook: refund failed", "generation_id", genID, "err", err)
+		}
 	}
 }
 
