@@ -1,0 +1,144 @@
+{
+  "title": "FunBaza Overview",
+  "uid": "funbaza-overview",
+  "timezone": "browser",
+  "schemaVersion": 39,
+  "version": 1,
+  "refresh": "30s",
+  "time": { "from": "now-24h", "to": "now" },
+  "panels": [
+    {
+      "id": 1,
+      "title": "HTTP RPS",
+      "type": "timeseries",
+      "datasource": { "type": "prometheus", "uid": "Prometheus" },
+      "targets": [
+        { "expr": "rate(nginx_http_requests_total[1m])", "legendFormat": "requests/sec" }
+      ],
+      "gridPos": { "h": 8, "w": 8, "x": 0, "y": 0 }
+    },
+    {
+      "id": 2,
+      "title": "CPU Load",
+      "type": "timeseries",
+      "datasource": { "type": "prometheus", "uid": "Prometheus" },
+      "targets": [
+        { "expr": "node_load1", "legendFormat": "load1" },
+        { "expr": "node_load5", "legendFormat": "load5" }
+      ],
+      "gridPos": { "h": 8, "w": 8, "x": 8, "y": 0 }
+    },
+    {
+      "id": 3,
+      "title": "Memory Used",
+      "type": "timeseries",
+      "datasource": { "type": "prometheus", "uid": "Prometheus" },
+      "targets": [
+        { "expr": "100 * (1 - node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes)", "legendFormat": "memory %" }
+      ],
+      "fieldConfig": { "defaults": { "unit": "percent" }, "overrides": [] },
+      "gridPos": { "h": 8, "w": 8, "x": 16, "y": 0 }
+    },
+    {
+      "id": 4,
+      "title": "New Users",
+      "type": "timeseries",
+      "datasource": { "type": "postgres", "uid": "FunBaza PostgreSQL" },
+      "targets": [
+        {
+          "format": "time_series",
+          "rawSql": "SELECT date_trunc('hour', created_at) AS time, count(*)::double precision AS value FROM users WHERE $__timeFilter(created_at) GROUP BY 1 ORDER BY 1"
+        }
+      ],
+      "gridPos": { "h": 8, "w": 8, "x": 0, "y": 8 }
+    },
+    {
+      "id": 5,
+      "title": "Generations By Status",
+      "type": "barchart",
+      "datasource": { "type": "postgres", "uid": "FunBaza PostgreSQL" },
+      "targets": [
+        {
+          "format": "table",
+          "rawSql": "SELECT status, count(*) AS requests FROM generation_requests WHERE $__timeFilter(created_at) GROUP BY status ORDER BY requests DESC"
+        }
+      ],
+      "gridPos": { "h": 8, "w": 8, "x": 8, "y": 8 }
+    },
+    {
+      "id": 6,
+      "title": "Credits Spent",
+      "type": "timeseries",
+      "datasource": { "type": "postgres", "uid": "FunBaza PostgreSQL" },
+      "targets": [
+        {
+          "format": "time_series",
+          "rawSql": "SELECT date_trunc('hour', created_at) AS time, sum(credits_spent)::double precision AS value FROM generation_requests WHERE $__timeFilter(created_at) GROUP BY 1 ORDER BY 1"
+        }
+      ],
+      "gridPos": { "h": 8, "w": 8, "x": 16, "y": 8 }
+    },
+    {
+      "id": 7,
+      "title": "Top Users By Credits",
+      "type": "table",
+      "datasource": { "type": "postgres", "uid": "FunBaza PostgreSQL" },
+      "targets": [
+        {
+          "format": "table",
+          "rawSql": "SELECT u.id, u.email, u.display_name, count(g.id) AS generations, sum(g.credits_spent) AS credits_spent FROM users u JOIN generation_requests g ON g.user_id = u.id WHERE $__timeFilter(g.created_at) GROUP BY u.id, u.email, u.display_name ORDER BY credits_spent DESC LIMIT 50"
+        }
+      ],
+      "gridPos": { "h": 10, "w": 12, "x": 0, "y": 16 }
+    },
+    {
+      "id": 8,
+      "title": "Top Generation Topics",
+      "type": "table",
+      "datasource": { "type": "postgres", "uid": "FunBaza PostgreSQL" },
+      "targets": [
+        {
+          "format": "table",
+          "rawSql": "SELECT left(coalesce(nullif(image_prompt, ''), nullif(song_prompt, ''), nullif(song_style, ''), 'unknown'), 120) AS topic, count(*) AS requests, sum(credits_spent) AS credits_spent FROM generation_requests WHERE $__timeFilter(created_at) GROUP BY topic ORDER BY requests DESC LIMIT 50"
+        }
+      ],
+      "gridPos": { "h": 10, "w": 12, "x": 12, "y": 16 }
+    },
+    {
+      "id": 9,
+      "title": "Image Models",
+      "type": "piechart",
+      "datasource": { "type": "postgres", "uid": "FunBaza PostgreSQL" },
+      "targets": [
+        {
+          "format": "table",
+          "rawSql": "SELECT image_model, count(*) AS requests FROM generation_requests WHERE $__timeFilter(created_at) AND image_count > 0 GROUP BY image_model ORDER BY requests DESC"
+        }
+      ],
+      "gridPos": { "h": 8, "w": 8, "x": 0, "y": 26 }
+    },
+    {
+      "id": 10,
+      "title": "Language Signals",
+      "type": "table",
+      "datasource": { "type": "postgres", "uid": "FunBaza PostgreSQL" },
+      "targets": [
+        {
+          "format": "table",
+          "rawSql": "SELECT CASE WHEN coalesce(image_prompt, song_prompt, song_lyrics) ~ '[А-Яа-я]' THEN 'ru/cyrillic' WHEN coalesce(image_prompt, song_prompt, song_lyrics) ~ '[A-Za-z]' THEN 'latin' ELSE 'unknown' END AS language_signal, count(*) AS requests, sum(credits_spent) AS credits_spent FROM generation_requests WHERE $__timeFilter(created_at) GROUP BY language_signal ORDER BY requests DESC"
+        }
+      ],
+      "gridPos": { "h": 8, "w": 8, "x": 8, "y": 26 }
+    },
+    {
+      "id": 11,
+      "title": "PostgreSQL Connections",
+      "type": "timeseries",
+      "datasource": { "type": "prometheus", "uid": "Prometheus" },
+      "targets": [
+        { "expr": "pg_stat_database_numbackends{datname=\"funbaza\"}", "legendFormat": "connections" }
+      ],
+      "gridPos": { "h": 8, "w": 8, "x": 16, "y": 26 }
+    }
+  ]
+}

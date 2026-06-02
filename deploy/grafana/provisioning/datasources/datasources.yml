@@ -1,0 +1,25 @@
+apiVersion: 1
+
+datasources:
+  - name: Prometheus
+    uid: Prometheus
+    type: prometheus
+    access: proxy
+    url: http://prometheus:9090
+    isDefault: true
+    editable: true
+
+  - name: FunBaza PostgreSQL
+    uid: FunBaza PostgreSQL
+    type: postgres
+    access: proxy
+    url: postgres:5432
+    user: funbaza
+    secureJsonData:
+      password: ${POSTGRES_PASSWORD}
+    jsonData:
+      database: funbaza
+      sslmode: disable
+      postgresVersion: 1600
+      timescaledb: false
+    editable: true
