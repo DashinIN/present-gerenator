@@ -45,7 +45,7 @@ func (s *BillingService) Refund(ctx context.Context, userID int64, amount int, r
 	return s.repo.Refund(ctx, userID, amount, &refID)
 }
 
-// TryDailyGrant начисляет 50 кредитов, если сегодня ещё не начислялись.
+// TryDailyGrant tops the balance up to 50 credits once per rolling 24 hours.
 func (s *BillingService) TryDailyGrant(ctx context.Context, userID int64) (bool, error) {
 	return s.repo.TryDailyGrant(ctx, userID, 50)
 }

@@ -121,8 +121,9 @@ func (r *BillingRepository) Refund(ctx context.Context, userID int64, amount int
 	return tx.Commit()
 }
 
-// TryDailyGrant атомарно пополняет баланс до cap, если сегодня ещё не пополнялось.
-// Возвращает true, если начисление произошло (баланс был ниже cap).
+// TryDailyGrant atomically tops the balance up to cap if the user has not
+// received a daily grant during the last 24 hours.
+// Returns true when credits were inserted because the balance was below cap.
 func (r *BillingRepository) TryDailyGrant(ctx context.Context, userID int64, cap int) (bool, error) {
 	tx, err := r.db.BeginTx(ctx, nil)
 	if err != nil {
@@ -134,11 +135,14 @@ func (r *BillingRepository) TryDailyGrant(ctx context.Context, userID int64, cap
 		return false, err
 	}
 
-	// Если сегодня уже пополняли — выходим.
+	// Use a rolling 24-hour window, not CURRENT_DATE. CURRENT_DATE would allow
+	// another grant right after midnight even when less than a day has passed.
 	var count int
 	if err = tx.QueryRowContext(ctx,
 		`SELECT COUNT(*) FROM credit_transactions
-		 WHERE user_id = $1 AND type = $2 AND created_at >= CURRENT_DATE`,
+		 WHERE user_id = $1
+		   AND type = $2
+		   AND created_at >= NOW() - INTERVAL '24 hours'`,
 		userID, models.TxTypeDailyGrant,
 	).Scan(&count); err != nil {
 		return false, fmt.Errorf("check daily grant: %w", err)
@@ -147,7 +151,7 @@ func (r *BillingRepository) TryDailyGrant(ctx context.Context, userID int64, cap
 		return false, nil
 	}
 
-	// Считаем текущий баланс.
+	// Calculate current balance.
 	var balance int64
 	if err = tx.QueryRowContext(ctx,
 		`SELECT COALESCE(SUM(amount), 0) FROM credit_transactions WHERE user_id = $1`,
@@ -163,7 +167,7 @@ func (r *BillingRepository) TryDailyGrant(ctx context.Context, userID int64, cap
 
 	if _, err = tx.ExecContext(ctx,
 		`INSERT INTO credit_transactions (user_id, amount, type, description)
-		 VALUES ($1, $2, $3, 'Ежедневное пополнение до лимита')`,
+		 VALUES ($1, $2, $3, 'Daily top-up to limit')`,
 		userID, topup, models.TxTypeDailyGrant,
 	); err != nil {
 		return false, fmt.Errorf("insert daily grant: %w", err)
