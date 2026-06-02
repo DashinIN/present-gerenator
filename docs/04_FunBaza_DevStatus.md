@@ -1,12 +1,12 @@
 # FunBaza - текущее состояние разработки
 
-> Обновлено: 2026-05-18  
+> Обновлено: 2026-06-02  
 > Цель релиза: публичный web MVP до подключения оплаты  
-> Локальный URL приложения: `http://localhost:8080/`
+> Продакшен URL: `https://funbaza.ru/`
 
 ## Краткий итог
 
-FunBaza готов к первому продакшен-релизу как web MVP для генерации AI-изображений и музыки. Основной пользовательский сценарий реализован end-to-end: вход через Google, баланс кредитов, история сессий, генерация изображений, генерация музыки, генерация текста, загрузка файлов, фоновая обработка и выдача готовых ассетов.
+FunBaza выведен в продакшен как web MVP для генерации AI-изображений и музыки. Основной пользовательский сценарий работает end-to-end: вход через Google, баланс кредитов, история сессий, генерация изображений, генерация музыки, генерация текста, загрузка файлов, фоновая обработка и выдача готовых ассетов.
 
 Оплата намеренно не входит в этот релиз. Пользователи получают кредиты через текущую логику начислений; платное пополнение - следующий крупный этап после продакшен-деплоя.
 
@@ -27,7 +27,9 @@ FunBaza готов к первому продакшен-релизу как web 
 | Кредиты и биллинг | Готово для MVP | Initial/daily grants, charge, refund, transaction history |
 | Оплата | Не реализована | Покупка кредитов - следующий этап |
 | Swagger | Готов | Доступен по `/swagger/index.html` |
-| Production Docker | Готов | Есть `docker-compose.prod.yml` и SSL-вариант |
+| Production Docker | Работает | HTTPS stack поднят через `docker-compose.prod.ssl.yml` |
+| Мониторинг | Работает | Grafana, Prometheus, exporters, cAdvisor |
+| БД admin | Работает | pgAdmin доступен через отдельный поддомен |
 
 ## Пользовательские изменения с прошлого статуса
 
@@ -55,6 +57,7 @@ Nginx
   |      +--> kie.ai image and music APIs
   |
   +--> MinIO public storage endpoint
+  +--> Grafana / pgAdmin
 ```
 
 В продакшене фронтенд собирается root `Dockerfile` и копируется в `backend/web/dist`. Go server раздает SPA и API из одного app-контейнера.
@@ -63,17 +66,17 @@ Nginx
 
 ```env
 APP_ENV=production
-BASE_URL=https://api.yourdomain.com
+BASE_URL=https://funbaza.ru
 POSTGRES_PASSWORD=...
 JWT_SECRET=...
 KIE_API_KEY=...
 
 GOOGLE_CLIENT_ID=...
 GOOGLE_CLIENT_SECRET=...
-GOOGLE_REDIRECT_URI=https://api.yourdomain.com/api/auth/google/callback
+GOOGLE_REDIRECT_URI=https://funbaza.ru/api/auth/google/callback
 
 S3_ENDPOINT=http://minio:9000
-S3_PUBLIC_ENDPOINT=https://storage.yourdomain.com
+S3_PUBLIC_ENDPOINT=https://storage.funbaza.ru
 S3_REGION=us-east-1
 S3_ACCESS_KEY=...
 S3_SECRET_KEY=...
@@ -84,13 +87,24 @@ WORKER_COUNT=4
 
 ## Статус проверок
 
-Последние локальные проверки от 2026-05-18:
+Последние проверки:
 
-- `cd frontend && npm run lint` - прошло.
-- `cd frontend && npm run build` - прошло.
-- `cd backend && go test ./...` - прошло.
-- `docker compose --env-file .env.prod.example -f docker-compose.prod.yml config --quiet` - прошло.
-- `docker compose --env-file .env.prod.example -f docker-compose.prod.ssl.yml config --quiet` - прошло.
+- `https://funbaza.ru/` - `200`, проверено 2026-06-02.
+- `https://funbaza.ru/api/health` - `200`, проверено 2026-06-02.
+- `https://grafana.funbaza.ru/login` - `200`, проверено 2026-06-02.
+- `https://pgadmin.funbaza.ru/login` - `200`, проверено 2026-06-02.
+- Google OAuth login - проходит, проверено 2026-06-02.
+- `/api/v1/user/me`, balance, tariff и sessions - `200` для авторизованного пользователя, проверено 2026-06-02.
+- Генерация - в prod logs есть успешный `generation completed`, проверено 2026-06-02.
+- Signed URLs для изображений и аудио через `storage.funbaza.ru` - работают, проверено 2026-06-02.
+
+Локальные проверки перед следующим релизным коммитом:
+
+- `cd frontend && npm run lint`
+- `cd frontend && npm run build`
+- `cd backend && go test ./...`
+- `docker compose --env-file .env.prod.example -f docker-compose.prod.yml config --quiet`
+- `docker compose --env-file .env.prod.example -f docker-compose.prod.ssl.yml config --quiet`
 
 ## Известные ограничения релиза
 
@@ -99,15 +113,8 @@ WORKER_COUNT=4
 3. Продакшен-хранилище по умолчанию использует bundled MinIO; переход на Cloudflare R2 или другой внешний S3-провайдер остается опциональным.
 4. CI/CD pipeline не закоммичен; деплой выполняется вручную через Docker Compose.
 5. Frontend проверяется build/lint, но отдельного component test suite пока нет.
-6. Мониторинг ограничен Docker logs и health checks, если не подключать внешний мониторинг на VPS.
+6. Grafana и pgAdmin доступны публично через поддомены; перед широким трафиком желательно ограничить доступ по IP или дополнительной авторизацией.
 
 ## Решение по релизу
 
-Проект подходит для контролируемого публичного MVP-релиза после того, как:
-
-- настроены продакшен-домены и DNS;
-- OAuth redirect URI обновлен в Google Cloud Console;
-- продакшен `.env` заполнен реальными секретами;
-- выпущены SSL-сертификаты;
-- backend tests и frontend checks проходят на релизном коммите;
-- контрольная проверка подтверждает login, генерацию, выдачу ассетов и историю транзакций на продакшен URL.
+Проект подходит для контролируемого публичного MVP-релиза. Продакшен-домены, DNS, SSL, OAuth, Docker stack, мониторинг, pgAdmin и основной пользовательский сценарий проверены на `https://funbaza.ru`.

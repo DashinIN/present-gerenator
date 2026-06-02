@@ -224,6 +224,23 @@ func main() {
 	if _, statErr := os.Stat(webDist); statErr == nil {
 		r.Static("/assets", webDist+"/assets")
 		r.Static("/locales", webDist+"/locales")
+		serveSVG := func(c *gin.Context) {
+			c.Header("Content-Type", "image/svg+xml")
+			c.Header("Cache-Control", "public, max-age=86400")
+			c.File(webDist + c.Request.URL.Path)
+		}
+		r.GET("/favicon.svg", serveSVG)
+		r.HEAD("/favicon.svg", func(c *gin.Context) {
+			c.Header("Content-Type", "image/svg+xml")
+			c.Header("Cache-Control", "public, max-age=86400")
+			c.File(webDist + "/favicon.svg")
+		})
+		r.GET("/icons.svg", serveSVG)
+		r.HEAD("/icons.svg", func(c *gin.Context) {
+			c.Header("Content-Type", "image/svg+xml")
+			c.Header("Cache-Control", "public, max-age=86400")
+			c.File(webDist + "/icons.svg")
+		})
 		r.NoRoute(func(c *gin.Context) {
 			if strings.HasPrefix(c.Request.URL.Path, "/api") {
 				c.JSON(http.StatusNotFound, gin.H{"error": gin.H{"code": "not_found", "message": "Not found"}})

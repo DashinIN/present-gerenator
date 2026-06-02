@@ -6,6 +6,7 @@ examples
 *.env.local
 .env*.local
 backend/.env
+*.pem
 
 # node
 node_modules/

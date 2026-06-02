@@ -69,7 +69,7 @@ services:
     environment:
       GF_SECURITY_ADMIN_USER: ${GRAFANA_ADMIN_USER:-admin}
       GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD:?GRAFANA_ADMIN_PASSWORD is required}
-      GF_SERVER_ROOT_URL: https://grafana.funbaza.com
+      GF_SERVER_ROOT_URL: https://grafana.funbaza.ru
       GF_USERS_ALLOW_SIGN_UP: "false"
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}
     volumes:

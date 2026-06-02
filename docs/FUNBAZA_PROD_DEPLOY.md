@@ -1,11 +1,20 @@
 # FunBaza production deploy
 
+Current production status: deployed and verified on 2026-06-02.
+
+Production server:
+
+- Public IP: `83.166.237.247`
+- Project path: `/opt/funbaza`
+- Compose stack: `docker-compose.prod.ssl.yml`
+- Env file: `/opt/funbaza/.env.prod.local`
+
 Target domains:
 
-- `https://funbaza.com` and `https://www.funbaza.com` - app and API.
-- `https://storage.funbaza.com` - public generated files through MinIO.
-- `https://grafana.funbaza.com` - monitoring and analytics dashboards.
-- `https://pgadmin.funbaza.com` - PostgreSQL admin UI.
+- `https://funbaza.ru` and `https://www.funbaza.ru` - app and API.
+- `https://storage.funbaza.ru` - public generated files through MinIO.
+- `https://grafana.funbaza.ru` - monitoring and analytics dashboards.
+- `https://pgadmin.funbaza.ru` - PostgreSQL admin UI.
 
 ## Server baseline
 
@@ -25,14 +34,16 @@ For Russian availability and payments, start with Selectel, Timeweb Cloud, Yande
 Create `A` records pointing to the server public IPv4:
 
 ```text
-funbaza.com
-www.funbaza.com
-storage.funbaza.com
-grafana.funbaza.com
-pgadmin.funbaza.com
+funbaza.ru
+www.funbaza.ru
+storage.funbaza.ru
+grafana.funbaza.ru
+pgadmin.funbaza.ru
 ```
 
 Wait until all records resolve to the VPS before issuing certificates.
+
+For the current deployment all five domains resolve to `83.166.237.247`.
 
 ## Production env
 
@@ -42,8 +53,8 @@ Required values:
 
 ```env
 APP_ENV=production
-BASE_URL=https://funbaza.com
-S3_PUBLIC_ENDPOINT=https://storage.funbaza.com
+BASE_URL=https://funbaza.ru
+S3_PUBLIC_ENDPOINT=https://storage.funbaza.ru
 S3_REGION=us-east-1
 S3_BUCKET=funbaza
 S3_USE_PATH_STYLE=true
@@ -58,21 +69,21 @@ KIE_API_KEY=replace-with-kie-key
 
 GOOGLE_CLIENT_ID=replace-with-google-client-id
 GOOGLE_CLIENT_SECRET=replace-with-google-client-secret
-GOOGLE_REDIRECT_URI=https://funbaza.com/api/auth/google/callback
+GOOGLE_REDIRECT_URI=https://funbaza.ru/api/auth/google/callback
 
-PGADMIN_DEFAULT_EMAIL=admin@funbaza.com
+PGADMIN_DEFAULT_EMAIL=admin@funbaza.ru
 PGADMIN_DEFAULT_PASSWORD=replace-with-strong-pgadmin-password
 GRAFANA_ADMIN_USER=admin
 GRAFANA_ADMIN_PASSWORD=replace-with-strong-grafana-password
 PROMETHEUS_RETENTION=30d
 
-LETSENCRYPT_EMAIL=admin@funbaza.com
+LETSENCRYPT_EMAIL=admin@funbaza.ru
 ```
 
 Google OAuth must allow:
 
-- Authorized JavaScript origin: `https://funbaza.com`
-- Redirect URI: `https://funbaza.com/api/auth/google/callback`
+- Authorized JavaScript origin: `https://funbaza.ru`
+- Redirect URI: `https://funbaza.ru/api/auth/google/callback`
 
 ## First HTTP start
 
@@ -87,12 +98,12 @@ docker compose --env-file .env.prod.local -f docker-compose.prod.yml logs --tail
 Check:
 
 ```bash
-curl http://funbaza.com/api/health
+curl http://funbaza.ru/api/health
 ```
 
 ## Issue TLS certificate
 
-Issue one SAN certificate under `funbaza.com`:
+Issue one SAN certificate under `funbaza.ru`:
 
 ```bash
 docker compose --env-file .env.prod.local -f docker-compose.prod.yml run --rm certbot certonly \
@@ -101,11 +112,11 @@ docker compose --env-file .env.prod.local -f docker-compose.prod.yml run --rm ce
   --email "$LETSENCRYPT_EMAIL" \
   --agree-tos \
   --no-eff-email \
-  -d funbaza.com \
-  -d www.funbaza.com \
-  -d storage.funbaza.com \
-  -d grafana.funbaza.com \
-  -d pgadmin.funbaza.com
+  -d funbaza.ru \
+  -d www.funbaza.ru \
+  -d storage.funbaza.ru \
+  -d grafana.funbaza.ru \
+  -d pgadmin.funbaza.ru
 ```
 
 Then switch to HTTPS:
@@ -119,12 +130,57 @@ docker compose --env-file .env.prod.local -f docker-compose.prod.ssl.yml ps
 Check:
 
 ```bash
-curl https://funbaza.com/api/health
+curl https://funbaza.ru/api/health
+```
+
+Expected result:
+
+```json
+{"status":"ok"}
+```
+
+## Current production checks
+
+Run from any machine with network access:
+
+```bash
+curl -s -o /dev/null -w 'funbaza %{http_code}\n' https://funbaza.ru/
+curl -s -o /dev/null -w 'health %{http_code}\n' https://funbaza.ru/api/health
+curl -s -o /dev/null -w 'grafana %{http_code}\n' https://grafana.funbaza.ru/login
+curl -s -o /dev/null -w 'pgadmin %{http_code}\n' https://pgadmin.funbaza.ru/login
+curl -s -o /dev/null -w 'storage-root %{http_code}\n' https://storage.funbaza.ru/
+```
+
+Verified on 2026-06-02:
+
+```text
+funbaza 200
+health 200
+grafana 200
+pgadmin 200
+storage-root 403
+```
+
+`storage-root 403` is expected: MinIO should not list bucket contents. Generated assets are served through signed URLs created by the app.
+
+Check the stack on the server:
+
+```bash
+cd /opt/funbaza
+sudo docker compose --env-file .env.prod.local -f docker-compose.prod.ssl.yml ps
+sudo docker compose --env-file .env.prod.local -f docker-compose.prod.ssl.yml logs --tail=120 app
 ```
 
 ## Monitoring and analytics
 
-Grafana opens at `https://grafana.funbaza.com`.
+Grafana opens at `https://grafana.funbaza.ru`.
+
+Credentials come from `/opt/funbaza/.env.prod.local`:
+
+```env
+GRAFANA_ADMIN_USER=...
+GRAFANA_ADMIN_PASSWORD=...
+```
 
 Provisioned dashboards:
 
@@ -144,7 +200,14 @@ Important limitation: the app currently stores `credits_spent`, not provider tok
 
 ## pgAdmin
 
-pgAdmin opens at `https://pgadmin.funbaza.com`.
+pgAdmin opens at `https://pgadmin.funbaza.ru`.
+
+Credentials come from `/opt/funbaza/.env.prod.local`:
+
+```env
+PGADMIN_DEFAULT_EMAIL=...
+PGADMIN_DEFAULT_PASSWORD=...
+```
 
 Add server:
 
@@ -160,7 +223,7 @@ Minimum:
 
 - Strong unique passwords for Grafana and pgAdmin.
 - Do not expose PostgreSQL, Redis, MinIO console, Prometheus, node exporter or cAdvisor ports publicly.
-- Restrict `grafana.funbaza.com` and `pgadmin.funbaza.com` by source IP at VPS firewall or nginx if there is a stable admin IP.
+- Restrict `grafana.funbaza.ru` and `pgadmin.funbaza.ru` by source IP at VPS firewall or nginx if there is a stable admin IP.
 - Enable host firewall after Docker is installed.
 - Configure backups before real traffic.
 

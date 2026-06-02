@@ -113,7 +113,7 @@ func (w *Worker) process(ctx context.Context, task *Task) error {
 	}
 
 	// Async webhook режим оставляем только для image-only задач.
-	if IsPublicWebhookBase(w.webhookBase) && gen.SongCount == 0 {
+	if IsPublicWebhookBase(w.webhookBase) && gen.SongCount == 0 && supportsAsyncImage(w.imageGen) {
 		return w.processAsync(ctx, gen)
 	}
 
@@ -337,6 +337,11 @@ func (w *Worker) processAsync(ctx context.Context, gen *models.GenerationRequest
 
 	_ = w.genRepo.UpdateStatus(ctx, gen.ID, models.StatusProcessingImages, "")
 	return nil
+}
+
+func supportsAsyncImage(imageGen services.ImageGenerator) bool {
+	_, ok := imageGen.(services.AsyncImageGenerator)
+	return ok
 }
 
 func IsPublicWebhookBase(raw string) bool {
