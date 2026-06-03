@@ -53,7 +53,7 @@ export function Sidebar({ open, activeSessionId, onSelectSession, onNewSession }
 
   return (
     <>
-      <aside style={{
+      <aside className={`app-sidebar ${open ? 'app-sidebar--open' : 'app-sidebar--collapsed'}`} style={{
         width,
         flexShrink: 0,
         background: 'var(--surface)',

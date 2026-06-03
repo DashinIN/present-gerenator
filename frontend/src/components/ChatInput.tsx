@@ -290,8 +290,8 @@ export function ChatInput({
 
   return (
     <>
-      <div style={{ padding: '14px 24px 20px', background: 'var(--surface)' }}>
-        <div style={{ maxWidth: 720, margin: '0 auto', display: 'flex', flexDirection: 'column', gap: 10 }}>
+      <div className="chat-composer" style={{ padding: '14px 24px 20px', background: 'var(--surface)' }}>
+        <div className="chat-composer__inner" style={{ maxWidth: 720, margin: '0 auto', display: 'flex', flexDirection: 'column', gap: 10 }}>
           {error && (
             <div style={{ padding: '8px 14px', background: 'rgba(239,68,68,0.08)', borderRadius: 10, fontSize: 13, color: 'var(--error)' }}>
               {error}
@@ -319,14 +319,14 @@ export function ChatInput({
               disabled={sending}
             />
 
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 10, flexWrap: 'wrap' }}>
+            <div className="composer-toolbar" style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 10, flexWrap: 'wrap' }}>
               <div style={{ position: 'relative', zIndex: imageModelOpen ? 120 : 1 }}>
                 <button type="button" onClick={() => setImageModelOpen(value => !value)} style={ghostBtnStyle}>
                   <span style={{ fontSize: 12, color: 'var(--text)' }}>{t('model')}: {imageModelLabel(imageModel)}</span>
                   <ChevronDown size={14} style={{ color: 'var(--text-muted)' }} />
                 </button>
                 {imageModelOpen && (
-                  <div style={{
+                  <div className="model-menu" style={{
                     position: 'absolute',
                     bottom: 'calc(100% + 8px)',
                     left: 0,
@@ -441,7 +441,7 @@ export function ChatInput({
             onToggle={toggleSong}
             disableToggle={songEnabled && !imageEnabled}
           >
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+            <div className="song-controls" style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
               <Button
                 variant="ghost"
                 size="sm"
@@ -452,6 +452,7 @@ export function ChatInput({
                 {t('songText')}
               </Button>
               <input
+                className="song-style-input"
                 value={songStyle}
                 onChange={event => setSongStyle(event.target.value)}
                 placeholder={t('songStylePlaceholder')}
@@ -481,7 +482,7 @@ export function ChatInput({
             </div>
           </SectionBlock>
 
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 12 }}>
+          <div className="composer-footer" style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 12 }}>
             <span style={{ fontSize: 12, color: notEnough ? 'var(--error)' : 'var(--text-muted)' }}>
               {cost > 0 ? `${cost} ${costLabel}` : ''}
               {notEnough ? ` - ${t('insufficient')}` : ''}
@@ -569,7 +570,7 @@ export function ChatInput({
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
           <div>
             <div style={fieldLabelStyle}>{t('lyricsPromptLabel')}</div>
-            <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) auto', gap: 10, alignItems: 'start' }}>
+            <div className="lyrics-prompt-row" style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) auto', gap: 10, alignItems: 'start' }}>
               <Textarea
                 value={lyricsPrompt}
                 onChange={event => setLyricsPrompt(event.target.value)}
@@ -597,7 +598,7 @@ export function ChatInput({
 
           {lyricsVariants.length > 0 && (
             <>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', gap: 10 }}>
+              <div className="lyrics-variants-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', gap: 10 }}>
                 {lyricsVariants.map((variant, index) => (
                   <button
                     key={`${variant.title}-${index}`}
@@ -662,7 +663,7 @@ interface SectionBlockProps {
 
 function SectionBlock({ icon, label, enabled, onToggle, disableToggle, children }: SectionBlockProps) {
   return (
-    <div style={{
+    <div className="section-block" style={{
       border: `1.5px solid ${enabled ? 'rgba(var(--primary-rgb),0.3)' : 'var(--border)'}`,
       borderRadius: 14,
       overflow: enabled ? 'visible' : 'hidden',
@@ -733,6 +734,7 @@ function SimpleModal({ open, onClose, title, children }: SimpleModalProps) {
 
   return (
     <div
+      className="simple-modal-backdrop"
       onClick={onClose}
       style={{
         position: 'fixed',
@@ -747,6 +749,7 @@ function SimpleModal({ open, onClose, title, children }: SimpleModalProps) {
       }}
     >
       <div
+        className="simple-modal"
         onClick={event => event.stopPropagation()}
         style={{
           width: 'min(760px, 100%)',
@@ -758,7 +761,7 @@ function SimpleModal({ open, onClose, title, children }: SimpleModalProps) {
           boxShadow: '0 20px 60px rgba(0,0,0,0.18)',
         }}
       >
-        <div style={{
+        <div className="simple-modal__head" style={{
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
@@ -771,7 +774,7 @@ function SimpleModal({ open, onClose, title, children }: SimpleModalProps) {
             <X size={16} style={{ color: 'var(--text-muted)' }} />
           </button>
         </div>
-        <div style={{ padding: 20 }}>
+        <div className="simple-modal__body" style={{ padding: 20 }}>
           {children}
         </div>
       </div>

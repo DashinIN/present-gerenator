@@ -9,10 +9,12 @@ import { useQueryClient } from '@tanstack/react-query'
 import { Button } from '@/components/ui/Button'
 import { useI18n } from '@/lib/i18n'
 
+const MOBILE_SIDEBAR_QUERY = '(max-width: 820px)'
+
 export function ChatPage() {
   const [activeSessionId, setActiveSessionId] = useState<string | null>(null)
   const [noCreditsAt, setNoCreditsAt] = useState<string | null>(null)
-  const [sidebarOpen, setSidebarOpen] = useState(true)
+  const [sidebarOpen, setSidebarOpen] = useState(() => !window.matchMedia(MOBILE_SIDEBAR_QUERY).matches)
   const [creationPickerOpen, setCreationPickerOpen] = useState(true)
   const [creationMode, setCreationMode] = useState<'image' | 'song'>('image')
   const [creationModeVersion, setCreationModeVersion] = useState(0)
@@ -30,6 +32,14 @@ export function ChatPage() {
     }
     prevBalanceRef.current = balance
   }, [balance, resolvedLanguage])
+
+  useEffect(() => {
+    const media = window.matchMedia(MOBILE_SIDEBAR_QUERY)
+    const syncSidebar = () => setSidebarOpen(!media.matches)
+    syncSidebar()
+    media.addEventListener('change', syncSidebar)
+    return () => media.removeEventListener('change', syncSidebar)
+  }, [])
 
   const { data: thread } = useSession(activeSessionId)
 
@@ -50,6 +60,7 @@ export function ChatPage() {
     setActiveSessionId(null)
     setNoCreditsAt(null)
     setCreationPickerOpen(true)
+    if (window.matchMedia(MOBILE_SIDEBAR_QUERY).matches) setSidebarOpen(false)
   }
 
   const handleInsufficientCredits = () => {
@@ -63,16 +74,27 @@ export function ChatPage() {
   }
 
   return (
-    <div style={{ display: 'flex', height: '100%', width: '100%', background: 'var(--bg)' }}>
+    <div className="app-shell" style={{ display: 'flex', height: '100%', width: '100%', background: 'var(--bg)' }}>
       <Sidebar
         open={sidebarOpen}
         activeSessionId={activeSessionId}
-        onSelectSession={setActiveSessionId}
+        onSelectSession={(id) => {
+          setActiveSessionId(id)
+          if (window.matchMedia(MOBILE_SIDEBAR_QUERY).matches) setSidebarOpen(false)
+        }}
         onNewSession={handleNewSession}
       />
+      {sidebarOpen && (
+        <button
+          type="button"
+          className="mobile-sidebar-backdrop"
+          aria-label={t('hideSidebar')}
+          onClick={() => setSidebarOpen(false)}
+        />
+      )}
 
-      <main style={{ flex: 1, display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden' }}>
-        <div style={{
+      <main className="chat-main" style={{ flex: 1, display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden' }}>
+        <div className="chat-header" style={{
           height: 60, flexShrink: 0,
           padding: '0 20px',
           background: 'var(--surface)',
@@ -89,16 +111,16 @@ export function ChatPage() {
           </Button>
 
           {thread ? (
-            <div>
-              <div style={{ fontWeight: 600, fontSize: 15 }}>{thread.session.title}</div>
+            <div className="chat-header__copy">
+              <div className="chat-header__title" style={{ fontWeight: 600, fontSize: 15 }}>{thread.session.title}</div>
               <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>
                 {generations.length} {generations.length === 1 ? t('greetingCount_one') : t('greetingCount_many')}
-                {hasPending && ` · ${t('generating')}`}
+                {hasPending && ` - ${t('generating')}`}
               </div>
             </div>
           ) : (
-            <div>
-              <div style={{ fontWeight: 600, fontSize: 15 }}>{t('newGreeting')}</div>
+            <div className="chat-header__copy">
+              <div className="chat-header__title" style={{ fontWeight: 600, fontSize: 15 }}>{t('newGreeting')}</div>
               <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>{t('describeGreeting')}</div>
             </div>
           )}

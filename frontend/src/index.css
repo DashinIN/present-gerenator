@@ -1131,3 +1131,318 @@ select:focus-visible {
 .msg-enter { animation: slideUp 0.25s ease; }
 
 .session-item:hover .rename-btn { opacity: 1; }
+
+.app-shell,
+.chat-main,
+.chat-header__copy,
+.assistant-message__body {
+  min-width: 0;
+}
+
+.mobile-sidebar-backdrop {
+  display: none;
+}
+
+.chat-header__title {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.result-image {
+  max-width: 100%;
+  height: auto;
+}
+
+@media (hover: none) and (pointer: coarse) {
+  button,
+  a,
+  input,
+  textarea,
+  select,
+  summary {
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  button,
+  a,
+  summary {
+    touch-action: manipulation;
+  }
+}
+
+@media (max-width: 820px) {
+  body,
+  #root {
+    min-height: 100dvh;
+  }
+
+  .app-shell {
+    position: relative;
+    overflow: hidden;
+  }
+
+  .app-sidebar {
+    position: fixed !important;
+    inset: 0 auto 0 0;
+    width: min(86vw, 320px) !important;
+    max-width: calc(100vw - 38px);
+    height: 100dvh !important;
+    z-index: 90;
+    border-right: 1px solid rgba(var(--primary-rgb), 0.14);
+    transform: translateX(-106%);
+    transition: transform 0.24s ease, box-shadow 0.24s ease !important;
+  }
+
+  .app-sidebar--open {
+    transform: translateX(0);
+    box-shadow: 18px 0 50px rgba(0, 0, 0, 0.34) !important;
+  }
+
+  .mobile-sidebar-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 80;
+    display: block;
+    border: 0;
+    background: rgba(0, 0, 0, 0.42);
+    backdrop-filter: blur(4px);
+  }
+
+  .chat-header {
+    height: 56px !important;
+    padding: 0 max(12px, env(safe-area-inset-left)) 0 max(12px, env(safe-area-inset-right)) !important;
+    border-bottom: 1px solid rgba(var(--primary-rgb), 0.1);
+  }
+
+  .chat-thread {
+    padding: 16px 0 !important;
+  }
+
+  .chat-thread__inner {
+    max-width: 100% !important;
+    padding: 0 12px !important;
+    gap: 24px !important;
+  }
+
+  .chat-empty {
+    padding: 24px 18px;
+    text-align: center;
+  }
+
+  .user-bubble {
+    max-width: min(92%, 520px) !important;
+    padding: 11px 13px !important;
+    overflow-wrap: anywhere;
+  }
+
+  .assistant-message {
+    gap: 8px !important;
+  }
+
+  .result-card {
+    border-radius: 4px 14px 14px 14px !important;
+  }
+
+  .result-image {
+    width: 100% !important;
+    border-radius: 4px 14px 14px 14px !important;
+  }
+
+  .result-download {
+    right: 8px !important;
+    bottom: 8px !important;
+    min-height: 34px;
+  }
+
+  .chat-composer {
+    padding: 10px max(10px, env(safe-area-inset-right)) calc(12px + env(safe-area-inset-bottom)) max(10px, env(safe-area-inset-left)) !important;
+    border-top: 1px solid rgba(var(--primary-rgb), 0.12);
+    box-shadow: 0 -14px 34px rgba(0, 0, 0, 0.16);
+  }
+
+  .chat-composer__inner {
+    max-width: 100% !important;
+    gap: 8px !important;
+  }
+
+  .section-block {
+    border-radius: 12px !important;
+  }
+
+  .composer-toolbar,
+  .song-controls {
+    align-items: stretch !important;
+    gap: 7px !important;
+  }
+
+  .composer-toolbar > *,
+  .composer-toolbar button,
+  .song-controls > *,
+  .song-controls button,
+  .song-style-input {
+    min-height: 38px;
+  }
+
+  .composer-toolbar button,
+  .song-controls button {
+    justify-content: center;
+  }
+
+  .model-menu {
+    position: fixed !important;
+    left: 10px !important;
+    right: 10px !important;
+    bottom: calc(12px + env(safe-area-inset-bottom)) !important;
+    min-width: 0 !important;
+    max-width: none !important;
+  }
+
+  .composer-footer {
+    justify-content: space-between !important;
+    gap: 10px !important;
+  }
+
+  .composer-footer > button {
+    min-width: 116px;
+    min-height: 42px;
+  }
+
+  .simple-modal-backdrop {
+    align-items: flex-end !important;
+    padding: 10px !important;
+  }
+
+  .simple-modal {
+    width: 100% !important;
+    max-height: min(88dvh, 760px) !important;
+    border-radius: 18px 18px 12px 12px !important;
+  }
+
+  .simple-modal__head {
+    padding: 14px 14px 12px !important;
+  }
+
+  .simple-modal__body {
+    padding: 14px !important;
+  }
+
+  .lyrics-prompt-row,
+  .lyrics-variants-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  .lyrics-prompt-row > button {
+    width: 100%;
+    min-width: 0 !important;
+  }
+
+  .lyrics-variants-grid > button {
+    min-height: 136px !important;
+  }
+
+  .image-filter-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  .image-filter-panel--modal {
+    max-height: 62dvh;
+  }
+
+  .transactions-backdrop {
+    justify-content: center !important;
+    background: rgba(0, 0, 0, 0.34);
+    backdrop-filter: blur(4px);
+  }
+
+  .transactions-panel {
+    width: 100% !important;
+    max-width: none !important;
+    margin-left: 0 !important;
+    max-height: 78dvh !important;
+    border-radius: 18px 18px 0 0 !important;
+  }
+
+  .creation-picker-backdrop {
+    align-items: flex-end;
+    padding: 10px;
+  }
+
+  .creation-picker-modal {
+    width: 100%;
+    max-height: min(88dvh, 720px);
+    overflow-y: auto;
+    border-radius: 22px 22px 14px 14px;
+    padding: 20px 16px calc(16px + env(safe-area-inset-bottom));
+  }
+
+  .creation-picker-modal__title {
+    font-size: 22px;
+  }
+
+  .creation-picker-grid {
+    gap: 12px;
+    margin-top: 16px;
+  }
+
+  .creation-picker-card {
+    min-height: 166px;
+    border-radius: 18px;
+    padding: 16px;
+  }
+
+  .creation-picker-card__title {
+    font-size: 25px;
+  }
+
+  .creation-picker-card__art {
+    margin: 12px 0;
+  }
+}
+
+@media (max-width: 480px) {
+  body {
+    font-size: 13px;
+  }
+
+  .chat-header {
+    gap: 8px !important;
+  }
+
+  .chat-header__copy > div:last-child {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .generation-loader {
+    padding: 13px 12px 8px;
+  }
+
+  .generation-loader__header {
+    grid-template-columns: 36px minmax(0, 1fr) auto;
+    gap: 9px;
+  }
+
+  .generation-loader__orb {
+    width: 34px;
+    height: 34px;
+  }
+
+  .audio-player {
+    padding: 10px;
+    border-radius: 13px;
+  }
+
+  .audio-player__timeline {
+    grid-template-columns: 36px minmax(0, 1fr) 36px;
+  }
+
+  .image-filter-category {
+    padding: 9px 11px;
+  }
+
+  .creation-picker-card__desc {
+    font-size: 13px;
+  }
+}

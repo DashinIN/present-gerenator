@@ -23,7 +23,7 @@ export function ChatThread({ generations, noCreditsAt }: ChatThreadProps) {
 
   if (generations.length === 0) {
     return (
-      <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', gap: 12, color: 'var(--text-muted)' }}>
+      <div className="chat-empty" style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', gap: 12, color: 'var(--text-muted)' }}>
         {noCreditsAt ? (
           <div style={{ display: 'flex', gap: 10 }}>
             <BotAvatar />
@@ -48,8 +48,8 @@ export function ChatThread({ generations, noCreditsAt }: ChatThreadProps) {
   }
 
   return (
-    <div style={{ flex: 1, overflowY: 'auto', padding: '24px 0' }}>
-      <div style={{ maxWidth: 720, margin: '0 auto', padding: '0 24px', display: 'flex', flexDirection: 'column', gap: 32 }}>
+    <div className="chat-thread" style={{ flex: 1, overflowY: 'auto', padding: '24px 0' }}>
+      <div className="chat-thread__inner" style={{ maxWidth: 720, margin: '0 auto', padding: '0 24px', display: 'flex', flexDirection: 'column', gap: 32 }}>
         {generations.map((gen, index) => (
           <GenerationMessage key={gen.id} gen={gen} isNew={index === generations.length - 1} />
         ))}
@@ -86,9 +86,9 @@ function BotAvatar() {
 
 function GenerationMessage({ gen, isNew }: { gen: GenerationRequest; isNew?: boolean }) {
   return (
-    <div className={isNew ? 'msg-enter' : undefined} style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+    <div className={`generation-message${isNew ? ' msg-enter' : ''}`} style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
       <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
-        <div style={{
+        <div className="user-bubble" style={{
           maxWidth: '80%', background: 'var(--primary)',
           borderRadius: '16px 16px 4px 16px', padding: '12px 16px',
         }}>
@@ -96,9 +96,9 @@ function GenerationMessage({ gen, isNew }: { gen: GenerationRequest; isNew?: boo
         </div>
       </div>
 
-      <div style={{ display: 'flex', gap: 10 }}>
+      <div className="assistant-message" style={{ display: 'flex', gap: 10 }}>
         <BotAvatar />
-        <div style={{ flex: 1 }}>
+        <div className="assistant-message__body" style={{ flex: 1 }}>
           <GenerationResult gen={gen} />
         </div>
       </div>
@@ -146,7 +146,7 @@ function GenerationResult({ gen }: { gen: GenerationRequest }) {
 
   if (imageOnly) {
     return (
-      <div>
+      <div className="image-result">
         <CompletedState gen={gen} />
         <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 4 }}>
           {formatDate(gen.created_at)}
@@ -156,7 +156,7 @@ function GenerationResult({ gen }: { gen: GenerationRequest }) {
   }
 
   return (
-    <div style={{
+    <div className="result-card" style={{
       background: 'var(--surface)',
       borderRadius: '4px 16px 16px 16px',
       overflow: 'hidden',
@@ -323,10 +323,11 @@ function CompletedState({ gen }: { gen: GenerationRequest }) {
       {gen.result_images?.length > 0 && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
           {gen.result_images.map((url, index) => (
-            <div key={index} style={{ position: 'relative' }}>
+            <div key={index} className="result-image-wrap" style={{ position: 'relative' }}>
               <img
                 src={url}
                 alt={`result ${index + 1}`}
+                className="result-image"
                 style={{
                   width: '70%', display: 'block',
                   borderRadius: '4px 16px 16px 16px',
@@ -335,6 +336,7 @@ function CompletedState({ gen }: { gen: GenerationRequest }) {
               <a
                 href={url}
                 download
+                className="result-download"
                 style={{
                   position: 'absolute', bottom: 10, right: 10,
                   background: 'rgba(0,0,0,0.55)', backdropFilter: 'blur(4px)',

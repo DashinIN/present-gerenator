@@ -22,6 +22,7 @@ export function TransactionsPanel({ onClose }: TransactionsPanelProps) {
 
   return (
     <div
+      className="transactions-backdrop"
       style={{
         position: 'fixed', inset: 0, zIndex: 200,
         display: 'flex', alignItems: 'flex-end', justifyContent: 'flex-start',
@@ -29,6 +30,7 @@ export function TransactionsPanel({ onClose }: TransactionsPanelProps) {
       onClick={onClose}
     >
       <div
+        className="transactions-panel"
         style={{
           marginLeft: 260, width: 360, maxHeight: '70vh',
           background: 'var(--surface)', borderRadius: '0 16px 0 0',
